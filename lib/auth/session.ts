@@ -82,6 +82,48 @@ export async function createSessionCookieValue(input: CreateSessionInput) {
   return `${encodedPayload}.${signature}`;
 }
 
+function base64UrlDecodeText(value: string) {
+  let base64 = value.replaceAll("-", "+").replaceAll("_", "/");
+  while (base64.length % 4) {
+    base64 += "=";
+  }
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
+}
+
+export async function verifySessionCookieValue(
+  cookieValue: string
+): Promise<SessionPayload | null> {
+  if (!cookieValue) return null;
+  const parts = cookieValue.split(".");
+  if (parts.length !== 2) return null;
+
+  const [encodedPayload, signature] = parts;
+  try {
+    const expectedSignature = await createSignature(encodedPayload);
+    if (expectedSignature !== signature) {
+      return null;
+    }
+
+    const decodedPayloadText = base64UrlDecodeText(encodedPayload);
+    const payload = JSON.parse(decodedPayloadText) as SessionPayload;
+
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp < now) {
+      return null;
+    }
+
+    return payload;
+  } catch (error) {
+    console.error("Session verification failed:", error);
+    return null;
+  }
+}
+
 export function getSessionCookieOptions() {
   return {
     httpOnly: true,
@@ -91,3 +133,4 @@ export function getSessionCookieOptions() {
     maxAge: SESSION_MAX_AGE_SECONDS,
   };
 }
+
