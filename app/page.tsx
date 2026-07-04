@@ -53,12 +53,23 @@ export default async function Home() {
           <h1 className="mt-2 text-2xl font-semibold text-foreground">{title}</h1>
           <p className="mt-4 text-foreground-muted">{subtitle}</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/login"
-              className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-6 text-sm font-medium text-surface-page"
-            >
-              الانتقال إلى تسجيل الدخول
-            </Link>
+            {user ? (
+              <form action="/api/auth/logout" method="post" className="inline-flex">
+                <button
+                  type="submit"
+                  className="inline-flex h-11 items-center justify-center rounded-lg bg-red-500 px-6 text-sm font-medium text-surface-page transition-all duration-150 hover:bg-red-400 active:scale-[0.98]"
+                >
+                  تسجيل الخروج
+                </button>
+              </form>
+            ) : (
+              <Link
+                href="/login"
+                className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-6 text-sm font-medium text-surface-page"
+              >
+                الانتقال إلى تسجيل الدخول
+              </Link>
+            )}
             <span className="inline-flex h-11 items-center justify-center rounded-lg border border-foreground-muted/30 px-6 text-sm text-foreground-muted">
               Dark mode فقط
             </span>
