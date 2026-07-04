@@ -1,15 +1,151 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
 export default function LoginPage() {
+  const router = useRouter();
+  const [loginId, setLoginId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginId.trim()) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ login_id: loginId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "تعذر تسجيل الدخول. يرجى المحاولة مرة أخرى.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Login successful, redirect to dashboard/home page
+      router.refresh();
+      router.push("/");
+    } catch (err) {
+      console.error("Login submission error:", err);
+      setError("حدث خطأ في الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.");
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-16">
-      <div className="w-full max-w-sm rounded-xl bg-surface-card p-8">
-        <h1 className="text-xl font-semibold text-foreground">تسجيل الدخول</h1>
-        <p className="mt-2 text-sm text-foreground-muted">
-          صفحة الدخول بالمعرّف — ستُفعَّل في خطوة لاحقة.
-        </p>
-        <div className="mt-6 rounded-lg border border-foreground-muted/30 px-4 py-3 text-sm text-foreground-muted">
-          Placeholder — لا يوجد تسجيل دخول فعلي بعد.
+      <div className="w-full max-w-sm rounded-xl bg-surface-card p-8 border border-foreground-muted/10 shadow-xl">
+        <div className="flex flex-col items-center mb-6">
+          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6 text-primary"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM5.25 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12 5.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM12 20.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
+              />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-foreground text-center">نظام إدارة المحل</h1>
+          <p className="mt-2 text-sm text-foreground-muted text-center">
+            أدخل معرّف الدخول الخاص بك للوصول للنظام
+          </p>
         </div>
+
+        {error && (
+          <div className="mb-4 rounded-lg bg-red-950/30 border border-red-500/30 px-4 py-3 text-sm text-red-400 flex items-start gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-5 h-5 shrink-0 mt-0.5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
+              />
+            </svg>
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label
+              htmlFor="loginId"
+              className="block text-sm font-medium text-foreground mb-1.5"
+            >
+              معرّف الدخول
+            </label>
+            <input
+              id="loginId"
+              type="text"
+              required
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
+              disabled={isLoading}
+              placeholder="مثال: OWNER1"
+              dir="ltr"
+              className="w-full h-11 px-4 rounded-lg bg-surface-page border border-foreground-muted/20 text-foreground placeholder:text-foreground-muted/40 focus:border-primary focus:outline-none transition-colors duration-150 disabled:opacity-50"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading || !loginId.trim()}
+            className="w-full h-11 inline-flex items-center justify-center rounded-lg bg-primary hover:bg-primary/90 text-surface-page font-semibold text-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100"
+          >
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <svg
+                  className="animate-spin h-5 w-5 text-surface-page"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <span>جاري الدخول...</span>
+              </div>
+            ) : (
+              "تسجيل الدخول"
+            )}
+          </button>
+        </form>
       </div>
     </div>
   );
 }
+

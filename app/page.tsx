@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 
+import AuthenticatedShell from "@/components/layout/authenticated-shell";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   SESSION_COOKIE_NAME,
@@ -45,37 +46,32 @@ export default async function Home() {
     ? `تم تسجيل الدخول كـ ${user.login_id}`
     : "يجب أن تقودك هذه الصفحة بعد تسجيل دخول ناجح إلى النظام.";
 
-  return (
+  const content = (
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-16">
-      <main className="w-full max-w-lg">
-        <div className="rounded-xl bg-surface-card p-8 shadow-none">
-          <p className="text-sm text-foreground-muted">نظام إدارة المحل</p>
-          <h1 className="mt-2 text-2xl font-semibold text-foreground">{title}</h1>
-          <p className="mt-4 text-foreground-muted">{subtitle}</p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            {user ? (
-              <form action="/api/auth/logout" method="post" className="inline-flex">
-                <button
-                  type="submit"
-                  className="inline-flex h-11 items-center justify-center rounded-lg bg-red-500 px-6 text-sm font-medium text-surface-page transition-all duration-150 hover:bg-red-400 active:scale-[0.98]"
-                >
-                  تسجيل الخروج
-                </button>
-              </form>
-            ) : (
-              <Link
-                href="/login"
-                className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-6 text-sm font-medium text-surface-page"
-              >
-                الانتقال إلى تسجيل الدخول
-              </Link>
-            )}
-            <span className="inline-flex h-11 items-center justify-center rounded-lg border border-foreground-muted/30 px-6 text-sm text-foreground-muted">
-              Dark mode فقط
-            </span>
-          </div>
+      <div className="w-full max-w-lg rounded-xl bg-surface-card p-8 shadow-none">
+        <p className="text-sm text-foreground-muted">نظام إدارة المحل</p>
+        <h1 className="mt-2 text-2xl font-semibold text-foreground">{title}</h1>
+        <p className="mt-4 text-foreground-muted">{subtitle}</p>
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          {user ? null : (
+            <Link
+              href="/login"
+              className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-6 text-sm font-medium text-surface-page"
+            >
+              الانتقال إلى تسجيل الدخول
+            </Link>
+          )}
+          <span className="inline-flex h-11 items-center justify-center rounded-lg border border-foreground-muted/30 px-6 text-sm text-foreground-muted">
+            Dark mode فقط
+          </span>
         </div>
-      </main>
+      </div>
     </div>
   );
+
+  if (!user) {
+    return content;
+  }
+
+  return <AuthenticatedShell user={user}>{content}</AuthenticatedShell>;
 }
