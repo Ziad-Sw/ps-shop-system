@@ -40,8 +40,6 @@ export default function AuthenticatedShell({
     <div className="min-h-screen bg-surface-page text-foreground">
       <header className="sticky top-0 z-20 border-b border-foreground-muted/10 bg-surface-page/95 backdrop-blur supports-[backdrop-filter]:bg-surface-page/80">
         <div className="mx-auto flex min-h-[64px] max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <div className="text-lg font-semibold text-foreground">PS-System</div>
-
           <div className="relative" ref={menuRef}>
             <button
               type="button"
@@ -85,6 +83,8 @@ export default function AuthenticatedShell({
               </div>
             ) : null}
           </div>
+
+          <div className="text-lg font-semibold text-foreground">PS-System</div>
         </div>
       </header>
 
