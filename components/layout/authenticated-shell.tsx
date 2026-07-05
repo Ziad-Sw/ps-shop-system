@@ -55,7 +55,7 @@ export default function AuthenticatedShell({
             {isMenuOpen ? (
               <div
                 role="menu"
-                className="absolute right-0 top-full mt-2 min-w-[240px] rounded-xl border border-foreground-muted/20 bg-surface-card p-2 shadow-xl"
+                className="absolute left-0 top-full mt-2 min-w-[240px] rounded-xl border border-foreground-muted/20 bg-surface-card p-2 shadow-xl"
               >
                 <div className="rounded-lg px-3 py-3 text-right">
                   <p className="font-semibold text-foreground">{displayName}</p>
