@@ -10,11 +10,13 @@ interface AuthenticatedUser {
 
 interface AuthenticatedShellProps {
   user: AuthenticatedUser | null;
+  shopName: string;
   children: React.ReactNode;
 }
 
 export default function AuthenticatedShell({
   user,
+  shopName,
   children,
 }: AuthenticatedShellProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -38,7 +40,7 @@ export default function AuthenticatedShell({
     <div className="min-h-screen bg-surface-page text-foreground">
       <header className="sticky top-0 z-20 border-b border-foreground-muted/10 bg-surface-page/95 backdrop-blur supports-[backdrop-filter]:bg-surface-page/80">
         <div className="mx-auto flex min-h-[64px] max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <div className="text-lg font-semibold text-foreground">نظام إدارة المحل</div>
+          <div className="text-lg font-semibold text-foreground">PS-System</div>
 
           <div className="relative" ref={menuRef}>
             <button
@@ -48,10 +50,8 @@ export default function AuthenticatedShell({
               aria-haspopup="menu"
               aria-expanded={isMenuOpen}
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
-                {displayName.charAt(0)}
-              </span>
-              <span className="hidden sm:inline">{displayName}</span>
+              <span className="hidden sm:inline text-right">{shopName}</span>
+              <span className="text-primary">▾</span>
             </button>
 
             {isMenuOpen ? (

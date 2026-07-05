@@ -24,7 +24,7 @@ async function getCurrentUser() {
   const supabase = createAdminClient();
   const { data: user, error } = await supabase
     .from("users")
-    .select("login_id, display_name")
+    .select("login_id, display_name, shop_id")
     .eq("id", session.user_id)
     .limit(1)
     .maybeSingle();
@@ -36,8 +36,25 @@ async function getCurrentUser() {
   return user;
 }
 
+async function getShopName(shopId: string) {
+  const supabase = createAdminClient();
+  const { data: shop, error } = await supabase
+    .from("shops")
+    .select("name")
+    .eq("id", shopId)
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !shop) {
+    return "المحل";
+  }
+
+  return shop.name;
+}
+
 export default async function Home() {
   const user = await getCurrentUser();
+  const shopName = user ? await getShopName(user.shop_id) : "المحل";
 
   const title = user
     ? `مرحبًا ${user.display_name || user.login_id}`
@@ -73,5 +90,5 @@ export default async function Home() {
     return content;
   }
 
-  return <AuthenticatedShell user={user}>{content}</AuthenticatedShell>;
+  return <AuthenticatedShell user={user} shopName={shopName}>{content}</AuthenticatedShell>;
 }
