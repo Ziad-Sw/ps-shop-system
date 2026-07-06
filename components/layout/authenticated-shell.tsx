@@ -89,7 +89,7 @@ export default function AuthenticatedShell({
                     <div className="mt-1 flex flex-col gap-1 text-right">
                       <Link
                         href="/settings"
-                        className="flex min-h-[44px] items-center justify-end rounded-lg px-3 py-3 text-sm text-foreground transition-colors hover:bg-primary/10"
+                        className="min-h-[44px] rounded-lg px-3 py-3 text-sm text-foreground transition-colors hover:bg-primary/10"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         الإعدادات
@@ -98,7 +98,7 @@ export default function AuthenticatedShell({
                       <form action="/api/auth/logout" method="post">
                         <button
                           type="submit"
-                          className="flex min-h-[44px] w-full items-center justify-end rounded-lg px-3 py-3 text-sm text-foreground transition-colors hover:bg-primary/10"
+                          className="min-h-[44px] w-full rounded-lg px-3 py-3 text-sm text-foreground transition-colors hover:bg-primary/10"
                         >
                           تسجيل الخروج
                         </button>
