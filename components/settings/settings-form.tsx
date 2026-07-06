@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 interface ShopData {
   id: string;
@@ -101,27 +102,53 @@ export default function SettingsForm({ initialShopData }: SettingsFormProps) {
         </div>
       </div>
 
-      {/* Placeholder for future settings */}
-      <div className="rounded-xl bg-surface-card p-6 opacity-50">
-        <h2 className="text-lg font-semibold text-foreground">المكوّنات</h2>
+      {/* PlayStation Settings Card */}
+      <Link
+        href="/settings/ps"
+        className="block rounded-xl bg-surface-card p-6 transition-colors hover:border-primary/50 hover:bg-surface-card/90 border border-transparent"
+      >
+        <h2 className="text-lg font-semibold text-foreground">البلايستيشن</h2>
         <p className="mt-1 text-sm text-foreground-muted">
-          تفعيل/تعطيل البلايستيشن والبلياردو (قريبًا)
+          إدارة أجهزة البلايستيشن وتسعيرها
         </p>
-      </div>
+        <div className="mt-3 text-sm text-primary">إعدادات ←</div>
+      </Link>
 
-      <div className="rounded-xl bg-surface-card p-6 opacity-50">
+      {/* Billiard Settings Card */}
+      <Link
+        href="/settings/billiard"
+        className="block rounded-xl bg-surface-card p-6 transition-colors hover:border-primary/50 hover:bg-surface-card/90 border border-transparent"
+      >
+        <h2 className="text-lg font-semibold text-foreground">البلياردو</h2>
+        <p className="mt-1 text-sm text-foreground-muted">
+          إدارة طاولات البلياردو وتسعيرها
+        </p>
+        <div className="mt-3 text-sm text-primary">إعدادات ←</div>
+      </Link>
+
+      {/* Products Settings Card */}
+      <Link
+        href="/settings/products"
+        className="block rounded-xl bg-surface-card p-6 transition-colors hover:border-primary/50 hover:bg-surface-card/90 border border-transparent"
+      >
+        <h2 className="text-lg font-semibold text-foreground">المشروبات</h2>
+        <p className="mt-1 text-sm text-foreground-muted">
+          إضافة وتعديل وحذف المشروبات وأسعارها
+        </p>
+        <div className="mt-3 text-sm text-primary">إعدادات ←</div>
+      </Link>
+
+      {/* Shifts Settings Card */}
+      <Link
+        href="/settings/shifts"
+        className="block rounded-xl bg-surface-card p-6 transition-colors hover:border-primary/50 hover:bg-surface-card/90 border border-transparent"
+      >
         <h2 className="text-lg font-semibold text-foreground">الورديات</h2>
         <p className="mt-1 text-sm text-foreground-muted">
-          عدد الورديات يوميًا (قريبًا)
+          تحديد عدد الورديات اليومية المسموح بها
         </p>
-      </div>
-
-      <div className="rounded-xl bg-surface-card p-6 opacity-50">
-        <h2 className="text-lg font-semibold text-foreground">الأسعار</h2>
-        <p className="mt-1 text-sm text-foreground-muted">
-          إدارة أسعار الأجهزة (قريبًا)
-        </p>
-      </div>
+        <div className="mt-3 text-sm text-primary">إعدادات ←</div>
+      </Link>
     </div>
   );
 }

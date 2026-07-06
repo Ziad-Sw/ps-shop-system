@@ -1,0 +1,92 @@
+import { cookies } from "next/headers";
+
+import AuthenticatedShell from "@/components/layout/authenticated-shell";
+import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  SESSION_COOKIE_NAME,
+  verifySessionCookieValue,
+} from "@/lib/auth/session";
+import ProductsSettingsForm from "@/components/settings/products-settings-form";
+import type { Product } from "@/types";
+
+async function getCurrentUser() {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+
+  if (!sessionCookie) {
+    return null;
+  }
+
+  const session = await verifySessionCookieValue(sessionCookie);
+  if (!session) {
+    return null;
+  }
+
+  const supabase = createAdminClient();
+  const { data: user, error } = await supabase
+    .from("users")
+    .select("login_id, display_name, shop_id")
+    .eq("id", session.user_id)
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !user) {
+    return null;
+  }
+
+  return user;
+}
+
+async function getShopName(shopId: string) {
+  const supabase = createAdminClient();
+  const { data: shop, error } = await supabase
+    .from("shops")
+    .select("name")
+    .eq("id", shopId)
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !shop) {
+    return "المحل";
+  }
+
+  return shop.name;
+}
+
+async function getProducts(shopId: string) {
+  const supabase = createAdminClient();
+  const { data: products, error } = await supabase
+    .from("products")
+    .select("id, name, price, is_active")
+    .eq("shop_id", shopId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    return [];
+  }
+
+  return (products as Product[]) || [];
+}
+
+export default async function ProductsSettingsPage() {
+  const user = await getCurrentUser();
+  const shopName = user ? await getShopName(user.shop_id) : "المحل";
+  const products = user ? await getProducts(user.shop_id) : [];
+
+  if (!user) {
+    return <div>Error loading settings</div>;
+  }
+
+  return (
+    <AuthenticatedShell user={user} shopName={shopName}>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-semibold text-foreground">إدارة المشروبات</h1>
+          <p className="mt-2 text-foreground-muted">إضافة وتعديل وحذف المشروبات وأسعارها</p>
+        </div>
+
+        <ProductsSettingsForm initialProducts={products} />
+      </div>
+    </AuthenticatedShell>
+  );
+}
