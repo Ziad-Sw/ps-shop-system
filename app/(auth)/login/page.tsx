@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ToastProvider, useToast } from "@/components/ui/toast";
 
-export default function LoginPage() {
+function LoginForm() {
+  const { showToast } = useToast();
   const router = useRouter();
   const [loginId, setLoginId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +43,10 @@ export default function LoginPage() {
       setError("حدث خطأ في الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.");
       setIsLoading(false);
     }
+  };
+
+  const handleForgotId = () => {
+    showToast("info", "إذا نسيت معرف الدخول، يرجى التواصل مع الدعم للحصول على معرف جديد.");
   };
 
   return (
@@ -105,7 +111,6 @@ export default function LoginPage() {
               onChange={(e) => setLoginId(e.target.value)}
               disabled={isLoading}
               placeholder="أدخل معرف الدخول الخاص بك"
-              dir="ltr"
               className="w-full h-11 px-4 rounded-lg bg-surface-page border border-foreground-muted/20 text-foreground placeholder:text-foreground-muted/40 focus:border-primary focus:outline-none transition-colors duration-150 disabled:opacity-50"
             />
           </div>
@@ -113,9 +118,7 @@ export default function LoginPage() {
           <div className="text-right">
             <button
               type="button"
-              onClick={() => {
-                alert("إذا نسيت معرف الدخول، يرجى التواصل مع الدعم للحصول على معرف جديد.");
-              }}
+              onClick={handleForgotId}
               className="text-sm text-primary hover:text-primary/80 transition-colors"
             >
               هل نسيت ال-ID؟
@@ -158,6 +161,14 @@ export default function LoginPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <ToastProvider>
+      <LoginForm />
+    </ToastProvider>
   );
 }
 
