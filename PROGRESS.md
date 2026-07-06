@@ -418,3 +418,84 @@
 ✅ الدروب داون يظل في نفس المكان (right-0)
 ✅ التصميم متسق مع باقي عناصر الشريط العلوي
 
+---
+
+## تحسينات الشريط العلوي — المرحلة E: تحسين زر تسجيل الخروج وتحديث محتوى الدروب داون
+
+تم تحديث `components/layout/authenticated-shell.tsx` لتحسين تجربة المستخدم والأمان.
+
+**التغييرات:**
+
+1. **تحسين زر تسجيل الخروج:**
+   - تغيير اللون إلى الأحمر (`text-red-400`) لتمييزه كإجراء خطير (UX best practice)
+   - إضافة خلفية حمراء عند التمرير (`hover:bg-red-500/10`)
+   - تغيير من form submit إلى button مع onClick handler
+   - إضافة رسالة تأكيد قبل التنفيذ: "هل أنت متأكد من تسجيل الخروج؟"
+
+2. **تحديث محتوى الدروب داون للأمان:**
+   - إخفاء معرّف الدخول (`login_id`) من الدروب داون للأمان
+   - السطر الأول الآن يعرض اسم صاحب المحل (`display_name`) أو "صاحب المحل" كـ fallback
+   - السطر الثاني يعرض اسم المحل بدلاً من المعرّف
+
+**ملفات التنفيذ:**
+- `components/layout/authenticated-shell.tsx` — تحسين زر تسجيل الخروج وتحديث محتوى الدروب داون
+
+**نتائج الاختبار:**
+✅ زر تسجيل الخروج باللون الأحمر
+✅ رسالة تأكيد تظهر قبل تسجيل الخروج
+✅ معرّف الدخول مخفي من الدروب داون
+✅ اسم صاحب المحل يظهر في السطر الأول
+✅ اسم المحل يظهر في السطر الثاني
+
+---
+
+## إضافة حقل اسم صاحب المحل — المرحلة F: إضافة owner_name وكارد الإعدادات
+
+تم إضافة حقل `owner_name` إلى جدول `shops` وكارد إعدادات لتعديله.
+
+**التغييرات:**
+
+1. **قاعدة البيانات:**
+   - إضافة عمود `owner_name` إلى جدول `shops` (Migration 003)
+   - تحديث TypeScript types في `types/database.ts`
+
+2. **API:**
+   - تحديث `/api/shops/update` لقبول حقل `owner_name`
+   - إضافة validation للتحقق من أن الحقل ليس فارغًا
+   - الحقل معفى من shift-lock (يمكن تعديله في أي وقت)
+
+3. **واجهة الإعدادات:**
+   - إضافة كارد "اسم صاحب المحل" في `settings-form.tsx`
+   - الكارد تحت كارد "اسم المحل" بنفس الهيكل
+   - زر حفظ مستقل لكل كارد (loading states منفصلة)
+   - حفظ فوري عند الضغط على الزر
+
+4. **تحديث جميع الصفحات:**
+   - إضافة دالة `getOwnerName` في جميع صفحات الإعدادات والصفحة الرئيسية
+   - تمرير `ownerName` كـ prop جديد إلى `AuthenticatedShell`
+   - تحديث `AuthenticatedShell` لاستخدام `ownerName` في الدروب داون
+
+5. **الربط:**
+   - الدروب داون يعرض الآن `ownerName` من قاعدة البيانات
+   - عند تعديل اسم صاحب المحل في الإعدادات، يتحديث فوراً في الدروب داون
+
+**ملفات التنفيذ:**
+- `supabase/migrations/003_add_owner_name_to_shops.sql` — migration جديد
+- `types/database.ts` — تحديث types
+- `app/api/shops/update/route.ts` — تحديث API
+- `components/settings/settings-form.tsx` — إضافة كارد اسم صاحب المحل
+- `app/page.tsx` — إضافة getOwnerName وتمرير ownerName
+- `app/settings/page.tsx` — إضافة getOwnerName وتمرير ownerName
+- `app/settings/ps/page.tsx` — إضافة getOwnerName وتمرير ownerName
+- `app/settings/billiard/page.tsx` — إضافة getOwnerName وتمرير ownerName
+- `app/settings/products/page.tsx` — إضافة getOwnerName وتمرير ownerName
+- `app/settings/shifts/page.tsx` — إضافة getOwnerName وتمرير ownerName
+- `components/layout/authenticated-shell.tsx` — تحديث لاستخدام ownerName
+
+**نتائج الاختبار:**
+✅ Migration تم تطبيقه بنجاح على Supabase
+✅ كارد "اسم صاحب المحل" يظهر في صفحة الإعدادات
+✅ حفظ اسم صاحب المحل يعمل بشكل صحيح
+✅ الدروب داون يعرض اسم صاحب المحل من قاعدة البيانات
+✅ التحديث فوري في الدروب داون بعد الحفظ
+
