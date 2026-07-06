@@ -41,7 +41,7 @@ async function getShopData(shopId: string) {
   const supabase = createAdminClient();
   const { data: shop, error } = await supabase
     .from("shops")
-    .select("id, name, billiard_enabled, pingpong_table_count")
+    .select("id, name, pingpong_enabled, pingpong_table_count")
     .eq("id", shopId)
     .limit(1)
     .maybeSingle();
@@ -120,7 +120,7 @@ export default async function PingpongSettingsPage() {
         </div>
 
         <PingpongSettingsForm
-          initialPingpongEnabled={shopData.billiard_enabled}
+          initialPingpongEnabled={shopData.pingpong_enabled}
           initialPricingRules={pricingRules}
           initialTableCount={shopData.pingpong_table_count || 0}
         />

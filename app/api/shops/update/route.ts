@@ -16,6 +16,7 @@ import { hasOpenShift } from "@/lib/shifts/check-open-shift";
  *   - owner_name            (always allowed — exempt from shift lock)
  *   - ps_enabled            (locked while a shift is open)
  *   - billiard_enabled      (locked while a shift is open)
+ *   - pingpong_enabled      (locked while a shift is open)
  *   - shifts_per_day        (locked while a shift is open; validated 1..4 here AND in DB)
  *   - ps_station_count      (locked while a shift is open; validated >= 0)
  *   - billiard_table_count  (locked while a shift is open; validated >= 0)
@@ -45,6 +46,7 @@ export async function POST(request: NextRequest) {
       owner_name,
       ps_enabled,
       billiard_enabled,
+      pingpong_enabled,
       shifts_per_day,
       ps_station_count,
       billiard_table_count,
@@ -52,7 +54,7 @@ export async function POST(request: NextRequest) {
     } = body ?? {};
 
     // 3. Build update payload — only known, type-valid fields are applied.
-    const update: Partial<{ name: string; owner_name: string | null; ps_enabled: boolean; billiard_enabled: boolean; shifts_per_day: number; ps_station_count: number; billiard_table_count: number; pingpong_table_count: number }> = {};
+    const update: Partial<{ name: string; owner_name: string | null; ps_enabled: boolean; billiard_enabled: boolean; pingpong_enabled: boolean; shifts_per_day: number; ps_station_count: number; billiard_table_count: number; pingpong_table_count: number }> = {};
 
     if (typeof name === "string") {
       const trimmed = name.trim();
@@ -82,6 +84,10 @@ export async function POST(request: NextRequest) {
 
     if (typeof billiard_enabled === "boolean") {
       update.billiard_enabled = billiard_enabled;
+    }
+
+    if (typeof pingpong_enabled === "boolean") {
+      update.pingpong_enabled = pingpong_enabled;
     }
 
     if (shifts_per_day !== undefined) {
@@ -174,6 +180,7 @@ export async function POST(request: NextRequest) {
     const touchesLockedFields =
       "ps_enabled" in update ||
       "billiard_enabled" in update ||
+      "pingpong_enabled" in update ||
       "shifts_per_day" in update ||
       "ps_station_count" in update ||
       "billiard_table_count" in update ||
@@ -197,7 +204,7 @@ export async function POST(request: NextRequest) {
       .from("shops")
       .update(update)
       .eq("id", shopId)
-      .select("id, name, owner_name, ps_enabled, billiard_enabled, shifts_per_day, ps_station_count, billiard_table_count, pingpong_table_count")
+      .select("id, name, owner_name, ps_enabled, billiard_enabled, pingpong_enabled, shifts_per_day, ps_station_count, billiard_table_count, pingpong_table_count")
       .maybeSingle();
 
     if (updateError || !updatedShop) {

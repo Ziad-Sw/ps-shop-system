@@ -672,3 +672,42 @@
 ✅ صفحة البينغ بونغ تم إنشاؤها بنجاح
 ✅ كارد البينغ بونغ يظهر في صفحة الإعدادات الرئيسية
 
+---
+
+## إصلاح الأخطاء وتحسين UX Writing — المرحلة K: إصلاح صفحات الإعدادات وتحسين رسائل الخطأ
+
+تم إصلاح الأخطاء في صفحات الإعدادات وتحسين رسائل الخطأ لتكون أكثر وضوحاً للمستخدم.
+
+**التغييرات:**
+
+1. **إصلاح خطأ صفحة البينغ بونغ:**
+   - إضافة عمود `pingpong_enabled` إلى جدول shops
+   - تحديث types/database.ts لإضافة pingpong_enabled
+   - تحديث API لقبول pingpong_enabled
+   - تحديث صفحة pingpong لاستخدام pingpong_enabled بدلاً من billiard_enabled
+   - تحديث pingpong-settings-form لاستخدام pingpong_enabled
+
+2. **تحسين UX Writing لرسائل الخطأ:**
+   - تحديث shifts-settings-form لإظهار رسالة واضحة عند وجود وردية مفتوحة
+   - تحديث ps-settings-form لإظهار رسالة واضحة عند وجود وردية مفتوحة (للتفعيل وعدد الأجهزة)
+   - تحديث billiard-settings-form لإظهار رسالة واضحة عند وجود وردية مفتوحة (للتفعيل وعدد الطاولات)
+   - تحديث pingpong-settings-form لإظهار رسالة واضحة عند وجود وردية مفتوحة (للتفعيل وعدد الطاولات)
+   - الرسائل الجديدة توضح المشكلة وتحدد الخطوة التالية (إغلاق الوردية أولاً)
+
+**ملفات التنفيذ:**
+- `supabase/migrations/004_add_station_counts_to_shops.sql` — إضافة pingpong_enabled
+- `types/database.ts` — إضافة pingpong_enabled
+- `app/api/shops/update/route.ts` — إضافة pingpong_enabled
+- `app/settings/pingpong/page.tsx` — استخدام pingpong_enabled
+- `components/settings/pingpong-settings-form.tsx` — استخدام pingpong_enabled وتحسين الرسائل
+- `components/settings/ps-settings-form.tsx` — تحسين رسائل الخطأ
+- `components/settings/billiard-settings-form.tsx` — تحسين رسائل الخطأ
+- `components/settings/shifts-settings-form.tsx` — تحسين رسائل الخطأ
+
+**نتائج الاختبار:**
+✅ صفحة البينغ بونغ تعمل بشكل صحيح
+✅ صفحة البلايستيشن تعمل بشكل صحيح
+✅ صفحة البلياردو تعمل بشكل صحيح
+✅ رسائل الخطأ واضحة وتحدد المشكلة والحل
+✅ UX Writing محسّن لجميع رسائل الخطأ
+

@@ -50,7 +50,12 @@ export default function BilliardSettingsForm({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to update");
+        if (error.error && error.error.includes("وردية مفتوحة")) {
+          showToast("error", "لا يمكن تعديل إعدادات البلياردو أثناء وجود وردية مفتوحة. يرجى إغلاق الوردية أولاً ثم المحاولة مرة أخرى.");
+        } else {
+          showToast("error", error.error || "حدث خطأ أثناء تحديث الإعدادات");
+        }
+        return;
       }
 
       setBilliardEnabled(!billiardEnabled);
@@ -81,7 +86,12 @@ export default function BilliardSettingsForm({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to update");
+        if (error.error && error.error.includes("وردية مفتوحة")) {
+          showToast("error", "لا يمكن تعديل عدد الطاولات أثناء وجود وردية مفتوحة. يرجى إغلاق الوردية أولاً ثم المحاولة مرة أخرى.");
+        } else {
+          showToast("error", error.error || "حدث خطأ أثناء حفظ عدد الطاولات");
+        }
+        return;
       }
 
       showToast("success", "تم حفظ عدد الطاولات بنجاح");

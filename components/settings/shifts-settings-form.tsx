@@ -30,7 +30,12 @@ export default function ShiftsSettingsForm({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to update");
+        if (error.error && error.error.includes("وردية مفتوحة")) {
+          showToast("error", "لا يمكن تعديل عدد الورديات أثناء وجود وردية مفتوحة. يرجى إغلاق الوردية أولاً ثم المحاولة مرة أخرى.");
+        } else {
+          showToast("error", error.error || "حدث خطأ أثناء حفظ الإعدادات");
+        }
+        return;
       }
 
       showToast("success", "تم حفظ عدد الورديات بنجاح");

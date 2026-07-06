@@ -45,12 +45,17 @@ export default function PingpongSettingsForm({
       const response = await fetch("/api/shops/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ billiard_enabled: !pingpongEnabled }),
+        body: JSON.stringify({ pingpong_enabled: !pingpongEnabled }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to update");
+        if (error.error && error.error.includes("وردية مفتوحة")) {
+          showToast("error", "لا يمكن تعديل إعدادات البينغ بونغ أثناء وجود وردية مفتوحة. يرجى إغلاق الوردية أولاً ثم المحاولة مرة أخرى.");
+        } else {
+          showToast("error", error.error || "حدث خطأ أثناء تحديث الإعدادات");
+        }
+        return;
       }
 
       setPingpongEnabled(!pingpongEnabled);
@@ -81,7 +86,12 @@ export default function PingpongSettingsForm({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to update");
+        if (error.error && error.error.includes("وردية مفتوحة")) {
+          showToast("error", "لا يمكن تعديل عدد الطاولات أثناء وجود وردية مفتوحة. يرجى إغلاق الوردية أولاً ثم المحاولة مرة أخرى.");
+        } else {
+          showToast("error", error.error || "حدث خطأ أثناء حفظ عدد الطاولات");
+        }
+        return;
       }
 
       showToast("success", "تم حفظ عدد الطاولات بنجاح");

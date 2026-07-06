@@ -37,6 +37,7 @@ export interface Database {
           logo_url: string | null;
           ps_enabled: boolean;
           billiard_enabled: boolean;
+          pingpong_enabled: boolean;
           shifts_per_day: number;
           ps_station_count: number;
           billiard_table_count: number;
@@ -51,6 +52,7 @@ export interface Database {
           logo_url?: string | null;
           ps_enabled?: boolean;
           billiard_enabled?: boolean;
+          pingpong_enabled?: boolean;
           shifts_per_day?: number;
           ps_station_count?: number;
           billiard_table_count?: number;
@@ -65,6 +67,7 @@ export interface Database {
           logo_url?: string | null;
           ps_enabled?: boolean;
           billiard_enabled?: boolean;
+          pingpong_enabled?: boolean;
           shifts_per_day?: number;
           ps_station_count?: number;
           billiard_table_count?: number;
