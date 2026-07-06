@@ -25,9 +25,16 @@ export default function AuthenticatedShell({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleLogout = () => {
-    if (confirm("هل أنت متأكد من تسجيل الخروج؟")) {
-      window.location.href = "/api/auth/logout";
+  const handleLogout = async () => {
+    if (confirm("هل تريد تسجيل الخروج؟ مع تسجيل الخروج سيتم نقلك إلى صفحة تسجيل الدخول")) {
+      try {
+        await fetch("/api/auth/logout", { method: "POST" });
+        window.location.href = "/login";
+      } catch (error) {
+        console.error("Logout error:", error);
+        // Even if fetch fails, redirect to login
+        window.location.href = "/login";
+      }
     }
   };
 
