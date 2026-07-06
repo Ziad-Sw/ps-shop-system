@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 
 interface Toast {
   id: string;
-  type: "success" | "error" | "info";
+  type: "success" | "error" | "info" | "warning";
   text: string;
 }
 
 interface ToastContextType {
-  showToast: (type: "success" | "error" | "info", text: string) => void;
+  showToast: (type: "success" | "error" | "info" | "warning", text: string) => void;
 }
 
 const ToastContext = React.createContext<ToastContextType | null>(null);
@@ -25,7 +25,7 @@ export function useToast() {
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const showToast = (type: "success" | "error" | "info", text: string) => {
+  const showToast = (type: "success" | "error" | "info" | "warning", text: string) => {
     const id = Math.random().toString(36).substring(7);
     const newToast = { id, type, text };
     setToasts((prev) => [...prev, newToast]);
@@ -75,6 +75,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               toast.type === "success"
                 ? "bg-primary/10 text-primary border border-primary/20"
                 : toast.type === "error"
+                ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                : toast.type === "warning"
                 ? "bg-red-500/10 text-red-400 border border-red-500/20"
                 : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
             }`}

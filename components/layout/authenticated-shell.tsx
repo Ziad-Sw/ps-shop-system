@@ -24,11 +24,17 @@ function AuthenticatedShellContent({
 }: AuthenticatedShellProps) {
   const { showToast } = useToast();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleLogout = async () => {
-    // Show confirmation toast instead of browser confirm
-    showToast("info", "جاري تسجيل الخروج...");
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+    setIsMenuOpen(false);
+  };
+
+  const handleLogoutConfirm = async () => {
+    setShowLogoutConfirm(false);
+    showToast("warning", "جاري تسجيل الخروج...");
     
     try {
       await fetch("/api/auth/logout", { method: "POST" });
@@ -36,11 +42,14 @@ function AuthenticatedShellContent({
     } catch (error) {
       console.error("Logout error:", error);
       showToast("error", "حدث خطأ أثناء تسجيل الخروج");
-      // Even if fetch fails, redirect to login
       setTimeout(() => {
         window.location.href = "/login";
       }, 1000);
     }
+  };
+
+  const handleLogoutCancel = () => {
+    setShowLogoutConfirm(false);
   };
 
   useEffect(() => {
@@ -117,7 +126,7 @@ function AuthenticatedShellContent({
 
                       <button
                         type="button"
-                        onClick={handleLogout}
+                        onClick={handleLogoutClick}
                         className="min-h-[44px] w-full rounded-lg px-3 py-3 text-sm text-red-400 transition-colors hover:bg-red-500/10"
                       >
                         تسجيل الخروج
@@ -135,6 +144,32 @@ function AuthenticatedShellContent({
         <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           {children}
         </main>
+
+        {/* Logout Confirmation Modal */}
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-surface-card rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-foreground-muted/20">
+              <h3 className="text-lg font-semibold text-foreground mb-2">تأكيد تسجيل الخروج</h3>
+              <p className="text-sm text-foreground-muted mb-6">
+                هل أنت متأكد من تسجيل الخروج؟ مع تسجيل الخروج سيتم نقلك إلى صفحة تسجيل الدخول.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleLogoutCancel}
+                  className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-card"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={handleLogoutConfirm}
+                  className="flex-1 min-h-[44px] rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/20"
+                >
+                  تسجيل الخروج
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </ToastProvider>
   );

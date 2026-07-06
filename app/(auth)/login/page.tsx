@@ -46,7 +46,7 @@ function LoginForm() {
   };
 
   const handleForgotId = () => {
-    showToast("info", "إذا نسيت معرف الدخول، يرجى التواصل مع الدعم للحصول على معرف جديد.");
+    showToast("warning", "إذا نسيت معرف الدخول، يرجى التواصل مع الدعم للحصول على معرف جديد.");
   };
 
   return (
