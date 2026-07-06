@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useToast } from "@/components/ui/toast";
 
 interface ShopData {
   id: string;
@@ -16,19 +17,13 @@ interface SettingsFormProps {
 }
 
 export default function SettingsForm({ initialShopData }: SettingsFormProps) {
+  const { showToast } = useToast();
   const [shopName, setShopName] = useState(initialShopData.name);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
 
   const handleSaveShopName = async () => {
     if (!shopName.trim()) {
-      setSaveMessage({
-        type: "error",
-        text: "يجب إدخال اسم للمحل",
-      });
+      showToast("error", "يجب إدخال اسم للمحل");
       return;
     }
 
@@ -44,19 +39,10 @@ export default function SettingsForm({ initialShopData }: SettingsFormProps) {
         throw new Error("Failed to update shop name");
       }
 
-      setSaveMessage({
-        type: "success",
-        text: "تم حفظ اسم المحل بنجاح",
-      });
-
-      // Clear message after 3 seconds
-      setTimeout(() => setSaveMessage(null), 3000);
+      showToast("success", "تم حفظ اسم المحل بنجاح");
     } catch (err) {
       console.error("Error saving shop name:", err);
-      setSaveMessage({
-        type: "error",
-        text: "حدث خطأ أثناء حفظ اسم المحل",
-      });
+      showToast("error", "حدث خطأ أثناء حفظ اسم المحل");
     } finally {
       setIsSaving(false);
     }
@@ -87,18 +73,6 @@ export default function SettingsForm({ initialShopData }: SettingsFormProps) {
           >
             {isSaving ? "جاري الحفظ..." : "حفظ اسم المحل"}
           </button>
-
-          {saveMessage && (
-            <div
-              className={`rounded-lg px-3 py-2 text-sm font-medium ${
-                saveMessage.type === "success"
-                  ? "bg-primary/10 text-primary"
-                  : "bg-red-500/10 text-red-400"
-              }`}
-            >
-              {saveMessage.text}
-            </div>
-          )}
         </div>
       </div>
 

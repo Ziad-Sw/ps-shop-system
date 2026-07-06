@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/components/ui/toast";
 
 interface PricingRule {
   id: string;
@@ -19,6 +20,7 @@ export default function BilliardSettingsForm({
   initialBilliardEnabled,
   initialPricingRules,
 }: BilliardSettingsFormProps) {
+  const { showToast } = useToast();
   const [billiardEnabled, setBilliardEnabled] = useState(
     initialBilliardEnabled
   );
@@ -32,10 +34,6 @@ export default function BilliardSettingsForm({
   const [isSavingSingle, setIsSavingSingle] = useState(false);
   const [isSavingMulti, setIsSavingMulti] = useState(false);
   const [isSavingAll, setIsSavingAll] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
 
   const handleSaveToggle = async () => {
     setIsSavingToggle(true);
@@ -52,19 +50,12 @@ export default function BilliardSettingsForm({
       }
 
       setBilliardEnabled(!billiardEnabled);
-      setSaveMessage({
-        type: "success",
-        text: billiardEnabled
-          ? "تم تعطيل البلياردو بنجاح"
-          : "تم تفعيل البلياردو بنجاح",
-      });
-      setTimeout(() => setSaveMessage(null), 3000);
+      showToast("success", billiardEnabled
+        ? "تم تعطيل البلياردو بنجاح"
+        : "تم تفعيل البلياردو بنجاح");
     } catch (err) {
       console.error("Error toggling billiard:", err);
-      setSaveMessage({
-        type: "error",
-        text: "حدث خطأ أثناء تحديث الإعدادات",
-      });
+      showToast("error", "حدث خطأ أثناء تحديث الإعدادات");
     } finally {
       setIsSavingToggle(false);
     }
@@ -92,17 +83,10 @@ export default function BilliardSettingsForm({
         throw new Error(error.error || "Failed to update pricing");
       }
 
-      setSaveMessage({
-        type: "success",
-        text: "تم حفظ السعر بنجاح",
-      });
-      setTimeout(() => setSaveMessage(null), 3000);
+      showToast("success", "تم حفظ السعر بنجاح");
     } catch (err) {
       console.error("Error saving pricing:", err);
-      setSaveMessage({
-        type: "error",
-        text: "حدث خطأ أثناء حفظ السعر",
-      });
+      showToast("error", "حدث خطأ أثناء حفظ السعر");
     } finally {
       if (mode === "single") {
         setIsSavingSingle(false);
@@ -147,17 +131,10 @@ export default function BilliardSettingsForm({
         throw new Error(error.error || "Failed to update multi pricing");
       }
 
-      setSaveMessage({
-        type: "success",
-        text: "تم حفظ جميع الأسعار بنجاح",
-      });
-      setTimeout(() => setSaveMessage(null), 3000);
+      showToast("success", "تم حفظ جميع الأسعار بنجاح");
     } catch (err) {
       console.error("Error saving all pricing:", err);
-      setSaveMessage({
-        type: "error",
-        text: "حدث خطأ أثناء حفظ الأسعار",
-      });
+      showToast("error", "حدث خطأ أثناء حفظ الأسعار");
     } finally {
       setIsSavingAll(false);
     }
@@ -261,18 +238,6 @@ export default function BilliardSettingsForm({
           </div>
         </div>
       </div>
-
-      {saveMessage && (
-        <div
-          className={`rounded-lg px-3 py-2 text-sm font-medium ${
-            saveMessage.type === "success"
-              ? "bg-primary/10 text-primary"
-              : "bg-red-500/10 text-red-400"
-          }`}
-        >
-          {saveMessage.text}
-        </div>
-      )}
     </div>
   );
 }

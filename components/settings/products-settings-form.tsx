@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useToast } from "@/components/ui/toast";
 
 interface Product {
   id: string;
@@ -16,6 +17,7 @@ interface ProductsSettingsFormProps {
 export default function ProductsSettingsForm({
   initialProducts,
 }: ProductsSettingsFormProps) {
+  const { showToast } = useToast();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [newProductName, setNewProductName] = useState("");
   const [newProductPrice, setNewProductPrice] = useState("");
@@ -23,29 +25,19 @@ export default function ProductsSettingsForm({
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isTogglingId, setIsTogglingId] = useState<string | null>(null);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
-  const [saveMessage, setSaveMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [editingPrice, setEditingPrice] = useState("");
 
   const handleAddProduct = async () => {
     if (!newProductName.trim() || !newProductPrice) {
-      setSaveMessage({
-        type: "error",
-        text: "يجب إدخال اسم المشروب والسعر",
-      });
+      showToast("error", "يجب إدخال اسم المشروب والسعر");
       return;
     }
 
     const price = parseFloat(newProductPrice);
     if (isNaN(price) || price < 0) {
-      setSaveMessage({
-        type: "error",
-        text: "السعر يجب أن يكون رقمًا موجبًا",
-      });
+      showToast("error", "السعر يجب أن يكون رقمًا موجبًا");
       return;
     }
 
@@ -69,17 +61,10 @@ export default function ProductsSettingsForm({
       setProducts([...products, result.product]);
       setNewProductName("");
       setNewProductPrice("");
-      setSaveMessage({
-        type: "success",
-        text: "تم إضافة المشروب بنجاح",
-      });
-      setTimeout(() => setSaveMessage(null), 3000);
+      showToast("success", "تم إضافة المشروب بنجاح");
     } catch (err) {
       console.error("Error adding product:", err);
-      setSaveMessage({
-        type: "error",
-        text: "حدث خطأ أثناء إضافة المشروب",
-      });
+      showToast("error", "حدث خطأ أثناء إضافة المشروب");
     } finally {
       setIsAdding(false);
     }
@@ -107,17 +92,10 @@ export default function ProductsSettingsForm({
       setProducts(
         products.map((p) => (p.id === id ? result.product : p))
       );
-      setSaveMessage({
-        type: "success",
-        text: "تم تحديث المشروب بنجاح",
-      });
-      setTimeout(() => setSaveMessage(null), 3000);
+      showToast("success", "تم تحديث المشروب بنجاح");
     } catch (err) {
       console.error("Error updating product:", err);
-      setSaveMessage({
-        type: "error",
-        text: "حدث خطأ أثناء تحديث المشروب",
-      });
+      showToast("error", "حدث خطأ أثناء تحديث المشروب");
     } finally {
       setIsSavingEdit(false);
     }
@@ -140,17 +118,10 @@ export default function ProductsSettingsForm({
       }
 
       setProducts(products.filter((p) => p.id !== id));
-      setSaveMessage({
-        type: "success",
-        text: "تم حذف المشروب بنجاح",
-      });
-      setTimeout(() => setSaveMessage(null), 3000);
+      showToast("success", "تم حذف المشروب بنجاح");
     } catch (err) {
       console.error("Error deleting product:", err);
-      setSaveMessage({
-        type: "error",
-        text: "حدث خطأ أثناء حذف المشروب",
-      });
+      showToast("error", "حدث خطأ أثناء حذف المشروب");
     } finally {
       setIsDeletingId(null);
     }
@@ -176,10 +147,7 @@ export default function ProductsSettingsForm({
       );
     } catch (err) {
       console.error("Error toggling product:", err);
-      setSaveMessage({
-        type: "error",
-        text: "حدث خطأ أثناء تحديث المشروب",
-      });
+      showToast("error", "حدث خطأ أثناء تحديث المشروب");
     } finally {
       setIsTogglingId(null);
     }
@@ -199,19 +167,13 @@ export default function ProductsSettingsForm({
 
   const handleSaveEdit = async () => {
     if (!editingProductId || !editingName.trim() || !editingPrice) {
-      setSaveMessage({
-        type: "error",
-        text: "يجب إدخال اسم المشروب والسعر",
-      });
+      showToast("error", "يجب إدخال اسم المشروب والسعر");
       return;
     }
 
     const price = parseFloat(editingPrice);
     if (isNaN(price) || price < 0) {
-      setSaveMessage({
-        type: "error",
-        text: "السعر يجب أن يكون رقمًا موجبًا",
-      });
+      showToast("error", "السعر يجب أن يكون رقمًا موجبًا");
       return;
     }
 
@@ -235,18 +197,11 @@ export default function ProductsSettingsForm({
       setProducts(
         products.map((p) => (p.id === editingProductId ? result.product : p))
       );
-      setSaveMessage({
-        type: "success",
-        text: "تم تحديث المشروب بنجاح",
-      });
-      setTimeout(() => setSaveMessage(null), 3000);
+      showToast("success", "تم تحديث المشروب بنجاح");
       handleCancelEdit();
     } catch (err) {
       console.error("Error updating product:", err);
-      setSaveMessage({
-        type: "error",
-        text: "حدث خطأ أثناء تحديث المشروب",
-      });
+      showToast("error", "حدث خطأ أثناء تحديث المشروب");
     } finally {
       setIsSavingEdit(false);
     }
@@ -385,18 +340,6 @@ export default function ProductsSettingsForm({
           )}
         </div>
       </div>
-
-      {saveMessage && (
-        <div
-          className={`rounded-lg px-3 py-2 text-sm font-medium ${
-            saveMessage.type === "success"
-              ? "bg-primary/10 text-primary"
-              : "bg-red-500/10 text-red-400"
-          }`}
-        >
-          {saveMessage.text}
-        </div>
-      )}
     </div>
   );
 }

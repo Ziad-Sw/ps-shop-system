@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/components/ui/toast";
 
 interface PricingRule {
   id: string;
@@ -19,6 +20,7 @@ export default function PsSettingsForm({
   initialPsEnabled,
   initialPricingRules,
 }: PsSettingsFormProps) {
+  const { showToast } = useToast();
   const [psEnabled, setPsEnabled] = useState(initialPsEnabled);
   const [singleRate, setSingleRate] = useState(
     initialPricingRules.find((r) => r.mode === "single")?.rate || 0
@@ -30,10 +32,6 @@ export default function PsSettingsForm({
   const [isSavingSingle, setIsSavingSingle] = useState(false);
   const [isSavingMulti, setIsSavingMulti] = useState(false);
   const [isSavingAll, setIsSavingAll] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
 
   const handleSaveToggle = async () => {
     setIsSavingToggle(true);
@@ -50,19 +48,12 @@ export default function PsSettingsForm({
       }
 
       setPsEnabled(!psEnabled);
-      setSaveMessage({
-        type: "success",
-        text: psEnabled
-          ? "تم تعطيل البلايستيشن بنجاح"
-          : "تم تفعيل البلايستيشن بنجاح",
-      });
-      setTimeout(() => setSaveMessage(null), 3000);
+      showToast("success", psEnabled
+        ? "تم تعطيل البلايستيشن بنجاح"
+        : "تم تفعيل البلايستيشن بنجاح");
     } catch (err) {
       console.error("Error toggling PS:", err);
-      setSaveMessage({
-        type: "error",
-        text: "حدث خطأ أثناء تحديث الإعدادات",
-      });
+      showToast("error", "حدث خطأ أثناء تحديث الإعدادات");
     } finally {
       setIsSavingToggle(false);
     }
@@ -90,17 +81,10 @@ export default function PsSettingsForm({
         throw new Error(error.error || "Failed to update pricing");
       }
 
-      setSaveMessage({
-        type: "success",
-        text: "تم حفظ السعر بنجاح",
-      });
-      setTimeout(() => setSaveMessage(null), 3000);
+      showToast("success", "تم حفظ السعر بنجاح");
     } catch (err) {
       console.error("Error saving pricing:", err);
-      setSaveMessage({
-        type: "error",
-        text: "حدث خطأ أثناء حفظ السعر",
-      });
+      showToast("error", "حدث خطأ أثناء حفظ السعر");
     } finally {
       if (mode === "single") {
         setIsSavingSingle(false);
@@ -145,17 +129,10 @@ export default function PsSettingsForm({
         throw new Error(error.error || "Failed to update multi pricing");
       }
 
-      setSaveMessage({
-        type: "success",
-        text: "تم حفظ جميع الأسعار بنجاح",
-      });
-      setTimeout(() => setSaveMessage(null), 3000);
+      showToast("success", "تم حفظ جميع الأسعار بنجاح");
     } catch (err) {
       console.error("Error saving all pricing:", err);
-      setSaveMessage({
-        type: "error",
-        text: "حدث خطأ أثناء حفظ الأسعار",
-      });
+      showToast("error", "حدث خطأ أثناء حفظ الأسعار");
     } finally {
       setIsSavingAll(false);
     }
@@ -259,18 +236,6 @@ export default function PsSettingsForm({
           </div>
         </div>
       </div>
-
-      {saveMessage && (
-        <div
-          className={`rounded-lg px-3 py-2 text-sm font-medium ${
-            saveMessage.type === "success"
-              ? "bg-primary/10 text-primary"
-              : "bg-red-500/10 text-red-400"
-          }`}
-        >
-          {saveMessage.text}
-        </div>
-      )}
     </div>
   );
 }
