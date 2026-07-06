@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ToastProvider } from "@/components/ui/toast";
+import { ToastProvider, useToast } from "@/components/ui/toast";
 
 interface AuthenticatedUser {
   login_id: string;
@@ -16,25 +16,30 @@ interface AuthenticatedShellProps {
   children: React.ReactNode;
 }
 
-export default function AuthenticatedShell({
+function AuthenticatedShellContent({
   user,
   shopName,
   ownerName,
   children,
 }: AuthenticatedShellProps) {
+  const { showToast } = useToast();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
-    if (confirm("هل تريد تسجيل الخروج؟ مع تسجيل الخروج سيتم نقلك إلى صفحة تسجيل الدخول")) {
-      try {
-        await fetch("/api/auth/logout", { method: "POST" });
+    // Show confirmation toast instead of browser confirm
+    showToast("info", "جاري تسجيل الخروج...");
+    
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout error:", error);
+      showToast("error", "حدث خطأ أثناء تسجيل الخروج");
+      // Even if fetch fails, redirect to login
+      setTimeout(() => {
         window.location.href = "/login";
-      } catch (error) {
-        console.error("Logout error:", error);
-        // Even if fetch fails, redirect to login
-        window.location.href = "/login";
-      }
+      }, 1000);
     }
   };
 
@@ -131,6 +136,14 @@ export default function AuthenticatedShell({
           {children}
         </main>
       </div>
+    </ToastProvider>
+  );
+}
+
+export default function AuthenticatedShell(props: AuthenticatedShellProps) {
+  return (
+    <ToastProvider>
+      <AuthenticatedShellContent {...props} />
     </ToastProvider>
   );
 }
