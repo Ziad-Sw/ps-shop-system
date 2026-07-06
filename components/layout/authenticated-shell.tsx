@@ -40,8 +40,8 @@ export default function AuthenticatedShell({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const displayName = user?.display_name || user?.login_id || "المستخدم";
-  const userLabel = user?.login_id ? `معرّف: ${user.login_id}` : "مستخدم مسجّل الدخول";
+  const displayName = user?.display_name || "صاحب المحل";
+  const shopLabel = shopName;
 
   return (
     <ToastProvider>
@@ -89,7 +89,7 @@ export default function AuthenticatedShell({
                   >
                     <div className="rounded-lg px-3 py-3 text-right">
                       <p className="font-semibold text-foreground">{displayName}</p>
-                      <p className="mt-1 text-sm text-foreground-muted">{userLabel}</p>
+                      <p className="mt-1 text-sm text-foreground-muted">{shopLabel}</p>
                     </div>
 
                     <div className="mt-1 flex flex-col gap-1 text-right">
