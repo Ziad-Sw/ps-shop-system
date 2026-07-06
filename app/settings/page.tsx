@@ -73,8 +73,12 @@ export default async function SettingsPage() {
   const shopData = user ? await getShopData(user.shop_id) : null;
   const shopName = user ? await getShopName(user.shop_id) : "المحل";
 
-  if (!user || !shopData) {
-    return <div>Error loading settings</div>;
+  if (!user) {
+    return <div>خطأ: لم يتم العثور على المستخدم. يرجى تسجيل الدخول.</div>;
+  }
+
+  if (!shopData) {
+    return <div>خطأ: لم يتم العثور على بيانات المحل. يرجى التواصل مع الدعم.</div>;
   }
 
   return (

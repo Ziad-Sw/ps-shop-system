@@ -26,15 +26,17 @@ export default function PsSettingsForm({
   const [multiRate, setMultiRate] = useState(
     initialPricingRules.find((r) => r.mode === "multi")?.rate || 0
   );
-  const [isSaving, setIsSaving] = useState(false);
-  const [savingMode, setSavingMode] = useState<"single" | "multi" | "all" | null>(null);
+  const [isSavingToggle, setIsSavingToggle] = useState(false);
+  const [isSavingSingle, setIsSavingSingle] = useState(false);
+  const [isSavingMulti, setIsSavingMulti] = useState(false);
+  const [isSavingAll, setIsSavingAll] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
 
   const handleSaveToggle = async () => {
-    setIsSaving(true);
+    setIsSavingToggle(true);
     try {
       const response = await fetch("/api/shops/update", {
         method: "POST",
@@ -62,13 +64,16 @@ export default function PsSettingsForm({
         text: "حدث خطأ أثناء تحديث الإعدادات",
       });
     } finally {
-      setIsSaving(false);
+      setIsSavingToggle(false);
     }
   };
 
   const handleSavePricing = async (mode: "single" | "multi", rate: number) => {
-    setSavingMode(mode);
-    setIsSaving(true);
+    if (mode === "single") {
+      setIsSavingSingle(true);
+    } else {
+      setIsSavingMulti(true);
+    }
     try {
       const response = await fetch("/api/pricing-rules/upsert", {
         method: "POST",
@@ -97,14 +102,16 @@ export default function PsSettingsForm({
         text: "حدث خطأ أثناء حفظ السعر",
       });
     } finally {
-      setIsSaving(false);
-      setSavingMode(null);
+      if (mode === "single") {
+        setIsSavingSingle(false);
+      } else {
+        setIsSavingMulti(false);
+      }
     }
   };
 
   const handleSaveAllPricing = async () => {
-    setSavingMode("all");
-    setIsSaving(true);
+    setIsSavingAll(true);
     try {
       // Save single rate
       const singleResponse = await fetch("/api/pricing-rules/upsert", {
@@ -150,8 +157,7 @@ export default function PsSettingsForm({
         text: "حدث خطأ أثناء حفظ الأسعار",
       });
     } finally {
-      setIsSaving(false);
-      setSavingMode(null);
+      setIsSavingAll(false);
     }
   };
 
@@ -167,14 +173,14 @@ export default function PsSettingsForm({
         <div className="mt-4 flex items-center gap-4">
           <button
             onClick={handleSaveToggle}
-            disabled={isSaving}
+            disabled={isSavingToggle}
             className={`min-h-[44px] rounded-lg px-6 py-2 text-sm font-medium transition-colors ${
               psEnabled
                 ? "bg-primary text-surface-page hover:bg-primary/90"
                 : "bg-surface-page border border-foreground-muted/20 text-foreground hover:border-primary/50"
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            {isSaving
+            {isSavingToggle
               ? "جاري الحفظ..."
               : psEnabled
               ? "مفعّل — اضغط للتعطيل"
@@ -208,10 +214,10 @@ export default function PsSettingsForm({
               />
               <button
                 onClick={() => handleSavePricing("single", singleRate)}
-                disabled={isSaving}
+                disabled={isSavingSingle}
                 className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSaving && savingMode === "single" ? "جاري..." : "حفظ"}
+                {isSavingSingle ? "جاري..." : "حفظ"}
               </button>
             </div>
           </div>
@@ -233,10 +239,10 @@ export default function PsSettingsForm({
               />
               <button
                 onClick={() => handleSavePricing("multi", multiRate)}
-                disabled={isSaving}
+                disabled={isSavingMulti}
                 className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSaving && savingMode === "multi" ? "جاري..." : "حفظ"}
+                {isSavingMulti ? "جاري..." : "حفظ"}
               </button>
             </div>
           </div>
@@ -245,10 +251,10 @@ export default function PsSettingsForm({
           <div className="pt-4 border-t border-foreground-muted/20">
             <button
               onClick={handleSaveAllPricing}
-              disabled={isSaving}
+              disabled={isSavingAll}
               className="w-full min-h-[44px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSaving ? "جاري حفظ جميع الأسعار..." : "حفظ جميع الأسعار"}
+              {isSavingAll ? "جاري حفظ جميع الأسعار..." : "حفظ جميع الأسعار"}
             </button>
           </div>
         </div>

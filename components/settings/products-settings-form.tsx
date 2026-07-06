@@ -19,7 +19,10 @@ export default function ProductsSettingsForm({
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [newProductName, setNewProductName] = useState("");
   const [newProductPrice, setNewProductPrice] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isTogglingId, setIsTogglingId] = useState<string | null>(null);
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -46,7 +49,7 @@ export default function ProductsSettingsForm({
       return;
     }
 
-    setIsSaving(true);
+    setIsAdding(true);
     try {
       const response = await fetch("/api/products", {
         method: "POST",
@@ -78,7 +81,7 @@ export default function ProductsSettingsForm({
         text: "حدث خطأ أثناء إضافة المشروب",
       });
     } finally {
-      setIsSaving(false);
+      setIsAdding(false);
     }
   };
 
@@ -87,7 +90,7 @@ export default function ProductsSettingsForm({
     name: string,
     price: number
   ) => {
-    setIsSaving(true);
+    setIsSavingEdit(true);
     try {
       const response = await fetch(`/api/products/${id}`, {
         method: "PATCH",
@@ -116,7 +119,7 @@ export default function ProductsSettingsForm({
         text: "حدث خطأ أثناء تحديث المشروب",
       });
     } finally {
-      setIsSaving(false);
+      setIsSavingEdit(false);
     }
   };
 
@@ -125,7 +128,7 @@ export default function ProductsSettingsForm({
       return;
     }
 
-    setIsSaving(true);
+    setIsDeletingId(id);
     try {
       const response = await fetch(`/api/products/${id}`, {
         method: "DELETE",
@@ -149,12 +152,12 @@ export default function ProductsSettingsForm({
         text: "حدث خطأ أثناء حذف المشروب",
       });
     } finally {
-      setIsSaving(false);
+      setIsDeletingId(null);
     }
   };
 
   const handleToggleActive = async (id: string, isActive: boolean) => {
-    setIsSaving(true);
+    setIsTogglingId(id);
     try {
       const response = await fetch(`/api/products/${id}`, {
         method: "PATCH",
@@ -178,7 +181,7 @@ export default function ProductsSettingsForm({
         text: "حدث خطأ أثناء تحديث المشروب",
       });
     } finally {
-      setIsSaving(false);
+      setIsTogglingId(null);
     }
   };
 
@@ -212,7 +215,7 @@ export default function ProductsSettingsForm({
       return;
     }
 
-    setIsSaving(true);
+    setIsSavingEdit(true);
     try {
       const response = await fetch(`/api/products/${editingProductId}`, {
         method: "PATCH",
@@ -245,7 +248,7 @@ export default function ProductsSettingsForm({
         text: "حدث خطأ أثناء تحديث المشروب",
       });
     } finally {
-      setIsSaving(false);
+      setIsSavingEdit(false);
     }
   };
 
@@ -277,10 +280,10 @@ export default function ProductsSettingsForm({
           />
           <button
             onClick={handleAddProduct}
-            disabled={isSaving}
+            disabled={isAdding}
             className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSaving ? "جاري..." : "إضافة"}
+            {isAdding ? "جاري..." : "إضافة"}
           </button>
         </div>
       </div>
@@ -310,7 +313,7 @@ export default function ProductsSettingsForm({
                       value={editingName}
                       onChange={(e) => setEditingName(e.target.value)}
                       className="w-full min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      disabled={isSaving}
+                      disabled={isSavingEdit}
                     />
                   ) : (
                     <div className="text-foreground">{product.name}</div>
@@ -325,7 +328,7 @@ export default function ProductsSettingsForm({
                       value={editingPrice}
                       onChange={(e) => setEditingPrice(e.target.value)}
                       className="w-full min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      disabled={isSaving}
+                      disabled={isSavingEdit}
                     />
                   ) : (
                     <div className="text-foreground">{product.price}</div>
@@ -335,14 +338,14 @@ export default function ProductsSettingsForm({
                   <>
                     <button
                       onClick={handleSaveEdit}
-                      disabled={isSaving}
+                      disabled={isSavingEdit}
                       className="min-h-[44px] min-w-[44px] rounded-lg px-3 py-2 text-sm font-medium bg-primary text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       حفظ
                     </button>
                     <button
                       onClick={handleCancelEdit}
-                      disabled={isSaving}
+                      disabled={isSavingEdit}
                       className="min-h-[44px] min-w-[44px] rounded-lg px-3 py-2 text-sm font-medium border border-foreground-muted/20 text-foreground transition-colors hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       إلغاء
@@ -352,28 +355,28 @@ export default function ProductsSettingsForm({
                   <>
                     <button
                       onClick={() => handleStartEdit(product)}
-                      disabled={isSaving}
+                      disabled={isAdding || isSavingEdit || isTogglingId !== null || isDeletingId !== null}
                       className="min-h-[44px] min-w-[44px] rounded-lg px-3 py-2 text-sm font-medium bg-primary/10 text-primary transition-colors hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       تعديل
                     </button>
                     <button
                       onClick={() => handleToggleActive(product.id, product.is_active)}
-                      disabled={isSaving}
+                      disabled={isTogglingId === product.id || isAdding || isSavingEdit || isDeletingId !== null}
                       className={`min-h-[44px] min-w-[44px] rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                         product.is_active
                           ? "bg-green-500/10 text-green-400 hover:bg-green-500/20"
                           : "bg-surface-page border border-foreground-muted/20 text-foreground-muted hover:border-primary/50"
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      {product.is_active ? "مفعّل" : "معطّل"}
+                      {isTogglingId === product.id ? "جاري..." : (product.is_active ? "مفعّل" : "معطّل")}
                     </button>
                     <button
                       onClick={() => handleDeleteProduct(product.id)}
-                      disabled={isSaving}
+                      disabled={isDeletingId === product.id || isAdding || isSavingEdit || isTogglingId !== null}
                       className="min-h-[44px] min-w-[44px] rounded-lg px-3 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      حذف
+                      {isDeletingId === product.id ? "جاري..." : "حذف"}
                     </button>
                   </>
                 )}
