@@ -53,6 +53,22 @@ async function getShopName(shopId: string) {
   return shop.name;
 }
 
+async function getOwnerName(shopId: string) {
+  const supabase = createAdminClient();
+  const { data: shop, error } = await supabase
+    .from("shops")
+    .select("owner_name")
+    .eq("id", shopId)
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !shop) {
+    return null;
+  }
+
+  return shop.owner_name;
+}
+
 async function getProducts(shopId: string) {
   const supabase = createAdminClient();
   const { data: products, error } = await supabase
@@ -71,6 +87,7 @@ async function getProducts(shopId: string) {
 export default async function ProductsSettingsPage() {
   const user = await getCurrentUser();
   const shopName = user ? await getShopName(user.shop_id) : "المحل";
+  const ownerName = user ? await getOwnerName(user.shop_id) : null;
   const products = user ? await getProducts(user.shop_id) : [];
 
   if (!user) {
@@ -78,7 +95,7 @@ export default async function ProductsSettingsPage() {
   }
 
   return (
-    <AuthenticatedShell user={user} shopName={shopName}>
+    <AuthenticatedShell user={user} shopName={shopName} ownerName={ownerName}>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-semibold text-foreground">إدارة المشروبات</h1>

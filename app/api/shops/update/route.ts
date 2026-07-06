@@ -13,6 +13,7 @@ import { hasOpenShift } from "@/lib/shifts/check-open-shift";
  *
  * Accepted fields (all optional):
  *   - name             (always allowed — exempt from shift lock)
+ *   - owner_name       (always allowed — exempt from shift lock)
  *   - ps_enabled       (locked while a shift is open)
  *   - billiard_enabled (locked while a shift is open)
  *   - shifts_per_day   (locked while a shift is open; validated 1..3 here AND in DB)
@@ -38,13 +39,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       name,
+      owner_name,
       ps_enabled,
       billiard_enabled,
       shifts_per_day,
     } = body ?? {};
 
     // 3. Build update payload — only known, type-valid fields are applied.
-    const update: Partial<{ name: string; ps_enabled: boolean; billiard_enabled: boolean; shifts_per_day: number }> = {};
+    const update: Partial<{ name: string; owner_name: string | null; ps_enabled: boolean; billiard_enabled: boolean; shifts_per_day: number }> = {};
 
     if (typeof name === "string") {
       const trimmed = name.trim();
@@ -55,6 +57,17 @@ export async function POST(request: NextRequest) {
         );
       }
       update.name = trimmed;
+    }
+
+    if (typeof owner_name === "string") {
+      const trimmed = owner_name.trim();
+      if (trimmed.length === 0) {
+        return NextResponse.json(
+          { error: "اسم صاحب المحل لا يمكن أن يكون فارغًا." },
+          { status: 400 }
+        );
+      }
+      update.owner_name = trimmed;
     }
 
     if (typeof ps_enabled === "boolean") {
@@ -133,7 +146,7 @@ export async function POST(request: NextRequest) {
       .from("shops")
       .update(update)
       .eq("id", shopId)
-      .select("id, name, ps_enabled, billiard_enabled, shifts_per_day")
+      .select("id, name, owner_name, ps_enabled, billiard_enabled, shifts_per_day")
       .maybeSingle();
 
     if (updateError || !updatedShop) {

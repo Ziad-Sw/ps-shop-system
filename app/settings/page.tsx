@@ -40,7 +40,7 @@ async function getShopData(shopId: string) {
   const supabase = createAdminClient();
   const { data: shop, error } = await supabase
     .from("shops")
-    .select("id, name, ps_enabled, billiard_enabled, shifts_per_day")
+    .select("id, name, owner_name, ps_enabled, billiard_enabled, shifts_per_day")
     .eq("id", shopId)
     .limit(1)
     .maybeSingle();
@@ -68,10 +68,27 @@ async function getShopName(shopId: string) {
   return shop.name;
 }
 
+async function getOwnerName(shopId: string) {
+  const supabase = createAdminClient();
+  const { data: shop, error } = await supabase
+    .from("shops")
+    .select("owner_name")
+    .eq("id", shopId)
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !shop) {
+    return null;
+  }
+
+  return shop.owner_name;
+}
+
 export default async function SettingsPage() {
   const user = await getCurrentUser();
   const shopData = user ? await getShopData(user.shop_id) : null;
   const shopName = user ? await getShopName(user.shop_id) : "المحل";
+  const ownerName = user ? await getOwnerName(user.shop_id) : null;
 
   if (!user) {
     return <div>خطأ: لم يتم العثور على المستخدم. يرجى تسجيل الدخول.</div>;
@@ -82,7 +99,7 @@ export default async function SettingsPage() {
   }
 
   return (
-    <AuthenticatedShell user={user} shopName={shopName}>
+    <AuthenticatedShell user={user} shopName={shopName} ownerName={ownerName}>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-semibold text-foreground">الإعدادات</h1>

@@ -33,6 +33,7 @@ export interface Database {
         Row: {
           id: string;
           name: string;
+          owner_name: string | null;
           logo_url: string | null;
           ps_enabled: boolean;
           billiard_enabled: boolean;
@@ -43,6 +44,7 @@ export interface Database {
         Insert: {
           id?: string;
           name: string;
+          owner_name?: string | null;
           logo_url?: string | null;
           ps_enabled?: boolean;
           billiard_enabled?: boolean;
@@ -53,6 +55,7 @@ export interface Database {
         Update: {
           id?: string;
           name?: string;
+          owner_name?: string | null;
           logo_url?: string | null;
           ps_enabled?: boolean;
           billiard_enabled?: boolean;

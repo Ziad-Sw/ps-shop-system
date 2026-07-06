@@ -12,12 +12,14 @@ interface AuthenticatedUser {
 interface AuthenticatedShellProps {
   user: AuthenticatedUser | null;
   shopName: string;
+  ownerName: string | null;
   children: React.ReactNode;
 }
 
 export default function AuthenticatedShell({
   user,
   shopName,
+  ownerName,
   children,
 }: AuthenticatedShellProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -40,7 +42,7 @@ export default function AuthenticatedShell({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const displayName = user?.display_name || "صاحب المحل";
+  const displayName = ownerName || "صاحب المحل";
   const shopLabel = shopName;
 
   return (

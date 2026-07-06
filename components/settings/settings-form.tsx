@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/toast";
 interface ShopData {
   id: string;
   name: string;
+  owner_name: string | null;
   ps_enabled: boolean;
   billiard_enabled: boolean;
   shifts_per_day: number;
@@ -19,7 +20,9 @@ interface SettingsFormProps {
 export default function SettingsForm({ initialShopData }: SettingsFormProps) {
   const { showToast } = useToast();
   const [shopName, setShopName] = useState(initialShopData.name);
-  const [isSaving, setIsSaving] = useState(false);
+  const [ownerName, setOwnerName] = useState(initialShopData.owner_name || "");
+  const [isSavingShopName, setIsSavingShopName] = useState(false);
+  const [isSavingOwnerName, setIsSavingOwnerName] = useState(false);
 
   const handleSaveShopName = async () => {
     if (!shopName.trim()) {
@@ -27,7 +30,7 @@ export default function SettingsForm({ initialShopData }: SettingsFormProps) {
       return;
     }
 
-    setIsSaving(true);
+    setIsSavingShopName(true);
     try {
       const response = await fetch("/api/shops/update", {
         method: "POST",
@@ -44,7 +47,34 @@ export default function SettingsForm({ initialShopData }: SettingsFormProps) {
       console.error("Error saving shop name:", err);
       showToast("error", "حدث خطأ أثناء حفظ اسم المحل");
     } finally {
-      setIsSaving(false);
+      setIsSavingShopName(false);
+    }
+  };
+
+  const handleSaveOwnerName = async () => {
+    if (!ownerName.trim()) {
+      showToast("error", "يجب إدخال اسم صاحب المحل");
+      return;
+    }
+
+    setIsSavingOwnerName(true);
+    try {
+      const response = await fetch("/api/shops/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ owner_name: ownerName.trim() }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update owner name");
+      }
+
+      showToast("success", "تم حفظ اسم صاحب المحل بنجاح");
+    } catch (err) {
+      console.error("Error saving owner name:", err);
+      showToast("error", "حدث خطأ أثناء حفظ اسم صاحب المحل");
+    } finally {
+      setIsSavingOwnerName(false);
     }
   };
 
@@ -68,10 +98,36 @@ export default function SettingsForm({ initialShopData }: SettingsFormProps) {
 
           <button
             onClick={handleSaveShopName}
-            disabled={isSaving || shopName === initialShopData.name}
+            disabled={isSavingShopName || shopName === initialShopData.name}
             className="min-h-[44px] w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSaving ? "جاري الحفظ..." : "حفظ اسم المحل"}
+            {isSavingShopName ? "جاري الحفظ..." : "حفظ اسم المحل"}
+          </button>
+        </div>
+      </div>
+
+      {/* Owner Name Section */}
+      <div className="rounded-xl bg-surface-card p-6">
+        <h2 className="text-lg font-semibold text-foreground">اسم صاحب المحل</h2>
+        <p className="mt-1 text-sm text-foreground-muted">
+          غيّر اسم صاحب المحل الذي يظهر في القائمة المنسدلة
+        </p>
+
+        <div className="mt-4 space-y-3">
+          <input
+            type="text"
+            value={ownerName}
+            onChange={(e) => setOwnerName(e.target.value)}
+            className="w-full min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            placeholder="مثال: محمد أحمد"
+          />
+
+          <button
+            onClick={handleSaveOwnerName}
+            disabled={isSavingOwnerName || ownerName === (initialShopData.owner_name || "")}
+            className="min-h-[44px] w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSavingOwnerName ? "جاري الحفظ..." : "حفظ اسم صاحب المحل"}
           </button>
         </div>
       </div>
