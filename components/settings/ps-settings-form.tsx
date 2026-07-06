@@ -14,11 +14,13 @@ interface PricingRule {
 interface PsSettingsFormProps {
   initialPsEnabled: boolean;
   initialPricingRules: PricingRule[];
+  initialStationCount: number;
 }
 
 export default function PsSettingsForm({
   initialPsEnabled,
   initialPricingRules,
+  initialStationCount,
 }: PsSettingsFormProps) {
   const { showToast } = useToast();
   const [psEnabled, setPsEnabled] = useState(initialPsEnabled);
@@ -28,10 +30,12 @@ export default function PsSettingsForm({
   const [multiRate, setMultiRate] = useState(
     initialPricingRules.find((r) => r.mode === "multi")?.rate || 0
   );
+  const [stationCount, setStationCount] = useState(initialStationCount);
   const [isSavingToggle, setIsSavingToggle] = useState(false);
   const [isSavingSingle, setIsSavingSingle] = useState(false);
   const [isSavingMulti, setIsSavingMulti] = useState(false);
   const [isSavingAll, setIsSavingAll] = useState(false);
+  const [isSavingStationCount, setIsSavingStationCount] = useState(false);
 
   const handleSaveToggle = async () => {
     setIsSavingToggle(true);
@@ -56,6 +60,34 @@ export default function PsSettingsForm({
       showToast("error", "حدث خطأ أثناء تحديث الإعدادات");
     } finally {
       setIsSavingToggle(false);
+    }
+  };
+
+  const handleSaveStationCount = async () => {
+    if (stationCount < 0) {
+      showToast("error", "عدد الأجهزة لا يمكن أن يكون سالباً");
+      return;
+    }
+
+    setIsSavingStationCount(true);
+    try {
+      const response = await fetch("/api/shops/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ps_station_count: stationCount }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update");
+      }
+
+      showToast("success", "تم حفظ عدد الأجهزة بنجاح");
+    } catch (err) {
+      console.error("Error saving station count:", err);
+      showToast("error", "حدث خطأ أثناء حفظ عدد الأجهزة");
+    } finally {
+      setIsSavingStationCount(false);
     }
   };
 
@@ -162,6 +194,33 @@ export default function PsSettingsForm({
               : psEnabled
               ? "مفعّل — اضغط للتعطيل"
               : "معطّل — اضغط للتفعيل"}
+          </button>
+        </div>
+      </div>
+
+      {/* Station Count Section */}
+      <div className="rounded-xl bg-surface-card p-6">
+        <h2 className="text-lg font-semibold text-foreground">عدد الأجهزة</h2>
+        <p className="mt-1 text-sm text-foreground-muted">
+          حدد عدد أجهزة البلايستيشن الموجودة في المحل
+        </p>
+
+        <div className="mt-4 flex gap-2">
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={stationCount}
+            onChange={(e) => setStationCount(parseInt(e.target.value) || 0)}
+            className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            placeholder="0"
+          />
+          <button
+            onClick={handleSaveStationCount}
+            disabled={isSavingStationCount}
+            className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSavingStationCount ? "جاري..." : "حفظ"}
           </button>
         </div>
       </div>

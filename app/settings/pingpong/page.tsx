@@ -6,7 +6,7 @@ import {
   SESSION_COOKIE_NAME,
   verifySessionCookieValue,
 } from "@/lib/auth/session";
-import BilliardSettingsForm from "@/components/settings/billiard-settings-form";
+import PingpongSettingsForm from "@/components/settings/pingpong-settings-form";
 import type { PricingRule } from "@/types";
 
 async function getCurrentUser() {
@@ -41,7 +41,7 @@ async function getShopData(shopId: string) {
   const supabase = createAdminClient();
   const { data: shop, error } = await supabase
     .from("shops")
-    .select("id, name, billiard_enabled, billiard_table_count")
+    .select("id, name, billiard_enabled, pingpong_table_count")
     .eq("id", shopId)
     .limit(1)
     .maybeSingle();
@@ -91,7 +91,7 @@ async function getPricingRules(shopId: string) {
     .from("pricing_rules")
     .select("id, station_type, mode, unit, rate")
     .eq("shop_id", shopId)
-    .eq("station_type", "billiard");
+    .eq("station_type", "pingpong");
 
   if (error) {
     return [];
@@ -100,7 +100,7 @@ async function getPricingRules(shopId: string) {
   return (rules as PricingRule[]) || [];
 }
 
-export default async function BilliardSettingsPage() {
+export default async function PingpongSettingsPage() {
   const user = await getCurrentUser();
   const shopData = user ? await getShopData(user.shop_id) : null;
   const shopName = user ? await getShopName(user.shop_id) : "المحل";
@@ -115,14 +115,14 @@ export default async function BilliardSettingsPage() {
     <AuthenticatedShell user={user} shopName={shopName} ownerName={ownerName}>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-semibold text-foreground">إعدادات البلياردو</h1>
-          <p className="mt-2 text-foreground-muted">إدارة طاولات البلياردو وتسعيرها</p>
+          <h1 className="text-3xl font-semibold text-foreground">إعدادات البينغ بونغ</h1>
+          <p className="mt-2 text-foreground-muted">إدارة طاولات البينغ بونغ وتسعيرها</p>
         </div>
 
-        <BilliardSettingsForm
-          initialBilliardEnabled={shopData.billiard_enabled}
+        <PingpongSettingsForm
+          initialPingpongEnabled={shopData.billiard_enabled}
           initialPricingRules={pricingRules}
-          initialTableCount={shopData.billiard_table_count || 0}
+          initialTableCount={shopData.pingpong_table_count || 0}
         />
       </div>
     </AuthenticatedShell>

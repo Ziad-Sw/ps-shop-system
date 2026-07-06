@@ -11,20 +11,20 @@ interface PricingRule {
   rate: number;
 }
 
-interface BilliardSettingsFormProps {
-  initialBilliardEnabled: boolean;
+interface PingpongSettingsFormProps {
+  initialPingpongEnabled: boolean;
   initialPricingRules: PricingRule[];
   initialTableCount: number;
 }
 
-export default function BilliardSettingsForm({
-  initialBilliardEnabled,
+export default function PingpongSettingsForm({
+  initialPingpongEnabled,
   initialPricingRules,
   initialTableCount,
-}: BilliardSettingsFormProps) {
+}: PingpongSettingsFormProps) {
   const { showToast } = useToast();
-  const [billiardEnabled, setBilliardEnabled] = useState(
-    initialBilliardEnabled
+  const [pingpongEnabled, setPingpongEnabled] = useState(
+    initialPingpongEnabled
   );
   const [singleRate, setSingleRate] = useState(
     initialPricingRules.find((r) => r.mode === "single")?.rate || 0
@@ -45,7 +45,7 @@ export default function BilliardSettingsForm({
       const response = await fetch("/api/shops/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ billiard_enabled: !billiardEnabled }),
+        body: JSON.stringify({ billiard_enabled: !pingpongEnabled }),
       });
 
       if (!response.ok) {
@@ -53,12 +53,12 @@ export default function BilliardSettingsForm({
         throw new Error(error.error || "Failed to update");
       }
 
-      setBilliardEnabled(!billiardEnabled);
-      showToast("success", billiardEnabled
-        ? "تم تعطيل البلياردو بنجاح"
-        : "تم تفعيل البلياردو بنجاح");
+      setPingpongEnabled(!pingpongEnabled);
+      showToast("success", pingpongEnabled
+        ? "تم تعطيل البينغ بونغ بنجاح"
+        : "تم تفعيل البينغ بونغ بنجاح");
     } catch (err) {
-      console.error("Error toggling billiard:", err);
+      console.error("Error toggling pingpong:", err);
       showToast("error", "حدث خطأ أثناء تحديث الإعدادات");
     } finally {
       setIsSavingToggle(false);
@@ -76,7 +76,7 @@ export default function BilliardSettingsForm({
       const response = await fetch("/api/shops/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ billiard_table_count: tableCount }),
+        body: JSON.stringify({ pingpong_table_count: tableCount }),
       });
 
       if (!response.ok) {
@@ -104,7 +104,7 @@ export default function BilliardSettingsForm({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          station_type: "billiard",
+          station_type: "pingpong",
           mode,
           rate,
         }),
@@ -136,7 +136,7 @@ export default function BilliardSettingsForm({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          station_type: "billiard",
+          station_type: "pingpong",
           mode: "single",
           rate: singleRate,
         }),
@@ -152,7 +152,7 @@ export default function BilliardSettingsForm({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          station_type: "billiard",
+          station_type: "pingpong",
           mode: "multi",
           rate: multiRate,
         }),
@@ -176,9 +176,9 @@ export default function BilliardSettingsForm({
     <div className="space-y-6">
       {/* Toggle Section */}
       <div className="rounded-xl bg-surface-card p-6">
-        <h2 className="text-lg font-semibold text-foreground">تفعيل البلياردو</h2>
+        <h2 className="text-lg font-semibold text-foreground">تفعيل البينغ بونغ</h2>
         <p className="mt-1 text-sm text-foreground-muted">
-          قم بتفعيل أو تعطيل خدمة البلياردو في المحل
+          قم بتفعيل أو تعطيل خدمة البينغ بونغ في المحل
         </p>
 
         <div className="mt-4 flex items-center gap-4">
@@ -186,14 +186,14 @@ export default function BilliardSettingsForm({
             onClick={handleSaveToggle}
             disabled={isSavingToggle}
             className={`min-h-[44px] rounded-lg px-6 py-2 text-sm font-medium transition-colors ${
-              billiardEnabled
+              pingpongEnabled
                 ? "bg-primary text-surface-page hover:bg-primary/90"
                 : "bg-surface-page border border-foreground-muted/20 text-foreground hover:border-primary/50"
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {isSavingToggle
               ? "جاري الحفظ..."
-              : billiardEnabled
+              : pingpongEnabled
               ? "مفعّل — اضغط للتعطيل"
               : "معطّل — اضغط للتفعيل"}
           </button>
@@ -204,7 +204,7 @@ export default function BilliardSettingsForm({
       <div className="rounded-xl bg-surface-card p-6">
         <h2 className="text-lg font-semibold text-foreground">عدد الطاولات</h2>
         <p className="mt-1 text-sm text-foreground-muted">
-          حدد عدد طاولات البلياردو الموجودة في المحل
+          حدد عدد طاولات البينغ بونغ الموجودة في المحل
         </p>
 
         <div className="mt-4 flex gap-2">
@@ -229,7 +229,7 @@ export default function BilliardSettingsForm({
 
       {/* Pricing Section */}
       <div className="rounded-xl bg-surface-card p-6">
-        <h2 className="text-lg font-semibold text-foreground">أسعار البلياردو</h2>
+        <h2 className="text-lg font-semibold text-foreground">أسعار البينغ بونغ</h2>
         <p className="mt-1 text-sm text-foreground-muted">
           الأسعار بالجيم لكل نوع لعب
         </p>

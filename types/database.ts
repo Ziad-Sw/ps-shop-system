@@ -8,7 +8,7 @@ export type Json =
 
 export type UserRole = "owner" | "staff";
 
-export type StationType = "playstation" | "billiard";
+export type StationType = "playstation" | "billiard" | "pingpong";
 
 export type PricingMode = "single" | "multi";
 
@@ -38,6 +38,9 @@ export interface Database {
           ps_enabled: boolean;
           billiard_enabled: boolean;
           shifts_per_day: number;
+          ps_station_count: number;
+          billiard_table_count: number;
+          pingpong_table_count: number;
           created_at: string;
           updated_at: string;
         };
@@ -49,6 +52,9 @@ export interface Database {
           ps_enabled?: boolean;
           billiard_enabled?: boolean;
           shifts_per_day?: number;
+          ps_station_count?: number;
+          billiard_table_count?: number;
+          pingpong_table_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -60,6 +66,9 @@ export interface Database {
           ps_enabled?: boolean;
           billiard_enabled?: boolean;
           shifts_per_day?: number;
+          ps_station_count?: number;
+          billiard_table_count?: number;
+          pingpong_table_count?: number;
           created_at?: string;
           updated_at?: string;
         };

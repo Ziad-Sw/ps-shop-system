@@ -41,7 +41,7 @@ async function getShopData(shopId: string) {
   const supabase = createAdminClient();
   const { data: shop, error } = await supabase
     .from("shops")
-    .select("id, name, ps_enabled")
+    .select("id, name, ps_enabled, ps_station_count")
     .eq("id", shopId)
     .limit(1)
     .maybeSingle();
@@ -122,6 +122,7 @@ export default async function PsSettingsPage() {
         <PsSettingsForm
           initialPsEnabled={shopData.ps_enabled}
           initialPricingRules={pricingRules}
+          initialStationCount={shopData.ps_station_count || 0}
         />
       </div>
     </AuthenticatedShell>

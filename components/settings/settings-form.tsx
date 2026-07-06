@@ -156,6 +156,18 @@ export default function SettingsForm({ initialShopData }: SettingsFormProps) {
         <div className="mt-3 text-sm text-primary">إعدادات ←</div>
       </Link>
 
+      {/* Ping Pong Settings Card */}
+      <Link
+        href="/settings/pingpong"
+        className="block rounded-xl bg-surface-card p-6 transition-colors hover:border-primary/50 hover:bg-surface-card/90 border border-transparent"
+      >
+        <h2 className="text-lg font-semibold text-foreground">البينغ بونغ</h2>
+        <p className="mt-1 text-sm text-foreground-muted">
+          إدارة طاولات البينغ بونغ وتسعيرها
+        </p>
+        <div className="mt-3 text-sm text-primary">إعدادات ←</div>
+      </Link>
+
       {/* Products Settings Card */}
       <Link
         href="/settings/products"

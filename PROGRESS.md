@@ -602,3 +602,73 @@
 ✅ رسائل warning تظهر باللون الأحمر
 ✅ الصوت يعمل للإشعارات success فقط
 
+---
+
+## إضافة البينغ بونغ وتحسين إعدادات الأجهزة — المرحلة J: إضافة عدد الأجهزة/الطرابيز والبينغ بونغ
+
+تم إضافة نظام البينغ بونغ كخدمة جديدة مع إضافة حقول عدد الأجهزة والطرابيز لجميع الخدمات.
+
+**التغييرات:**
+
+1. **قاعدة البيانات:**
+   - إضافة عمود `ps_station_count` لعدد أجهزة البلايستيشن
+   - إضافة عمود `billiard_table_count` لعدد طاولات البلياردو
+   - إضافة عمود `pingpong_table_count` لعدد طاولات البينغ بونغ
+   - جميع الأعمدة بقيمة افتراضية 0
+
+2. **Types:**
+   - إضافة "pingpong" إلى StationType
+   - تحديث Row/Insert/Update لجدول shops بالحقول الجديدة
+
+3. **API:**
+   - تحديث `/api/shops/update` لقبول الحقول الجديدة
+   - إضافة validation للحقول الجديدة (>= 0)
+   - إضافة الحقول الجديدة إلى shift-lock check
+   - تحديث select query لإرجاع الحقول الجديدة
+
+4. **صفحة إعدادات البلايستيشن:**
+   - إضافة قسم "عدد الأجهزة"
+   - إضافة input لتحديد عدد الأجهزة
+   - إضافة دالة handleSaveStationCount
+   - تحديث props لاستقبال initialStationCount
+
+5. **صفحة إعدادات البلياردو:**
+   - إضافة قسم "عدد الطاولات"
+   - إضافة input لتحديد عدد الطاولات
+   - إضافة دالة handleSaveTableCount
+   - تحديث props لاستقبال initialTableCount
+
+6. **صفحة إعدادات البينغ بونغ (جديدة):**
+   - إنشاء `components/settings/pingpong-settings-form.tsx`
+   - إنشاء `app/settings/pingpong/page.tsx`
+   - نفس هيكل صفحة البلياردو مع:
+     - تفعيل/تعطيل البينغ بونغ
+     - عدد الطاولات
+     - أسعار اللعب الفردي والمالتي
+   - استخدام station_type = "pingpong"
+
+7. **صفحة الإعدادات الرئيسية:**
+   - إضافة كارد البينغ بونغ تحت كارد البلياردو
+   - رابط إلى `/settings/pingpong`
+
+**ملفات التنفيذ:**
+- `supabase/migrations/004_add_station_counts_to_shops.sql` — إضافة أعمدة عدد الأجهزة/الطرابيز
+- `types/database.ts` — تحديث types بالحقول الجديدة
+- `app/api/shops/update/route.ts` — تحديث API
+- `components/settings/ps-settings-form.tsx` — إضافة عدد الأجهزة
+- `app/settings/ps/page.tsx` — تمرير initialStationCount
+- `components/settings/billiard-settings-form.tsx` — إضافة عدد الطاولات
+- `app/settings/billiard/page.tsx` — تمرير initialTableCount
+- `components/settings/pingpong-settings-form.tsx` — إنشاء (جديد)
+- `app/settings/pingpong/page.tsx` — إنشاء (جديد)
+- `components/settings/settings-form.tsx` — إضافة كارد البينغ بونغ
+
+**نتائج الاختبار:**
+✅ Migration تم إنشاؤه بنجاح
+✅ Types تم تحديثها
+✅ API يقبل الحقول الجديدة
+✅ صفحة البلايستيشن تحتوي على قسم عدد الأجهزة
+✅ صفحة البلياردو تحتوي على قسم عدد الطاولات
+✅ صفحة البينغ بونغ تم إنشاؤها بنجاح
+✅ كارد البينغ بونغ يظهر في صفحة الإعدادات الرئيسية
+
