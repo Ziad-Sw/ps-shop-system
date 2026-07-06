@@ -42,48 +42,71 @@ export default function AuthenticatedShell({
       <div className="min-h-screen bg-surface-page text-foreground">
         <header className="sticky top-0 z-20 border-b border-foreground-muted/10 bg-surface-page/95 backdrop-blur supports-[backdrop-filter]:bg-surface-page/80">
           <div className="mx-auto flex min-h-[64px] max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-            <div className="relative" ref={menuRef}>
-              <button
-                type="button"
-                onClick={() => setIsMenuOpen((value) => !value)}
-                className="flex min-h-[44px] min-w-[44px] items-center gap-2 rounded-lg border border-foreground-muted/20 bg-surface-card px-3 py-2 text-sm text-foreground transition-colors duration-150 hover:border-primary/50 hover:bg-surface-card/90 focus:outline-none focus:ring-2 focus:ring-primary/60"
-                aria-haspopup="menu"
-                aria-expanded={isMenuOpen}
+            <div className="flex items-center gap-3">
+              <Link
+                href="/"
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-foreground-muted/20 bg-surface-card px-3 py-2 text-foreground transition-colors duration-150 hover:border-primary/50 hover:bg-surface-card/90 focus:outline-none focus:ring-2 focus:ring-primary/60"
+                title="الرئيسية"
               >
-                <span className="hidden sm:inline text-right">{shopName}</span>
-                <span className="text-primary">▾</span>
-              </button>
-
-              {isMenuOpen ? (
-                <div
-                  role="menu"
-                  className="absolute right-0 top-full mt-2 min-w-[240px] rounded-xl border border-foreground-muted/20 bg-surface-card p-2 shadow-xl"
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
-                  <div className="rounded-lg px-3 py-3 text-right">
-                    <p className="font-semibold text-foreground">{displayName}</p>
-                    <p className="mt-1 text-sm text-foreground-muted">{userLabel}</p>
-                  </div>
+                  <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              </Link>
 
-                  <div className="mt-1 flex flex-col gap-1">
-                    <Link
-                      href="/settings"
-                      className="flex min-h-[44px] items-center justify-end rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-primary/10"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      الإعدادات
-                    </Link>
+              <div className="relative" ref={menuRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsMenuOpen((value) => !value)}
+                  className="flex min-h-[44px] min-w-[44px] items-center gap-2 rounded-lg border border-foreground-muted/20 bg-surface-card px-3 py-2 text-sm text-foreground transition-colors duration-150 hover:border-primary/50 hover:bg-surface-card/90 focus:outline-none focus:ring-2 focus:ring-primary/60"
+                  aria-haspopup="menu"
+                  aria-expanded={isMenuOpen}
+                >
+                  <span className="hidden sm:inline text-right">{shopName}</span>
+                  <span className="text-primary">▾</span>
+                </button>
 
-                    <form action="/api/auth/logout" method="post">
-                      <button
-                        type="submit"
-                        className="flex min-h-[44px] w-full items-center justify-end rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-primary/10"
+                {isMenuOpen ? (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-full mt-2 min-w-[240px] rounded-xl border border-foreground-muted/20 bg-surface-card p-2 shadow-xl"
+                  >
+                    <div className="rounded-lg px-3 py-3 text-right">
+                      <p className="font-semibold text-foreground">{displayName}</p>
+                      <p className="mt-1 text-sm text-foreground-muted">{userLabel}</p>
+                    </div>
+
+                    <div className="mt-1 flex flex-col gap-1 text-right">
+                      <Link
+                        href="/settings"
+                        className="flex min-h-[44px] items-center justify-end rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-primary/10"
+                        onClick={() => setIsMenuOpen(false)}
                       >
-                        تسجيل الخروج
-                      </button>
-                    </form>
+                        الإعدادات
+                      </Link>
+
+                      <form action="/api/auth/logout" method="post">
+                        <button
+                          type="submit"
+                          className="flex min-h-[44px] w-full items-center justify-end rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-primary/10"
+                        >
+                          تسجيل الخروج
+                        </button>
+                      </form>
+                    </div>
                   </div>
-                </div>
-              ) : null}
+                ) : null}
+              </div>
             </div>
 
             <div className="text-lg font-semibold text-foreground">PS-System</div>
