@@ -23,6 +23,12 @@ export default function AuthenticatedShell({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const handleLogout = () => {
+    if (confirm("هل أنت متأكد من تسجيل الخروج؟")) {
+      window.location.href = "/api/auth/logout";
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -95,14 +101,13 @@ export default function AuthenticatedShell({
                         الإعدادات
                       </Link>
 
-                      <form action="/api/auth/logout" method="post">
-                        <button
-                          type="submit"
-                          className="min-h-[44px] w-full rounded-lg px-3 py-3 text-sm text-foreground transition-colors hover:bg-primary/10"
-                        >
-                          تسجيل الخروج
-                        </button>
-                      </form>
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="min-h-[44px] w-full rounded-lg px-3 py-3 text-sm text-red-400 transition-colors hover:bg-red-500/10"
+                      >
+                        تسجيل الخروج
+                      </button>
                     </div>
                   </div>
                 ) : null}
