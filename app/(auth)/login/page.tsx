@@ -63,9 +63,9 @@ export default function LoginPage() {
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-foreground text-center">نظام إدارة المحل</h1>
+          <h1 className="text-2xl font-bold text-foreground text-center">PS-System</h1>
           <p className="mt-2 text-sm text-foreground-muted text-center">
-            أدخل معرّف الدخول الخاص بك للوصول للنظام
+            نظام إدارة المحل
           </p>
         </div>
 
@@ -95,7 +95,7 @@ export default function LoginPage() {
               htmlFor="loginId"
               className="block text-sm font-medium text-foreground mb-1.5"
             >
-              معرّف الدخول
+              تسجيل الدخول
             </label>
             <input
               id="loginId"
@@ -104,10 +104,22 @@ export default function LoginPage() {
               value={loginId}
               onChange={(e) => setLoginId(e.target.value)}
               disabled={isLoading}
-              placeholder="مثال: OWNER1"
+              placeholder="أدخل معرف الدخول الخاص بك"
               dir="ltr"
               className="w-full h-11 px-4 rounded-lg bg-surface-page border border-foreground-muted/20 text-foreground placeholder:text-foreground-muted/40 focus:border-primary focus:outline-none transition-colors duration-150 disabled:opacity-50"
             />
+          </div>
+
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={() => {
+                alert("إذا نسيت معرف الدخول، يرجى التواصل مع الدعم للحصول على معرف جديد.");
+              }}
+              className="text-sm text-primary hover:text-primary/80 transition-colors"
+            >
+              هل نسيت ال-ID؟
+            </button>
           </div>
 
           <button
@@ -137,10 +149,10 @@ export default function LoginPage() {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                <span>جاري الدخول...</span>
+                <span>جاري تسجيل الدخول...</span>
               </div>
             ) : (
-              "تسجيل الدخول"
+              "دخول"
             )}
           </button>
         </form>
