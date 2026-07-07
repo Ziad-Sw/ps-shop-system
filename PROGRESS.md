@@ -736,3 +736,23 @@
 ✅ حفظ الأسعار في البينغ بونغ يعمل بشكل صحيح
 ✅ البينغ بونغ مفعّل افتراضياً
 
+---
+
+## إصلاح constraint في قاعدة البيانات — المرحلة M: إضافة pingpong إلى station_type check
+
+تم إصلاح CHECK constraint في قاعدة البيانات لقبول pingpong.
+
+**التغييرات:**
+
+1. **إنشاء migration جديد:**
+   - إضافة pingpong إلى pricing_rules station_type check
+   - إضافة pingpong إلى stations station_type check
+   - إسقاط وإعادة إنشاء الـ constraints
+
+**ملفات التنفيذ:**
+- `supabase/migrations/005_add_pingpong_to_station_type_check.sql` — migration جديد
+
+**نتائج الاختبار:**
+✅ Migration تم تشغيله بنجاح
+✅ حفظ أسعار البينغ بونغ يعمل الآن
+
