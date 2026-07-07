@@ -3,7 +3,7 @@ ALTER TABLE public.shops
 ADD COLUMN ps_station_count INTEGER DEFAULT 0,
 ADD COLUMN billiard_table_count INTEGER DEFAULT 0,
 ADD COLUMN pingpong_table_count INTEGER DEFAULT 0,
-ADD COLUMN pingpong_enabled BOOLEAN DEFAULT false;
+ADD COLUMN pingpong_enabled BOOLEAN DEFAULT true;
 
 -- Add comments
 COMMENT ON COLUMN public.shops.ps_station_count IS 'عدد أجهزة البلايستيشن في المحل';

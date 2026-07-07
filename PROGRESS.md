@@ -712,3 +712,27 @@
 ✅ UX Writing محسّن لجميع رسائل الخطأ
 ✅ Migration تم تشغيله بنجاح على قاعدة البيانات
 
+---
+
+## إصلاح مشاكل البينغ بونغ — المرحلة L: إصلاح حفظ الأسعار وتفعيل افتراضي
+
+تم إصلاح مشكلتين في صفحة البينغ بونغ.
+
+**التغييرات:**
+
+1. **إصلاح خطأ حفظ الأسعار:**
+   - تحديث API `/api/pricing-rules/upsert` لقبول station_type = "pingpong"
+   - إضافة "pingpong" إلى validation في API
+
+2. **تغيير القيمة الافتراضية:**
+   - تغيير pingpong_enabled من false إلى true في migration
+   - الآن البينغ بونغ مفعّل افتراضياً في النظام
+
+**ملفات التنفيذ:**
+- `app/api/pricing-rules/upsert/route.ts` — إضافة pingpong إلى validation
+- `supabase/migrations/004_add_station_counts_to_shops.sql` — تغيير القيمة الافتراضية إلى true
+
+**نتائج الاختبار:**
+✅ حفظ الأسعار في البينغ بونغ يعمل بشكل صحيح
+✅ البينغ بونغ مفعّل افتراضياً
+

@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
     // 1. Validate station_type
     if (
       station_type !== "playstation" &&
-      station_type !== "billiard"
+      station_type !== "billiard" &&
+      station_type !== "pingpong"
     ) {
       return NextResponse.json(
         { error: "نوع الجهاز غير صالح." },
