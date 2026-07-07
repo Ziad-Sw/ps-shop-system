@@ -114,7 +114,8 @@ export default function PingpongSettingsForm({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to update pricing");
+        showToast("error", error.error || "حدث خطأ أثناء حفظ السعر");
+        return;
       }
 
       showToast("success", "تم حفظ السعر بنجاح");
@@ -146,7 +147,8 @@ export default function PingpongSettingsForm({
 
       if (!singleResponse.ok) {
         const error = await singleResponse.json();
-        throw new Error(error.error || "Failed to update single pricing");
+        showToast("error", error.error || "حدث خطأ أثناء حفظ الأسعار");
+        return;
       }
 
       // Save multi rate
@@ -162,7 +164,8 @@ export default function PingpongSettingsForm({
 
       if (!multiResponse.ok) {
         const error = await multiResponse.json();
-        throw new Error(error.error || "Failed to update multi pricing");
+        showToast("error", error.error || "حدث خطأ أثناء حفظ الأسعار");
+        return;
       }
 
       showToast("success", "تم حفظ جميع الأسعار بنجاح");
