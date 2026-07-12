@@ -1,0 +1,159 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useToast } from "@/components/ui/toast";
+import { OpenShiftModal } from "./open-shift-modal";
+import { CloseShiftModal } from "./close-shift-modal";
+
+interface Shift {
+  id: string;
+  responsible_name: string;
+  shift_number: number;
+  opened_at: string;
+  status: "open" | "closed";
+}
+
+export function ShiftControl() {
+  const [currentShift, setCurrentShift] = useState<Shift | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
+  const { showToast } = useToast();
+
+  const fetchCurrentShift = async () => {
+    try {
+      const response = await fetch("/api/shifts/current");
+      const data = await response.json();
+      
+      if (response.ok) {
+        setCurrentShift(data.shift);
+      }
+    } catch (error) {
+      console.error("Failed to fetch current shift:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCurrentShift();
+  }, []);
+
+  const handleOpenShift = async (responsibleName: string) => {
+    try {
+      const response = await fetch("/api/shifts/open", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ responsible_name: responsibleName }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        await fetchCurrentShift();
+      } else {
+        showToast("error", data.error || "فشل فتح الوردية");
+      }
+    } catch (error) {
+      console.error("Failed to open shift:", error);
+      throw error;
+    }
+  };
+
+  const handleCloseShift = async (shiftId: string) => {
+    try {
+      const response = await fetch("/api/shifts/close", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shift_id: shiftId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        await fetchCurrentShift();
+      } else {
+        showToast("error", data.error || "فشل إغلاق الوردية");
+      }
+    } catch (error) {
+      console.error("Failed to close shift:", error);
+      throw error;
+    }
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString("ar-EG", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="bg-neutral-800 rounded-lg p-4 border border-neutral-700">
+        <div className="animate-pulse h-6 bg-neutral-700 rounded"></div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="bg-neutral-800 rounded-lg p-4 border border-neutral-700">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            {currentShift ? (
+              <div className="space-y-1">
+                <div className="flex items-center gap-3">
+                  <span className="text-green-400 text-sm font-medium">وردية مفتوحة</span>
+                  <span className="text-neutral-400 text-sm">•</span>
+                  <span className="text-neutral-300 text-sm">
+                    {currentShift.responsible_name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 text-neutral-400 text-sm">
+                  <span>رقم {currentShift.shift_number}</span>
+                  <span>•</span>
+                  <span>من {formatTime(currentShift.opened_at)}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="text-neutral-400 text-sm">لا توجد وردية مفتوحة</div>
+            )}
+          </div>
+
+          <div>
+            {currentShift ? (
+              <button
+                onClick={() => setIsCloseModalOpen(true)}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium"
+              >
+                إنهاء وردية
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+              >
+                فتح وردية
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <OpenShiftModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onOpenShift={handleOpenShift}
+      />
+
+      <CloseShiftModal
+        isOpen={isCloseModalOpen}
+        onClose={() => setIsCloseModalOpen(false)}
+        shift={currentShift}
+        onCloseShift={handleCloseShift}
+      />
+    </>
+  );
+}

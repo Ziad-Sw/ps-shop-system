@@ -25,6 +25,7 @@ export default function ProductsSettingsForm({
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isTogglingId, setIsTogglingId] = useState<string | null>(null);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [editingPrice, setEditingPrice] = useState("");
@@ -101,11 +102,15 @@ export default function ProductsSettingsForm({
     }
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    if (!confirm("هل أنت متأكد من حذف هذا المشروب؟")) {
-      return;
-    }
+  const handleDeleteProduct = (id: string) => {
+    setShowDeleteConfirm(id);
+  };
 
+  const handleDeleteConfirm = async () => {
+    const id = showDeleteConfirm;
+    if (!id) return;
+
+    setShowDeleteConfirm(null);
     setIsDeletingId(id);
     try {
       const response = await fetch(`/api/products/${id}`, {
@@ -125,6 +130,10 @@ export default function ProductsSettingsForm({
     } finally {
       setIsDeletingId(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(null);
   };
 
   const handleToggleActive = async (id: string, isActive: boolean) => {
@@ -340,6 +349,32 @@ export default function ProductsSettingsForm({
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-surface-card rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-foreground-muted/20">
+            <h3 className="text-lg font-semibold text-foreground mb-2">تأكيد الحذف</h3>
+            <p className="text-sm text-foreground-muted mb-6">
+              هل أنت متأكد من حذف هذا المشروب؟ لا يمكن التراجع عن هذا الإجراء.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeleteCancel}
+                className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-card"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="flex-1 min-h-[44px] rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/20"
+              >
+                حذف
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

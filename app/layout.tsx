@@ -12,6 +12,9 @@ const ibmPlexArabic = IBM_Plex_Sans_Arabic({
 export const metadata: Metadata = {
   title: "نظام إدارة محل بلايستيشن",
   description: "نظام إدارة يومي لمحل بلايستيشن — أجهزة، بلياردو، ومشروبات",
+  icons: {
+    icon: "/logo-ps.svg",
+  },
 };
 
 export default function RootLayout({

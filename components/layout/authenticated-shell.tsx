@@ -137,7 +137,10 @@ function AuthenticatedShellContent({
               </div>
             </div>
 
-            <div className="text-lg font-semibold text-foreground">PS-System</div>
+            <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
+              <span>PS-System</span>
+              <img src="/logo-ps.svg" alt="PS-System Logo" className="h-8 w-8" />
+            </div>
           </div>
         </header>
 

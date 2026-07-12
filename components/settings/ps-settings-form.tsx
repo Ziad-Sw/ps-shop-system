@@ -48,6 +48,7 @@ export default function PsSettingsForm({
 
       if (!response.ok) {
         const error = await response.json();
+        console.error("API Error:", error);
         showToast("error", error.error || "حدث خطأ أثناء تحديث الإعدادات");
         return;
       }
