@@ -15,9 +15,10 @@ interface ShopData {
 
 interface SettingsFormProps {
   initialShopData: ShopData;
+  canEdit?: boolean;
 }
 
-export default function SettingsForm({ initialShopData }: SettingsFormProps) {
+export default function SettingsForm({ initialShopData, canEdit = true }: SettingsFormProps) {
   const { showToast } = useToast();
   const [shopName, setShopName] = useState(initialShopData.name);
   const [ownerName, setOwnerName] = useState(initialShopData.owner_name || "");
@@ -92,13 +93,14 @@ export default function SettingsForm({ initialShopData }: SettingsFormProps) {
             type="text"
             value={shopName}
             onChange={(e) => setShopName(e.target.value)}
-            className="w-full min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            disabled={!canEdit}
+            className="w-full min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder="مثال: محل البلايستيشن"
           />
 
           <button
             onClick={handleSaveShopName}
-            disabled={isSavingShopName || shopName === initialShopData.name}
+            disabled={!canEdit || isSavingShopName || shopName === initialShopData.name}
             className="min-h-[44px] w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSavingShopName ? "جاري الحفظ..." : "حفظ اسم المحل"}
@@ -118,13 +120,14 @@ export default function SettingsForm({ initialShopData }: SettingsFormProps) {
             type="text"
             value={ownerName}
             onChange={(e) => setOwnerName(e.target.value)}
-            className="w-full min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            disabled={!canEdit}
+            className="w-full min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder="مثال: محمد أحمد"
           />
 
           <button
             onClick={handleSaveOwnerName}
-            disabled={isSavingOwnerName || ownerName === (initialShopData.owner_name || "")}
+            disabled={!canEdit || isSavingOwnerName || ownerName === (initialShopData.owner_name || "")}
             className="min-h-[44px] w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSavingOwnerName ? "جاري الحفظ..." : "حفظ اسم صاحب المحل"}
@@ -176,6 +179,18 @@ export default function SettingsForm({ initialShopData }: SettingsFormProps) {
         <h2 className="text-lg font-semibold text-foreground">المشروبات</h2>
         <p className="mt-1 text-sm text-foreground-muted">
           إضافة وتعديل وحذف المشروبات وأسعارها
+        </p>
+        <div className="mt-3 text-sm text-primary">إعدادات ←</div>
+      </Link>
+
+      {/* Team Management Card */}
+      <Link
+        href="/settings/team"
+        className="block rounded-xl bg-surface-card p-6 transition-colors hover:border-primary/50 hover:bg-surface-card/90 border border-transparent"
+      >
+        <h2 className="text-lg font-semibold text-foreground">الفريق والصلاحيات</h2>
+        <p className="mt-1 text-sm text-foreground-muted">
+          إضافة وتعديل وحذف أعضاء الفريق وتحديد صلاحيات كل عضو
         </p>
         <div className="mt-3 text-sm text-primary">إعدادات ←</div>
       </Link>

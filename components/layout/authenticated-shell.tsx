@@ -7,6 +7,7 @@ import { ToastProvider, useToast } from "@/components/ui/toast";
 interface AuthenticatedUser {
   login_id: string;
   display_name: string | null;
+  role: "owner" | "staff";
 }
 
 interface AuthenticatedShellProps {
@@ -63,7 +64,9 @@ function AuthenticatedShellContent({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const displayName = ownerName || "صاحب المحل";
+  const displayName = user?.role === "owner"
+    ? ownerName || "صاحب المحل"
+    : user?.display_name || ownerName || "صاحب المحل";
   const shopLabel = shopName;
 
   return (
@@ -111,7 +114,16 @@ function AuthenticatedShellContent({
                     className="absolute right-0 top-full mt-2 min-w-[240px] rounded-xl border border-foreground-muted/20 bg-surface-card p-2 shadow-xl"
                   >
                     <div className="rounded-lg px-3 py-3 text-right">
-                      <p className="font-semibold text-foreground">{displayName}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-foreground">{displayName}</p>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          user?.role === "owner"
+                            ? "bg-yellow-500/10 text-yellow-400"
+                            : "bg-blue-500/10 text-blue-400"
+                        }`}>
+                          {user?.role === "owner" ? "مدير" : "موظف"}
+                        </span>
+                      </div>
                       <p className="mt-1 text-sm text-foreground-muted">{shopLabel}</p>
                     </div>
 
@@ -123,6 +135,24 @@ function AuthenticatedShellContent({
                       >
                         الإعدادات
                       </Link>
+
+                      <Link
+                        href="/archive"
+                        className="min-h-[44px] rounded-lg px-3 py-3 text-sm text-foreground transition-colors hover:bg-primary/10"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        أرشيف الورديات
+                      </Link>
+
+                      <Link
+                        href="/expenses"
+                        className="min-h-[44px] rounded-lg px-3 py-3 text-sm text-foreground transition-colors hover:bg-primary/10"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        المصاريف
+                      </Link>
+
+                      <hr className="border-foreground-muted/10 my-1" />
 
                       <button
                         type="button"

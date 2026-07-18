@@ -1,0 +1,570 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Station, Session, Product } from "@/types/database";
+import type { BillingMode } from "@/types/database";
+import { ReceiptPopup } from "./receipt-popup";
+import { useToast } from "@/components/ui/toast";
+
+interface SessionPopupProps {
+  station: Station;
+  activeSession: Session | null;
+  onClose: () => void;
+  onSessionStarted: () => void;
+  onSessionClosed: () => void;
+}
+
+export function SessionPopup({
+  station,
+  activeSession,
+  onClose,
+  onSessionStarted,
+  onSessionClosed,
+}: SessionPopupProps) {
+  const { showToast } = useToast();
+  const [mode, setMode] = useState<"single" | "multi">("single");
+  const [billingMode, setBillingMode] = useState<BillingMode>("time");
+  const [isStarting, setIsStarting] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [removingItemId, setRemovingItemId] = useState<string | null>(null);
+  const [elapsedTime, setElapsedTime] = useState<string>("");
+  const [saleItems, setSaleItems] = useState<
+    Array<{
+      id: string;
+      product_name: string;
+      quantity: number;
+      unit_price: number;
+      total_price: number;
+    }>
+  >([]);
+  const [gamesCount, setGamesCount] = useState<number>(
+    activeSession?.games_count ?? 0
+  );
+  const [gamesCountInput, setGamesCountInput] = useState<number>(
+    activeSession?.games_count ?? 0
+  );
+
+  const activeBillingMode = activeSession?.billing_mode ?? billingMode;
+  const isGameBased = activeBillingMode === "games";
+
+  // Fetch products on mount
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  // Sync gamesCount and fetch existing sale items when activeSession changes
+  useEffect(() => {
+    if (activeSession) {
+      const g = activeSession.games_count ?? 0;
+      setGamesCount(g);
+      setGamesCountInput(g);
+      fetchSaleItems(activeSession.id);
+    } else {
+      setSaleItems([]);
+    }
+  }, [activeSession]);
+
+  // Update elapsed time for active time-based sessions
+  useEffect(() => {
+    if (!activeSession || activeSession.billing_mode !== "time") {
+      setElapsedTime("");
+      return;
+    }
+
+    const updateElapsedTime = () => {
+      const startTime = new Date(activeSession.start_time);
+      const now = new Date();
+      const diffMs = now.getTime() - startTime.getTime();
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+      const hours = Math.floor(diffMinutes / 60);
+      const minutes = diffMinutes % 60;
+
+      if (hours > 0) {
+        setElapsedTime(`${hours}س ${minutes}د`);
+      } else {
+        setElapsedTime(`${minutes}د`);
+      }
+    };
+
+    updateElapsedTime();
+    const interval = setInterval(updateElapsedTime, 1000);
+
+    return () => clearInterval(interval);
+  }, [activeSession]);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch("/api/products");
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(data.products || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+    }
+  };
+
+  const fetchSaleItems = async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/sessions/sale-items?session_id=${sessionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSaleItems(data.items || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch sale items:", error);
+    }
+  };
+
+  const handleStartSession = async () => {
+    setIsStarting(true);
+    try {
+      const body: Record<string, unknown> = {
+        station_id: station.id,
+        mode: mode,
+        billing_mode: billingMode,
+      };
+      if (billingMode === "games") {
+        body.games_count = gamesCount;
+      }
+
+      const response = await fetch("/api/sessions/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showToast("success", "تم بدء الجلسة بنجاح");
+        onSessionStarted();
+      } else {
+        showToast("error", data.error || "فشل بدء الجلسة");
+      }
+    } catch (error) {
+      console.error("Failed to start session:", error);
+      showToast("error", "حدث خطأ أثناء بدء الجلسة");
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+  const handleRemoveProduct = async (saleItemId: string) => {
+    setRemovingItemId(saleItemId);
+    try {
+      const response = await fetch(
+        `/api/sessions/remove-product?sale_item_id=${saleItemId}`,
+        { method: "DELETE" }
+      );
+
+      if (response.ok) {
+        setSaleItems((prev) => prev.filter((item) => item.id !== saleItemId));
+        showToast("success", "تم حذف المشروب بنجاح");
+      } else {
+        const data = await response.json();
+        showToast("error", data.error || "فشل حذف المشروب");
+      }
+    } catch (error) {
+      console.error("Failed to remove product:", error);
+      showToast("error", "حدث خطأ أثناء حذف المشروب");
+    } finally {
+      setRemovingItemId(null);
+    }
+  };
+
+  const handleAddProduct = async () => {
+    if (!selectedProductId || !activeSession) return;
+
+    setIsAddingProduct(true);
+    try {
+      const selectedProduct = products.find((p) => p.id === selectedProductId);
+      const response = await fetch("/api/sessions/add-product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: activeSession.id,
+          product_id: selectedProductId,
+          quantity: selectedQuantity,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSaleItems((prev) => [
+          ...prev,
+          {
+            id: data.sale_item.id,
+            product_name: selectedProduct?.name ?? "",
+            quantity: selectedQuantity,
+            unit_price: Number(data.sale_item.unit_price),
+            total_price: Number(data.sale_item.total_price),
+          },
+        ]);
+        setSelectedProductId("");
+        setSelectedQuantity(1);
+      } else {
+        showToast("error", data.error || "فشل إضافة المشروب");
+      }
+    } catch (error) {
+      console.error("Failed to add product:", error);
+      showToast("error", "حدث خطأ أثناء إضافة المشروب");
+    } finally {
+      setIsAddingProduct(false);
+    }
+  };
+
+  const handleSaveGames = async () => {
+    if (!activeSession) return;
+
+    try {
+      const response = await fetch("/api/sessions/update-games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: activeSession.id,
+          games_count: gamesCountInput,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setGamesCount(gamesCountInput);
+        showToast("success", "تم تحديث عدد الجيمات");
+      } else {
+        showToast("error", data.error || "فشل تحديث عدد الجيمات");
+      }
+    } catch (error) {
+      console.error("Failed to update games count:", error);
+      showToast("error", "حدث خطأ أثناء تحديث عدد الجيمات");
+    }
+  };
+
+  const hasGamesChanged = gamesCountInput !== gamesCount;
+
+  const handlePreviewClose = async () => {
+    if (!activeSession) return;
+
+    try {
+      const response = await fetch("/api/sessions/preview-close", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: activeSession.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setShowReceipt(true);
+      } else {
+        showToast("error", data.error || "فشل حساب الإيصال");
+      }
+    } catch (error) {
+      console.error("Failed to preview close:", error);
+      showToast("error", "حدث خطأ أثناء حساب الإيصال");
+    }
+  };
+
+  const isAvailable = !activeSession;
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div
+          className="w-full max-w-md rounded-xl bg-surface-card p-6 shadow-none"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-foreground">
+              {isAvailable ? "بدء جلسة جديدة" : "الجلسة الحالية"}
+            </h2>
+            <button
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground-muted hover:bg-surface-page hover:text-foreground"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Station Info */}
+          <div className="mb-6 rounded-lg bg-surface-page/50 p-4">
+            <div className="text-sm text-foreground-muted">الجهاز</div>
+            <div className="mt-1 text-lg font-semibold text-foreground">{station.name}</div>
+
+            {!isAvailable && (
+              <>
+                {isGameBased ? (
+                  <div className="mt-3 text-sm text-green-400">
+                    عدد الجيمات: {gamesCount}
+                  </div>
+                ) : (
+                  elapsedTime && (
+                    <div className="mt-3 flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                      <span className="text-sm text-green-400">شغال من {elapsedTime}</span>
+                    </div>
+                  )
+                )}
+              </>
+            )}
+          </div>
+
+          {isAvailable ? (
+            /* Available Station - Start Session */
+            <div className="space-y-4">
+              {/* Billing Mode Toggle */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  طريقة الفوترة
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setBillingMode("time")}
+                    className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                      billingMode === "time"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                    }`}
+                  >
+                    بالوقت
+                  </button>
+                  <button
+                    onClick={() => setBillingMode("games")}
+                    className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                      billingMode === "games"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                    }`}
+                  >
+                    بعدد الجيمات
+                  </button>
+                </div>
+              </div>
+
+              {/* Mode Selection */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  وضع اللعب
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setMode("single")}
+                    className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                      mode === "single"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                    }`}
+                  >
+                    فردي
+                  </button>
+                  <button
+                    onClick={() => setMode("multi")}
+                    className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                      mode === "multi"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                    }`}
+                  >
+                    مالتي
+                  </button>
+                </div>
+              </div>
+
+              {/* Games Count (only for games billing mode) */}
+              {billingMode === "games" && (
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">
+                    عدد الجيمات
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={gamesCount}
+                    onChange={(e) => setGamesCount(Math.max(0, Number(e.target.value)))}
+                    className="w-full rounded-lg bg-surface-page px-3 py-2 text-foreground outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              )}
+
+              <button
+                onClick={handleStartSession}
+                disabled={isStarting}
+                className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isStarting ? "جاري البدء..." : "ابدأ الجلسة"}
+              </button>
+            </div>
+          ) : (
+            /* Active Session - Add Products / End Session */
+            <div className="space-y-4">
+              {/* Games Count (Game-based only) */}
+              {isGameBased && (
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">
+                    عدد الجيمات
+                  </label>
+                  <div className="flex gap-3">
+                    <input
+                      type="number"
+                      min="0"
+                      value={gamesCountInput}
+                      onChange={(e) => setGamesCountInput(Math.max(0, Number(e.target.value)))}
+                      className="flex-1 rounded-lg bg-surface-page px-3 py-2 text-foreground outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <button
+                      onClick={handleSaveGames}
+                      disabled={!hasGamesChanged}
+                      className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      حفظ
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Add Product Section */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  إضافة مشروب
+                </label>
+                <div className="space-y-3">
+                  <div className="relative">
+                    <select
+                      value={selectedProductId}
+                      onChange={(e) => setSelectedProductId(e.target.value)}
+                      className="w-full appearance-none rounded-lg bg-surface-page px-3 py-2 text-foreground outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="">اختر مشروب</option>
+                      {products.map((product) => (
+                        <option key={product.id} value={product.id}>
+                          {product.name} - {product.price} ج.م
+                        </option>
+                      ))}
+                    </select>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      value={selectedQuantity}
+                      onChange={(e) => setSelectedQuantity(Number(e.target.value))}
+                      className="w-24 rounded-lg bg-surface-page px-3 py-2 text-foreground outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <button
+                      onClick={handleAddProduct}
+                      disabled={!selectedProductId || isAddingProduct}
+                      className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isAddingProduct ? "جاري الإضافة..." : "إضافة"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Added Products List */}
+              {saleItems.length > 0 && (
+                <div className="rounded-lg bg-surface-page/50 p-3">
+                  <div className="mb-2 text-sm font-medium text-foreground">المشروبات المضافة</div>
+                  <div className="space-y-1.5">
+                    {saleItems.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between text-sm">
+                        <span className="text-foreground-muted">
+                          {item.product_name} × {item.quantity}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-foreground">{item.total_price.toFixed(2)} ج.م</span>
+                          <button
+                            onClick={() => handleRemoveProduct(item.id)}
+                            disabled={removingItemId === item.id}
+                            className="flex h-5 w-5 items-center justify-center rounded text-red-400 hover:bg-red-500/10 disabled:opacity-30"
+                          >
+                            {removingItemId === item.id ? (
+                              <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                              </svg>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M18 6 6 18" />
+                                <path d="m6 6 12 12" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 flex justify-between border-t border-foreground-muted/20 pt-2 text-sm font-medium">
+                    <span className="text-foreground-muted">إجمالي المشروبات</span>
+                    <span className="text-foreground">
+                      {saleItems.reduce((sum, item) => sum + item.total_price, 0).toFixed(2)} ج.م
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div className="border-t border-foreground-muted/20 pt-4">
+                <button
+                  onClick={handlePreviewClose}
+                  className="w-full rounded-lg bg-red-500 px-4 py-3 text-sm font-medium text-white hover:bg-red-600"
+                >
+                  {isGameBased ? "إنهاء الجيمات" : "إنهاء الوقت"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Receipt Popup */}
+      {showReceipt && activeSession && (
+        <ReceiptPopup
+          session={activeSession}
+          station={station}
+          onClose={() => setShowReceipt(false)}
+          onConfirm={() => {
+            setShowReceipt(false);
+            onSessionClosed();
+          }}
+        />
+      )}
+    </>
+  );
+}

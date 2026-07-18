@@ -15,28 +15,34 @@ interface BilliardSettingsFormProps {
   initialBilliardEnabled: boolean;
   initialPricingRules: PricingRule[];
   initialTableCount: number;
+  canEdit?: boolean;
 }
 
 export default function BilliardSettingsForm({
   initialBilliardEnabled,
   initialPricingRules,
   initialTableCount,
+  canEdit = true,
 }: BilliardSettingsFormProps) {
   const { showToast } = useToast();
   const [billiardEnabled, setBilliardEnabled] = useState(
     initialBilliardEnabled
   );
-  const [singleRate, setSingleRate] = useState(
-    initialPricingRules.find((r) => r.mode === "single")?.rate || 0
+  const [singleHourRate, setSingleHourRate] = useState(
+    initialPricingRules.find((r) => r.mode === "single" && r.unit === "hour")?.rate || 0
   );
-  const [multiRate, setMultiRate] = useState(
-    initialPricingRules.find((r) => r.mode === "multi")?.rate || 0
+  const [multiHourRate, setMultiHourRate] = useState(
+    initialPricingRules.find((r) => r.mode === "multi" && r.unit === "hour")?.rate || 0
+  );
+  const [singleGameRate, setSingleGameRate] = useState(
+    initialPricingRules.find((r) => r.mode === "single" && r.unit === "game")?.rate || 0
+  );
+  const [multiGameRate, setMultiGameRate] = useState(
+    initialPricingRules.find((r) => r.mode === "multi" && r.unit === "game")?.rate || 0
   );
   const [tableCount, setTableCount] = useState(initialTableCount);
   const [isSavingToggle, setIsSavingToggle] = useState(false);
-  const [isSavingSingle, setIsSavingSingle] = useState(false);
-  const [isSavingMulti, setIsSavingMulti] = useState(false);
-  const [isSavingAll, setIsSavingAll] = useState(false);
+  const [savingMode, setSavingMode] = useState<string | null>(null);
   const [isSavingTableCount, setIsSavingTableCount] = useState(false);
 
   const handleSaveToggle = async () => {
@@ -95,12 +101,9 @@ export default function BilliardSettingsForm({
     }
   };
 
-  const handleSavePricing = async (mode: "single" | "multi", rate: number) => {
-    if (mode === "single") {
-      setIsSavingSingle(true);
-    } else {
-      setIsSavingMulti(true);
-    }
+  const handleSavePricing = async (mode: "single" | "multi", unit: "hour" | "game", rate: number) => {
+    const key = `${mode}_${unit}`;
+    setSavingMode(key);
     try {
       const response = await fetch("/api/pricing-rules/upsert", {
         method: "POST",
@@ -108,6 +111,7 @@ export default function BilliardSettingsForm({
         body: JSON.stringify({
           station_type: "billiard",
           mode,
+          unit,
           rate,
         }),
       });
@@ -120,57 +124,10 @@ export default function BilliardSettingsForm({
       showToast("success", "تم حفظ السعر بنجاح");
     } catch (err) {
       console.error("Error saving pricing:", err);
-      showToast("error", "حدث خطأ أثناء حفظ السعر");
+      const errorMessage = err instanceof Error ? err.message : "حدث خطأ أثناء حفظ السعر";
+      showToast("error", errorMessage);
     } finally {
-      if (mode === "single") {
-        setIsSavingSingle(false);
-      } else {
-        setIsSavingMulti(false);
-      }
-    }
-  };
-
-  const handleSaveAllPricing = async () => {
-    setIsSavingAll(true);
-    try {
-      // Save single rate
-      const singleResponse = await fetch("/api/pricing-rules/upsert", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          station_type: "billiard",
-          mode: "single",
-          rate: singleRate,
-        }),
-      });
-
-      if (!singleResponse.ok) {
-        const error = await singleResponse.json();
-        throw new Error(error.error || "Failed to update single pricing");
-      }
-
-      // Save multi rate
-      const multiResponse = await fetch("/api/pricing-rules/upsert", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          station_type: "billiard",
-          mode: "multi",
-          rate: multiRate,
-        }),
-      });
-
-      if (!multiResponse.ok) {
-        const error = await multiResponse.json();
-        throw new Error(error.error || "Failed to update multi pricing");
-      }
-
-      showToast("success", "تم حفظ جميع الأسعار بنجاح");
-    } catch (err) {
-      console.error("Error saving all pricing:", err);
-      showToast("error", "حدث خطأ أثناء حفظ الأسعار");
-    } finally {
-      setIsSavingAll(false);
+      setSavingMode(null);
     }
   };
 
@@ -186,7 +143,7 @@ export default function BilliardSettingsForm({
         <div className="mt-4 flex items-center gap-4">
           <button
             onClick={handleSaveToggle}
-            disabled={isSavingToggle}
+            disabled={!canEdit || isSavingToggle}
             className={`min-h-[44px] rounded-lg px-6 py-2 text-sm font-medium transition-colors ${
               billiardEnabled
                 ? "bg-primary text-surface-page hover:bg-primary/90"
@@ -216,12 +173,13 @@ export default function BilliardSettingsForm({
             step="1"
             value={tableCount}
             onChange={(e) => setTableCount(parseInt(e.target.value) || 0)}
-            className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder="0"
+            disabled={!canEdit}
           />
           <button
             onClick={handleSaveTableCount}
-            disabled={isSavingTableCount}
+            disabled={!canEdit || isSavingTableCount}
             className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSavingTableCount ? "جاري..." : "حفظ"}
@@ -233,69 +191,120 @@ export default function BilliardSettingsForm({
       <div className="rounded-xl bg-surface-card p-6">
         <h2 className="text-lg font-semibold text-foreground">أسعار البلياردو</h2>
         <p className="mt-1 text-sm text-foreground-muted">
-          الأسعار بالجيم لكل نوع لعب
+          أسعار اللعب بالساعة وبعدد الجيمات لكل نوع لعب
         </p>
 
-        <div className="mt-4 space-y-4">
-          {/* Single Player */}
+        <div className="mt-6 space-y-6">
+          {/* Hourly Pricing */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              لعب فردي (جنيه/جيم)
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={singleRate}
-                onChange={(e) => setSingleRate(parseFloat(e.target.value) || 0)}
-                className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="0.00"
-              />
-              <button
-                onClick={() => handleSavePricing("single", singleRate)}
-                disabled={isSavingSingle}
-                className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSavingSingle ? "جاري..." : "حفظ"}
-              </button>
+            <h3 className="text-md font-medium text-foreground mb-3">التسعير بالساعة</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  لعب فردي (جنيه/ساعة)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={singleHourRate}
+                    onChange={(e) => setSingleHourRate(parseFloat(e.target.value) || 0)}
+                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                    placeholder="0.00"
+                    disabled={!canEdit}
+                  />
+                  <button
+                    onClick={() => handleSavePricing("single", "hour", singleHourRate)}
+                    disabled={!canEdit || savingMode === "single_hour"}
+                    className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {savingMode === "single_hour" ? "جاري..." : "حفظ"}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  لعب مالتي (جنيه/ساعة)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={multiHourRate}
+                    onChange={(e) => setMultiHourRate(parseFloat(e.target.value) || 0)}
+                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                    placeholder="0.00"
+                    disabled={!canEdit}
+                  />
+                  <button
+                    onClick={() => handleSavePricing("multi", "hour", multiHourRate)}
+                    disabled={!canEdit || savingMode === "multi_hour"}
+                    className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {savingMode === "multi_hour" ? "جاري..." : "حفظ"}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Multi Player */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              لعب مالتي (جنيه/جيم)
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={multiRate}
-                onChange={(e) => setMultiRate(parseFloat(e.target.value) || 0)}
-                className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="0.00"
-              />
-              <button
-                onClick={() => handleSavePricing("multi", multiRate)}
-                disabled={isSavingMulti}
-                className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSavingMulti ? "جاري..." : "حفظ"}
-              </button>
-            </div>
-          </div>
+          {/* Per-Game Pricing */}
+          <div className="border-t border-foreground-muted/20 pt-6">
+            <h3 className="text-md font-medium text-foreground mb-3">التسعير بعدد الجيمات</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  لعب فردي (جنيه/جيم)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={singleGameRate}
+                    onChange={(e) => setSingleGameRate(parseFloat(e.target.value) || 0)}
+                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                    placeholder="0.00"
+                    disabled={!canEdit}
+                  />
+                  <button
+                    onClick={() => handleSavePricing("single", "game", singleGameRate)}
+                    disabled={!canEdit || savingMode === "single_game"}
+                    className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {savingMode === "single_game" ? "جاري..." : "حفظ"}
+                  </button>
+                </div>
+              </div>
 
-          {/* Save All Button */}
-          <div className="pt-4 border-t border-foreground-muted/20">
-            <button
-              onClick={handleSaveAllPricing}
-              disabled={isSavingAll}
-              className="w-full min-h-[44px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSavingAll ? "جاري حفظ جميع الأسعار..." : "حفظ جميع الأسعار"}
-            </button>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  لعب مالتي (جنيه/جيم)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={multiGameRate}
+                    onChange={(e) => setMultiGameRate(parseFloat(e.target.value) || 0)}
+                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                    placeholder="0.00"
+                    disabled={!canEdit}
+                  />
+                  <button
+                    onClick={() => handleSavePricing("multi", "game", multiGameRate)}
+                    disabled={!canEdit || savingMode === "multi_game"}
+                    className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {savingMode === "multi_game" ? "جاري..." : "حفظ"}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

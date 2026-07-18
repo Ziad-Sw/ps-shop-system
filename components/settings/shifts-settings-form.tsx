@@ -5,10 +5,12 @@ import { useToast } from "@/components/ui/toast";
 
 interface ShiftsSettingsFormProps {
   initialShiftsPerDay: number;
+  canEdit?: boolean;
 }
 
 export default function ShiftsSettingsForm({
   initialShiftsPerDay,
+  canEdit = true,
 }: ShiftsSettingsFormProps) {
   const { showToast } = useToast();
   const [shiftsPerDay, setShiftsPerDay] = useState(initialShiftsPerDay);
@@ -61,11 +63,12 @@ export default function ShiftsSettingsForm({
               onChange={(e) =>
                 setShiftsPerDay(parseInt(e.target.value) || 1)
               }
-              className="w-24 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              disabled={!canEdit}
+              className="w-24 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
               onClick={handleSave}
-              disabled={isSaving || shiftsPerDay === initialShiftsPerDay}
+              disabled={!canEdit || isSaving || shiftsPerDay === initialShiftsPerDay}
               className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? "جاري الحفظ..." : "حفظ"}
@@ -77,7 +80,6 @@ export default function ShiftsSettingsForm({
             <ul className="mt-1 list-disc list-inside space-y-1">
               <li>الحد الأدنى: وردية واحدة يوميًا</li>
               <li>الحد الأقصى: 4 ورديات يوميًا</li>
-              <li>لا يمكن تعديل هذا الإعداد أثناء وجود وردية مفتوحة</li>
             </ul>
           </div>
         </div>

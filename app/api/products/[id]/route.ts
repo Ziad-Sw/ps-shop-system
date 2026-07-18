@@ -2,14 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getShopIdFromRequest } from "@/lib/auth/require-shop";
-import { hasOpenShift } from "@/lib/shifts/check-open-shift";
+import { assertPermission, PermissionError, getUserIdFromRequest } from "@/lib/auth/permissions";
 
 /**
  * PATCH  /api/products/[id]  — edit a product (name/price/is_active).
  * DELETE /api/products/[id]  — soft delete (sets is_active = false).
  *
- * Both are locked while a shift is open, and both verify the product
- * belongs to the authenticated shop before mutating.
+ * Both verify the product belongs to the authenticated shop before mutating.
  */
 async function getProductForShop(
   supabase: ReturnType<typeof createAdminClient>,
@@ -34,6 +33,12 @@ export async function PATCH(
     if (!shopId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const userId = await getUserIdFromRequest();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    await assertPermission(userId, "manage_settings");
 
     const { id } = await params;
     const body = await request.json();
@@ -69,16 +74,6 @@ export async function PATCH(
       );
     }
 
-    if (await hasOpenShift(shopId)) {
-      return NextResponse.json(
-        {
-          error:
-            "لا يمكن تعديل المشروبات أثناء وجود وردية مفتوحة. أغلق الوردية أولًا.",
-        },
-        { status: 409 }
-      );
-    }
-
     const supabase = createAdminClient();
     const { data: existing, error: findError } = await getProductForShop(
       supabase,
@@ -107,6 +102,9 @@ export async function PATCH(
 
     return NextResponse.json({ ok: true, product: data });
   } catch (err) {
+    if (err instanceof PermissionError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error("Error updating product:", err);
     return NextResponse.json(
       { error: "Internal server error" },
@@ -125,17 +123,13 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
-
-    if (await hasOpenShift(shopId)) {
-      return NextResponse.json(
-        {
-          error:
-            "لا يمكن حذف المشروبات أثناء وجود وردية مفتوحة. أغلق الوردية أولًا.",
-        },
-        { status: 409 }
-      );
+    const userId = await getUserIdFromRequest();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    await assertPermission(userId, "manage_settings");
+
+    const { id } = await params;
 
     const supabase = createAdminClient();
     const { data: existing, error: findError } = await getProductForShop(
@@ -147,23 +141,58 @@ export async function DELETE(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Soft delete — preserve rows for historical sale_items integrity.
-    const { error } = await supabase
-      .from("products")
-      .update({ is_active: false })
-      .eq("id", id)
+    // Count sale_items linked to this product to decide delete strategy
+    const { count, error: countError } = await supabase
+      .from("sale_items")
+      .select("*", { count: "exact", head: true })
+      .eq("product_id", id)
       .eq("shop_id", shopId);
 
-    if (error) {
-      console.error("product soft-delete failed:", error);
+    if (countError) {
+      console.error("Failed to count sale items:", countError);
       return NextResponse.json(
-        { error: "Failed to delete product" },
+        { error: "Failed to check product usage" },
         { status: 500 }
       );
     }
 
+    if (count !== null && count === 0) {
+      // Hard delete — no historical data references this product
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .eq("id", id)
+        .eq("shop_id", shopId);
+
+      if (error) {
+        console.error("product hard-delete failed:", error);
+        return NextResponse.json(
+          { error: "Failed to delete product" },
+          { status: 500 }
+        );
+      }
+    } else {
+      // Soft delete — preserve rows for historical sale_items integrity
+      const { error } = await supabase
+        .from("products")
+        .update({ is_active: false })
+        .eq("id", id)
+        .eq("shop_id", shopId);
+
+      if (error) {
+        console.error("product soft-delete failed:", error);
+        return NextResponse.json(
+          { error: "Failed to delete product" },
+          { status: 500 }
+        );
+      }
+    }
+
     return NextResponse.json({ ok: true });
   } catch (err) {
+    if (err instanceof PermissionError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error("Error deleting product:", err);
     return NextResponse.json(
       { error: "Internal server error" },

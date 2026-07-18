@@ -7,6 +7,7 @@ import {
   verifySessionCookieValue,
 } from "@/lib/auth/session";
 import SettingsForm from "@/components/settings/settings-form";
+import { getUserPermissions } from "@/lib/auth/permissions";
 
 async function getCurrentUser() {
   const cookieStore = await cookies();
@@ -24,7 +25,7 @@ async function getCurrentUser() {
   const supabase = createAdminClient();
   const { data: user, error } = await supabase
     .from("users")
-    .select("login_id, display_name, shop_id")
+    .select("id, login_id, display_name, role, shop_id")
     .eq("id", session.user_id)
     .limit(1)
     .maybeSingle();
@@ -98,6 +99,9 @@ export default async function SettingsPage() {
     return <div>خطأ: لم يتم العثور على بيانات المحل. يرجى التواصل مع الدعم.</div>;
   }
 
+  const userPerms = await getUserPermissions(user.id);
+  const canEdit = userPerms?.role === "owner" || userPerms?.permissions?.manage_settings === true;
+
   return (
     <AuthenticatedShell user={user} shopName={shopName} ownerName={ownerName}>
       <div className="space-y-6">
@@ -106,7 +110,7 @@ export default async function SettingsPage() {
           <p className="mt-2 text-foreground-muted">إدارة إعدادات المحل</p>
         </div>
 
-        <SettingsForm initialShopData={shopData} />
+        <SettingsForm initialShopData={shopData} canEdit={canEdit} />
       </div>
     </AuthenticatedShell>
   );

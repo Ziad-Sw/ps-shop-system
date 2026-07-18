@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getShopIdFromRequest } from "@/lib/auth/require-shop";
+import { assertPermission, PermissionError, getUserIdFromRequest } from "@/lib/auth/permissions";
 
 /**
  * POST /api/shifts/close — closes an open shift.
@@ -21,6 +22,12 @@ export async function POST(request: NextRequest) {
     if (!shopId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const userId = await getUserIdFromRequest();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    await assertPermission(userId, "manage_shifts");
 
     const body = await request.json();
     const { shift_id } = body ?? {};
@@ -104,6 +111,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, shift: updatedShift });
   } catch (err) {
+    if (err instanceof PermissionError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error("Error closing shift:", err);
     return NextResponse.json(
       { error: "Internal server error" },

@@ -13,6 +13,7 @@ export type {
   StationType,
   PricingMode,
   PricingUnit,
+  BillingMode,
   SessionStatus,
   ShiftStatus,
   StaffPermissions,

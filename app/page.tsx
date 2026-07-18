@@ -3,7 +3,9 @@ import { cookies } from "next/headers";
 
 import AuthenticatedShell from "@/components/layout/authenticated-shell";
 import { ShiftControl } from "@/components/shifts/shift-control";
+import { StationsGrid } from "@/components/sessions/stations-grid";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getUserPermissions } from "@/lib/auth/permissions";
 import {
   SESSION_COOKIE_NAME,
   verifySessionCookieValue,
@@ -25,7 +27,7 @@ async function getCurrentUser() {
   const supabase = createAdminClient();
   const { data: user, error } = await supabase
     .from("users")
-    .select("login_id, display_name, shop_id")
+    .select("id, login_id, display_name, role, shop_id")
     .eq("id", session.user_id)
     .limit(1)
     .maybeSingle();
@@ -75,35 +77,41 @@ export default async function Home() {
   const ownerName = user ? await getOwnerName(user.shop_id) : null;
 
   const title = user
-    ? `مرحبًا ${user.display_name || user.login_id}`
+    ? `مرحبًا ${user.display_name || "صاحب المحل"}`
     : "مرحبًا بك في نظام إدارة المحل";
   const subtitle = user
-    ? `تم تسجيل الدخول كـ ${user.login_id}`
+    ? `تم تسجيل الدخول بنجاح`
     : "يجب أن تقودك هذه الصفحة بعد تسجيل دخول ناجح إلى النظام.";
 
+  const userPerms = user ? await getUserPermissions(user.id) : null;
+  const canManageSessions = userPerms?.role === "owner" || userPerms?.permissions?.manage_sessions === true;
+  const canManageShifts = userPerms?.role === "owner" || userPerms?.permissions?.manage_shifts === true;
+
   const content = (
-    <div className="flex flex-1 flex-col items-center justify-center px-6 py-16">
-      <div className="w-full max-w-lg space-y-6">
-        <ShiftControl />
+    <div className="flex flex-1 flex-col px-6 py-6">
+      <div className="space-y-6">
+        <ShiftControl canManageShifts={canManageShifts} />
         
-        <div className="rounded-xl bg-surface-card p-8 shadow-none">
-          <p className="text-sm text-foreground-muted">نظام إدارة المحل</p>
-          <h1 className="mt-2 text-2xl font-semibold text-foreground">{title}</h1>
-          <p className="mt-4 text-foreground-muted">{subtitle}</p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            {user ? null : (
+        {user ? (
+          <StationsGrid shopId={user.shop_id} canManageSessions={canManageSessions} />
+        ) : (
+          <div className="rounded-xl bg-surface-card p-8 shadow-none">
+            <p className="text-sm text-foreground-muted">نظام إدارة المحل</p>
+            <h1 className="mt-2 text-2xl font-semibold text-foreground">{title}</h1>
+            <p className="mt-4 text-foreground-muted">{subtitle}</p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/login"
                 className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-6 text-sm font-medium text-surface-page"
               >
                 الانتقال إلى تسجيل الدخول
               </Link>
-            )}
-            <span className="inline-flex h-11 items-center justify-center rounded-lg border border-foreground-muted/30 px-6 text-sm text-foreground-muted">
-              Dark mode فقط
-            </span>
+              <span className="inline-flex h-11 items-center justify-center rounded-lg border border-foreground-muted/30 px-6 text-sm text-foreground-muted">
+                Dark mode فقط
+              </span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

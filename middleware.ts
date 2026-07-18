@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { SESSION_COOKIE_NAME, verifySessionCookieValue } from "@/lib/auth/session";
+import { verifyUserActive } from "@/lib/auth/verify-active";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -21,7 +22,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // 3. Verify session validity
+  // 3. Verify session signature and expiry
   const session = await verifySessionCookieValue(sessionCookie.value);
 
   if (!session) {
@@ -29,7 +30,18 @@ export async function middleware(request: NextRequest) {
       ? NextResponse.json({ error: "جلسة العمل غير صالحة أو منتهية." }, { status: 401 })
       : NextResponse.redirect(new URL("/login", request.url));
 
-    // Clear the invalid cookie
+    response.cookies.delete(SESSION_COOKIE_NAME);
+    return response;
+  }
+
+  // 4. Verify user still exists and is active in the database
+  const activeUser = await verifyUserActive(session.user_id);
+
+  if (!activeUser) {
+    const response = pathname.startsWith("/api/")
+      ? NextResponse.json({ error: "تم تعطيل حسابك. الرجاء التواصل مع صاحب المحل." }, { status: 401 })
+      : NextResponse.redirect(new URL("/login", request.url));
+
     response.cookies.delete(SESSION_COOKIE_NAME);
     return response;
   }

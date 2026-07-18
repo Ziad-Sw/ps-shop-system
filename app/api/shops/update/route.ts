@@ -6,24 +6,108 @@ import {
   SESSION_COOKIE_NAME,
   verifySessionCookieValue,
 } from "@/lib/auth/session";
-import { hasOpenShift } from "@/lib/shifts/check-open-shift";
+import type { StationType } from "@/types/database";
+import { assertPermission, PermissionError } from "@/lib/auth/permissions";
 
 /**
  * Partial update for the authenticated user's shop.
  *
  * Accepted fields (all optional):
- *   - name                  (always allowed — exempt from shift lock)
- *   - owner_name            (always allowed — exempt from shift lock)
- *   - ps_enabled            (locked while a shift is open)
- *   - billiard_enabled      (locked while a shift is open)
- *   - pingpong_enabled      (locked while a shift is open)
- *   - shifts_per_day        (locked while a shift is open; validated 1..4 here AND in DB)
- *   - ps_station_count      (locked while a shift is open; validated >= 0)
- *   - billiard_table_count  (locked while a shift is open; validated >= 0)
- *   - pingpong_table_count  (locked while a shift is open; validated >= 0)
+ *   - name
+ *   - owner_name
+ *   - ps_enabled
+ *   - billiard_enabled
+ *   - pingpong_enabled
+ *   - shifts_per_day        (validated 1..4 here AND in DB)
+ *   - ps_station_count      (validated >= 0; syncs stations table)
+ *   - billiard_table_count  (validated >= 0; syncs stations table)
+ *   - pingpong_table_count  (validated >= 0; syncs stations table)
  *
  * Only fields present in the body are applied. Unknown fields are ignored.
  */
+
+/**
+ * Syncs the stations table to match the requested count for a given station type.
+ * Creates new stations if count increased, deactivates excess stations if count decreased.
+ */
+async function syncStations(
+  shopId: string,
+  stationType: StationType,
+  targetCount: number
+) {
+  const supabase = createAdminClient();
+
+  // Get current active stations for this type
+  const { data: currentStations, error: fetchError } = await supabase
+    .from("stations")
+    .select("id, sort_order")
+    .eq("shop_id", shopId)
+    .eq("station_type", stationType)
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+
+  if (fetchError) {
+    console.error("Failed to fetch current stations:", fetchError);
+    return;
+  }
+
+  const currentCount = currentStations?.length || 0;
+
+  // If count increased, create new stations
+  if (targetCount > currentCount) {
+    const newStations = [];
+    for (let i = 0; i < targetCount - currentCount; i++) {
+      newStations.push({
+        shop_id: shopId,
+        station_type: stationType,
+        name: getDefaultStationName(stationType, currentCount + i + 1),
+        sort_order: currentCount + i,
+        is_active: true,
+      });
+    }
+
+    if (newStations.length > 0) {
+      const { error: insertError } = await supabase
+        .from("stations")
+        .insert(newStations);
+      if (insertError) {
+        console.error("Failed to create new stations:", insertError);
+      }
+    }
+  }
+  // If count decreased, deactivate excess stations
+  else if (targetCount < currentCount) {
+    const stationIdsToDeactivate = currentStations
+      .slice(targetCount)
+      .map((s) => s.id);
+
+    if (stationIdsToDeactivate.length > 0) {
+      const { error: updateError } = await supabase
+        .from("stations")
+        .update({ is_active: false })
+        .in("id", stationIdsToDeactivate);
+      if (updateError) {
+        console.error("Failed to deactivate stations:", updateError);
+      }
+    }
+  }
+}
+
+/**
+ * Returns the default name for a new station based on its type and number.
+ */
+function getDefaultStationName(stationType: StationType, number: number): string {
+  switch (stationType) {
+    case "playstation":
+      return `جهاز ${number}`;
+    case "billiard":
+      return `طاولة ${number}`;
+    case "pingpong":
+      return `طاولة ${number}`;
+    default:
+      return `جهاز ${number}`;
+  }
+}
 export async function POST(request: NextRequest) {
   try {
     // 1. Verify session
@@ -38,6 +122,8 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    await assertPermission(session.user_id, "manage_settings");
 
     // 2. Parse body
     const body = await request.json();
@@ -175,31 +261,7 @@ export async function POST(request: NextRequest) {
 
     const shopId = user.shop_id;
 
-    // 6. Shift-lock check for sensitive fields.
-    // `name` and `owner_name` are exempt (financially inert); everything else is locked.
-    const touchesLockedFields =
-      "ps_enabled" in update ||
-      "billiard_enabled" in update ||
-      "pingpong_enabled" in update ||
-      "shifts_per_day" in update ||
-      "ps_station_count" in update ||
-      "billiard_table_count" in update ||
-      "pingpong_table_count" in update;
-
-    if (touchesLockedFields) {
-      const blockedByOpenShift = await hasOpenShift(shopId);
-      if (blockedByOpenShift) {
-        return NextResponse.json(
-          {
-            error:
-              "لا يمكن تعديل هذه الإعدادات أثناء وجود وردية مفتوحة. يمكنك التعديل فقط بين الورديات أو عندما لا تكون هناك وردية شغالة.",
-          },
-          { status: 409 }
-        );
-      }
-    }
-
-    // 7. Apply update
+    // 6. Apply update
     const { data: updatedShop, error: updateError } = await supabase
       .from("shops")
       .update(update)
@@ -215,11 +277,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 8. Sync stations when station counts change
+    if ("ps_station_count" in update) {
+      await syncStations(shopId, "playstation", updatedShop.ps_station_count);
+    }
+    if ("billiard_table_count" in update) {
+      await syncStations(shopId, "billiard", updatedShop.billiard_table_count);
+    }
+    if ("pingpong_table_count" in update) {
+      await syncStations(shopId, "pingpong", updatedShop.pingpong_table_count);
+    }
+
     return NextResponse.json({
       ok: true,
       shop: updatedShop,
     });
   } catch (err) {
+    if (err instanceof PermissionError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error("Error updating shop:", err);
     return NextResponse.json(
       { error: "Internal server error" },

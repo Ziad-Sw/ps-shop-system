@@ -7,6 +7,7 @@ import {
   verifySessionCookieValue,
 } from "@/lib/auth/session";
 import BilliardSettingsForm from "@/components/settings/billiard-settings-form";
+import { getUserPermissions } from "@/lib/auth/permissions";
 import type { PricingRule } from "@/types";
 
 async function getCurrentUser() {
@@ -25,7 +26,7 @@ async function getCurrentUser() {
   const supabase = createAdminClient();
   const { data: user, error } = await supabase
     .from("users")
-    .select("login_id, display_name, shop_id")
+    .select("id, login_id, display_name, role, shop_id")
     .eq("id", session.user_id)
     .limit(1)
     .maybeSingle();
@@ -102,6 +103,7 @@ async function getPricingRules(shopId: string) {
 
 export default async function BilliardSettingsPage() {
   const user = await getCurrentUser();
+  const userPerms = user ? await getUserPermissions(user.id) : null;
   const shopData = user ? await getShopData(user.shop_id) : null;
   const shopName = user ? await getShopName(user.shop_id) : "المحل";
   const ownerName = user ? await getOwnerName(user.shop_id) : null;
@@ -123,6 +125,7 @@ export default async function BilliardSettingsPage() {
           initialBilliardEnabled={shopData.billiard_enabled}
           initialPricingRules={pricingRules}
           initialTableCount={shopData.billiard_table_count || 0}
+          canEdit={userPerms?.role === "owner" || userPerms?.permissions?.manage_settings === true}
         />
       </div>
     </AuthenticatedShell>

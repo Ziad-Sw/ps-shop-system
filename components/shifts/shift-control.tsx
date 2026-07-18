@@ -13,7 +13,11 @@ interface Shift {
   status: "open" | "closed";
 }
 
-export function ShiftControl() {
+interface ShiftControlProps {
+  canManageShifts?: boolean;
+}
+
+export function ShiftControl({ canManageShifts = true }: ShiftControlProps) {
   const [currentShift, setCurrentShift] = useState<Shift | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -72,8 +76,10 @@ export function ShiftControl() {
 
       if (response.ok) {
         await fetchCurrentShift();
+        return data.shift;
       } else {
         showToast("error", data.error || "فشل إغلاق الوردية");
+        return null;
       }
     } catch (error) {
       console.error("Failed to close shift:", error);
@@ -126,14 +132,16 @@ export function ShiftControl() {
             {currentShift ? (
               <button
                 onClick={() => setIsCloseModalOpen(true)}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium"
+                disabled={!canManageShifts}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 إنهاء وردية
               </button>
             ) : (
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                disabled={!canManageShifts}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 فتح وردية
               </button>

@@ -7,6 +7,8 @@ import {
   verifySessionCookieValue,
 } from "@/lib/auth/session";
 import { hasOpenShift } from "@/lib/shifts/check-open-shift";
+import { getCairoDayBoundaries } from "@/lib/shifts/cairo-time";
+import { assertPermission, PermissionError } from "@/lib/auth/permissions";
 
 /**
  * POST /api/shifts/open — opens a new shift for the shop.
@@ -32,6 +34,8 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    await assertPermission(session.user_id, "manage_shifts");
 
     // 2. Parse body
     const body = await request.json();
@@ -88,18 +92,15 @@ export async function POST(request: NextRequest) {
 
     const shiftsPerDay = shop.shifts_per_day;
 
-    // 6. Count shifts opened today (both open and closed)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    // 6. Count shifts opened today (both open and closed) using Africa/Cairo timezone
+    const { start, end } = getCairoDayBoundaries();
 
     const { data: todayShifts, error: countError } = await supabase
       .from("shifts")
       .select("id")
       .eq("shop_id", shopId)
-      .gte("opened_at", today.toISOString())
-      .lt("opened_at", tomorrow.toISOString());
+      .gte("opened_at", start)
+      .lt("opened_at", end);
 
     if (countError) {
       console.error("Failed to count today's shifts:", countError);
@@ -146,6 +147,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, shift });
   } catch (err) {
+    if (err instanceof PermissionError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error("Error opening shift:", err);
     return NextResponse.json(
       { error: "Internal server error" },

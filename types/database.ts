@@ -14,6 +14,8 @@ export type PricingMode = "single" | "multi";
 
 export type PricingUnit = "hour" | "game";
 
+export type BillingMode = "time" | "games";
+
 export type SessionStatus = "active" | "completed";
 
 export type ShiftStatus = "open" | "closed";
@@ -85,7 +87,9 @@ export interface Database {
           display_name: string;
           role: UserRole;
           permissions: StaffPermissions;
+          email: string | null;
           is_active: boolean;
+          deactivated_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -96,7 +100,9 @@ export interface Database {
           display_name: string;
           role: UserRole;
           permissions?: StaffPermissions;
+          email?: string | null;
           is_active?: boolean;
+          deactivated_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -107,7 +113,9 @@ export interface Database {
           display_name?: string;
           role?: UserRole;
           permissions?: StaffPermissions;
+          email?: string | null;
           is_active?: boolean;
+          deactivated_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -264,11 +272,13 @@ export interface Database {
           shift_id: string;
           station_id: string;
           mode: PricingMode;
+          billing_mode: BillingMode;
           status: SessionStatus;
           start_time: string;
           end_time: string | null;
           games_count: number | null;
           calculated_cost: number | null;
+          duration_hours: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -278,11 +288,13 @@ export interface Database {
           shift_id: string;
           station_id: string;
           mode: PricingMode;
+          billing_mode: BillingMode;
           status?: SessionStatus;
           start_time?: string;
           end_time?: string | null;
           games_count?: number | null;
           calculated_cost?: number | null;
+          duration_hours?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -292,11 +304,13 @@ export interface Database {
           shift_id?: string;
           station_id?: string;
           mode?: PricingMode;
+          billing_mode?: BillingMode;
           status?: SessionStatus;
           start_time?: string;
           end_time?: string | null;
           games_count?: number | null;
           calculated_cost?: number | null;
+          duration_hours?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -431,25 +445,31 @@ export interface Database {
         Row: {
           id: string;
           shop_id: string;
-          shift_id: string;
+          shift_id: string | null;
           description: string;
           amount: number;
+          category: string | null;
+          expense_date: string;
           created_at: string;
         };
         Insert: {
           id?: string;
           shop_id: string;
-          shift_id: string;
+          shift_id?: string | null;
           description: string;
           amount: number;
+          category?: string | null;
+          expense_date?: string;
           created_at?: string;
         };
         Update: {
           id?: string;
           shop_id?: string;
-          shift_id?: string;
+          shift_id?: string | null;
           description?: string;
           amount?: number;
+          category?: string | null;
+          expense_date?: string;
           created_at?: string;
         };
         Relationships: [
