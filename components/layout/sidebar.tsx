@@ -1,5 +1,6 @@
 "use client";
 
+import { PanelLeft } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
@@ -19,16 +20,6 @@ interface SidebarProps {
 }
 
 const DESKTOP_BREAKPOINT = 1024;
-
-function HamburgerIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <line x1="3" y1="12" x2="21" y2="12" />
-      <line x1="3" y1="18" x2="21" y2="18" />
-    </svg>
-  );
-}
 
 function HomeIcon() {
   return (
@@ -138,7 +129,7 @@ export default function Sidebar({
               title="فتح القائمة الجانبية"
               className={iconBtnClass}
             >
-              <HamburgerIcon />
+              <PanelLeft size={20} />
             </button>
             <Link href="/" title="الرئيسية" className={iconBtnClass}>
               <HomeIcon />
@@ -203,8 +194,7 @@ export default function Sidebar({
               onClick={onToggle}
               className="flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-primary/10"
             >
-              <HamburgerIcon />
-              <span>إغلاق</span>
+              <PanelLeft size={20} />
             </button>
             <Link
               href="/"
