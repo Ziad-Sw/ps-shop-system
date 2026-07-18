@@ -60,7 +60,7 @@ function AuthenticatedShellContent({
             <button
               type="button"
               onClick={() => setIsSidebarOpen((value) => !value)}
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-foreground-muted/20 bg-surface-card px-3 py-2 text-foreground transition-colors duration-150 hover:border-primary/50 hover:bg-surface-card/90 focus:outline-none focus:ring-2 focus:ring-primary/60"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-foreground-muted/20 bg-surface-card px-3 py-2 text-foreground transition-colors duration-150 hover:border-primary/50 hover:bg-surface-card/90 focus:outline-none focus:ring-2 focus:ring-primary/60 lg:hidden"
               aria-label="فتح القائمة الجانبية"
             >
               <svg
@@ -89,6 +89,7 @@ function AuthenticatedShellContent({
         <Sidebar
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
+          onToggle={() => setIsSidebarOpen((value) => !value)}
           user={user}
           shopName={shopName}
           ownerName={ownerName}

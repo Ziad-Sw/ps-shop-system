@@ -11,6 +11,7 @@ interface SidebarUser {
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  onToggle: () => void;
   user: SidebarUser | null;
   shopName: string;
   ownerName: string | null;
@@ -18,6 +19,25 @@ interface SidebarProps {
 }
 
 const DESKTOP_BREAKPOINT = 1024;
+
+function HamburgerIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  );
+}
+
+function HomeIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  );
+}
 
 function SettingsIcon() {
   return (
@@ -60,6 +80,7 @@ function LogoutIcon() {
 export default function Sidebar({
   isOpen,
   onClose,
+  onToggle,
   user,
   shopName,
   ownerName,
@@ -103,38 +124,41 @@ export default function Sidebar({
     };
   }, [isOpen, onClose]);
 
+  const iconBtnClass =
+    "flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-primary/10";
+
   return (
     <>
       {isDesktop && !isOpen && (
-        <div className="fixed top-[64px] right-0 z-30 flex h-[calc(100vh-64px)] w-[60px] flex-col items-center border-l border-foreground-muted/10 bg-surface-card py-4">
-          <nav className="flex flex-1 flex-col items-center gap-3">
-            <Link
-              href="/settings"
-              title="الإعدادات"
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-primary/10"
+        <div className="fixed top-[64px] right-0 z-30 flex h-[calc(100vh-64px)] w-[60px] flex-col items-center border-l border-foreground-muted/10 bg-surface-card py-3">
+          <div className="flex flex-col items-center gap-1">
+            <button
+              type="button"
+              onClick={onToggle}
+              title="فتح القائمة الجانبية"
+              className={iconBtnClass}
             >
+              <HamburgerIcon />
+            </button>
+            <Link href="/" title="الرئيسية" className={iconBtnClass}>
+              <HomeIcon />
+            </Link>
+            <Link href="/settings" title="الإعدادات" className={iconBtnClass}>
               <SettingsIcon />
             </Link>
-            <Link
-              href="/archive"
-              title="أرشيف الورديات"
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-primary/10"
-            >
+            <Link href="/archive" title="أرشيف الورديات" className={iconBtnClass}>
               <ArchiveIcon />
             </Link>
-            <Link
-              href="/expenses"
-              title="المصاريف"
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-primary/10"
-            >
+            <Link href="/expenses" title="المصاريف" className={iconBtnClass}>
               <ExpensesIcon />
             </Link>
-          </nav>
+          </div>
+          <div className="flex-1" />
           <button
             type="button"
             title="تسجيل الخروج"
             onClick={onLogoutClick}
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-red-400 transition-colors hover:bg-red-500/10"
+            className="flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg text-red-400 transition-colors hover:bg-red-500/10"
           >
             <LogoutIcon />
           </button>
@@ -174,6 +198,22 @@ export default function Sidebar({
 
         <nav className="flex-1 overflow-y-auto px-2 py-4">
           <div className="space-y-1">
+            <button
+              type="button"
+              onClick={onToggle}
+              className="flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-primary/10"
+            >
+              <HamburgerIcon />
+              <span>إغلاق</span>
+            </button>
+            <Link
+              href="/"
+              onClick={onClose}
+              className="flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-primary/10"
+            >
+              <HomeIcon />
+              <span>الرئيسية</span>
+            </Link>
             <Link
               href="/settings"
               onClick={onClose}
