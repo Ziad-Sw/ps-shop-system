@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface SidebarUser {
   display_name: string | null;
@@ -17,14 +17,7 @@ interface SidebarProps {
   onLogoutClick: () => void;
 }
 
-function HomeIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-      <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-  );
-}
+const DESKTOP_BREAKPOINT = 1024;
 
 function SettingsIcon() {
   return (
@@ -73,6 +66,14 @@ export default function Sidebar({
   onLogoutClick,
 }: SidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkDesktop = () => setIsDesktop(window.innerWidth >= DESKTOP_BREAKPOINT);
+    checkDesktop();
+    window.addEventListener("resize", checkDesktop);
+    return () => window.removeEventListener("resize", checkDesktop);
+  }, []);
 
   const displayName =
     user?.role === "owner"
@@ -104,12 +105,41 @@ export default function Sidebar({
 
   return (
     <>
-      {isOpen ? (
-        <div
-          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm"
-          onClick={onClose}
-        />
-      ) : null}
+      {isDesktop && !isOpen && (
+        <div className="fixed top-[64px] right-0 z-30 flex h-[calc(100vh-64px)] w-[60px] flex-col items-center border-l border-foreground-muted/10 bg-surface-card py-4">
+          <nav className="flex flex-1 flex-col items-center gap-3">
+            <Link
+              href="/settings"
+              title="الإعدادات"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-primary/10"
+            >
+              <SettingsIcon />
+            </Link>
+            <Link
+              href="/archive"
+              title="أرشيف الورديات"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-primary/10"
+            >
+              <ArchiveIcon />
+            </Link>
+            <Link
+              href="/expenses"
+              title="المصاريف"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground transition-colors hover:bg-primary/10"
+            >
+              <ExpensesIcon />
+            </Link>
+          </nav>
+          <button
+            type="button"
+            title="تسجيل الخروج"
+            onClick={onLogoutClick}
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-red-400 transition-colors hover:bg-red-500/10"
+          >
+            <LogoutIcon />
+          </button>
+        </div>
+      )}
 
       <div
         ref={sidebarRef}
