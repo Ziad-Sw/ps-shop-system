@@ -1,6 +1,6 @@
 # PROGRESS — PS Shop System
 
-آخر تحديث: 2026-07-18 (تحديث السايد بار)
+آخر تحديث: 2026-07-19 (Feature 8 — الكرون جوب)
 
 ## ما تم بناؤه (الخطوة 1)
 
@@ -1700,4 +1700,61 @@
 - ✅ الضغط على الأيقونة يفتح/يقفل السايد بار (نفس السلوك)
 - ✅ باقي الأيقونات (Home, Settings, Archive, Expenses, Logout) لم تتغير
 - ✅ `npm run build` ناجح بدون أخطاء
+
+---
+
+## يوليو 2026 — Feature 8: المهمة المجدولة للتنظيف (Cron Cleanup Job) ✅
+
+**التغيير:** بناء المهمة المجدولة اليومية لحذف الورديات المنتهية صلاحيتها (أكثر من 30 يومًا من `closed_at`)، والمنتجات اليتيمة، والمستخدمين المعطلين نهائيًا بعد 30 يومًا — مع دعم وضع المحاكاة (Dry Run) للفحص الآمن.
+
+### ما تم بناؤه
+
+**1. `lib/cleanup/archive-cleanup.ts`** — 4 دوال قابلة للاختبار ومستقلة:
+- `getExpiredShiftIds()` — يجلب الورديات المقفولة التي `closed_at < NOW() - 30 days`
+- `deleteShiftData(shiftIds, dryRun)` — حذف صريح بالترتيب: sessions → sale_items → expenses → shifts (بدعم dry-run)
+- `deleteOrphanProducts(dryRun)` — يحذف المنتجات التي ليس لها أي صف في `sale_items`
+- `deleteExpiredDeactivatedUsers(dryRun)` — يحذف المستخدمين المعطلين (is_active=false) الذين:
+  - `deactivated_at < NOW() - 30 days`
+  - لا توجد لهم أي وردية متبقية (`opened_by_user_id`)
+
+**2. `app/api/cron/cleanup/route.ts`** — نقطة نهاية محمية:
+- `POST /api/cron/cleanup` مع `Authorization: Bearer <CRON_SECRET>`
+- يرفض الطلبات بدون توكن صحيح بـ `401`
+- يتطلب وجود `CRON_SECRET` في المتغيرات البيئية (بدونها يرجع `500`)
+- يدعم `CRON_DRY_RUN=true` لتفعيل المحاكاة
+- يرجع JSON كامل بعدد العناصر في كل فئة
+
+**3. تحديث `.env.local.example` و`.env.local`:**
+- إضافة `CRON_SECRET=your-cron-secret-token`
+- إضافة `CRON_DRY_RUN=true` (الافتراضي الآمن)
+
+**4. تحديث `TECH_INSTRUCTIONS.md`:**
+- إضافة القسم §6.9 — شرح كامل للمهمة المجدولة بالعربية (آلية التشغيل، المتغيرات البيئية، خوارزمية الحذف، آلية الحماية، instructions لربط cron خارجي)
+
+### القرارات البرمجية
+
+| القرار | السبب |
+|---|---|
+| `closed_at` (ليس `opened_at`) لحساب نافذة الـ 30 يوم | مطابق لـ BRD — كل وردية تُحذف بعد 30 يومًا من تاريخ قفلها تحديدًا |
+| حذف صريح (sessions → sale_items → expenses → shifts) بالرغم من وجود CASCADE | سلوك Supabase JS client عبر REST قد يكون غير متسق مع RLS في بعض الإعدادات — الحذف الصريح كحماية إضافية |
+| فحص COUNT لكل منتج/مستخدم على حدة (بدون استعلام SQL خام) | تجنب الحاجة لـ DDL/migrations — التطبيق الحالي لا يسمح بإضافة SQL functions بسهولة |
+| Dry Run (`CRON_DRY_RUN=true`) كآلية أمان افتراضية | يسمح لصاحب المحل بتأكيد ما سيُحذف قبل التنفيذ الفعلي — تشغيله بدون خوف في أي وقت |
+| مصادقة Bearer Token بدلاً من Vercel-native cron | المشروع لم يُنشر بعد على Vercel — آلية عامة تعمل مع أي موفر cron خارجي |
+| دالة `runCleanup()` تجمع كل الخطوات في استدعاء واحد | تبسيط استدعاء الـ route وتوحيد نقطة الدخول |
+
+### نتائج الاختبار
+
+- ✅ Dry Run (`CRON_DRY_RUN=true`) يعمل ويعيد JSON كامل بعدد العناصر بدون حذف فعلي
+- ✅ `Authorization: Bearer` يُرفض الطلب بدون توكن (401) أو بتوكن خاطئ (401)
+- ✅ الطلب الصحيح مع التوكن السليم يمر ويستدعي runCleanup
+- ✅ عند عدم وجود بيانات قديمة، يرجع صفر في كل الفئات بدون أخطاء
+- ✅ `npm run build` ناجح بدون أخطاء TypeScript أو compilation
+
+### الخطوة التالية
+
+بمجرد التأكد من استقرار النظام وعدم الحاجة لاسترجاع أي بيانات قديمة:
+1. **تعديل `.env.local`:** تغيير `CRON_DRY_RUN=false` (أو حذف المتغير كليًا)
+2. **نشر المشروع** على Vercel أو استضافة أخرى
+3. **ربط cron خارجي:** إضافة مهمة يومية في cron-job.org أو أي موفر مع الأمر:
+   `curl -X POST https://your-domain.com/api/cron/cleanup -H "Authorization: Bearer <CRON_SECRET>"`
 
