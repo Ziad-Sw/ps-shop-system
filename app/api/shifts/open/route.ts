@@ -6,7 +6,6 @@ import {
   SESSION_COOKIE_NAME,
   verifySessionCookieValue,
 } from "@/lib/auth/session";
-import { hasOpenShift } from "@/lib/shifts/check-open-shift";
 import { getCairoDayBoundaries } from "@/lib/shifts/cairo-time";
 import { assertPermission, PermissionError } from "@/lib/auth/permissions";
 
@@ -67,8 +66,14 @@ export async function POST(request: NextRequest) {
     const shopId = user.shop_id;
 
     // 4. Check if there's already an open shift
-    const alreadyOpen = await hasOpenShift(shopId);
-    if (alreadyOpen) {
+    const { data: existingOpen } = await supabase
+      .from("shifts")
+      .select("id")
+      .eq("shop_id", shopId)
+      .eq("status", "open")
+      .limit(1)
+      .maybeSingle();
+    if (existingOpen) {
       return NextResponse.json(
         { error: "يوجد وردية مفتوحة بالفعل. لا يمكن فتح وردية جديدة." },
         { status: 409 }

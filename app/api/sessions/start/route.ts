@@ -6,7 +6,6 @@ import {
   SESSION_COOKIE_NAME,
   verifySessionCookieValue,
 } from "@/lib/auth/session";
-import { hasOpenShift } from "@/lib/shifts/check-open-shift";
 import { assertPermission, PermissionError } from "@/lib/auth/permissions";
 import type { BillingMode } from "@/types";
 
@@ -102,15 +101,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "الجهاز غير موجود." },
         { status: 404 }
-      );
-    }
-
-    // Verify there's an open shift
-    const shiftOpen = await hasOpenShift(shopId);
-    if (!shiftOpen) {
-      return NextResponse.json(
-        { error: "لا توجد وردية مفتوحة. افتح وردية أولاً." },
-        { status: 409 }
       );
     }
 
