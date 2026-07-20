@@ -113,10 +113,18 @@ export async function POST(request: NextRequest) {
       .limit(1)
       .maybeSingle();
 
-    if (shiftError || !openShift) {
+    if (shiftError) {
+      console.error("Failed to get open shift:", shiftError);
       return NextResponse.json(
         { error: "Failed to get open shift" },
         { status: 500 }
+      );
+    }
+
+    if (!openShift) {
+      return NextResponse.json(
+        { error: "لازم تفتح وردية الأول قبل ما تقدر تبدأ جلسة" },
+        { status: 400 }
       );
     }
 
