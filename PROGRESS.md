@@ -1799,7 +1799,10 @@
 - **الجدول:** 3:00 AM UTC يوميًا (`0 3 * * *`)
 - **التفعيل:** بعد الـ push والتdeploy التالي على Vercel — لا يمكن اختباره محليًا
 
-**⚠️ مشكلة توثيق مكتشفة:** الـ route الحالي يتحقق من `Authorization: Bearer <CRON_SECRET>` فقط. Vercel Cron Jobs يرسلون `x-vercel-cron: 1` وليس Bearer token تلقائيًا. هذا يعني أن cron سينفذ ولكن الـ route سيرفضه بـ 401. الحل: إضافة `x-vercel-cron` كبديل توثيق في route (خارج نطاق هذه المهمة).
+**🔧 إصلاح التوثيق:** تم تعديل `app/api/cron/cleanup/route.ts` لقبول مسارين توثيق منفصلين:
+- الأولوية الأولى: هيدر `x-vercel-cron: 1` (Vercel native cron) — يمر بدون حاجة لـ CRON_SECRET
+- Fallback: `Authorization: Bearer <CRON_SECRET>` (للاختبار اليدوي وموفري cron الخارجيين)
+- إذا لم يتحقق أي منهما: `401` كما كان
 
 **الملف:** `vercel.json` (جديد)
 

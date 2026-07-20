@@ -4,30 +4,34 @@ import { runCleanup } from "@/lib/cleanup/archive-cleanup";
 
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("authorization");
-    const expectedSecret = process.env.CRON_SECRET;
+    const isVercelCron = request.headers.get("x-vercel-cron") === "1";
 
-    if (!expectedSecret) {
-      console.error("[cleanup] CRON_SECRET is not configured on the server.");
-      return NextResponse.json(
-        { error: "Server configuration error: CRON_SECRET not set." },
-        { status: 500 }
-      );
-    }
+    if (!isVercelCron) {
+      const authHeader = request.headers.get("authorization");
+      const expectedSecret = process.env.CRON_SECRET;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Unauthorized: missing or invalid Authorization header." },
-        { status: 401 }
-      );
-    }
+      if (!expectedSecret) {
+        console.error("[cleanup] CRON_SECRET is not configured on the server.");
+        return NextResponse.json(
+          { error: "Server configuration error: CRON_SECRET not set." },
+          { status: 500 }
+        );
+      }
 
-    const token = authHeader.slice(7);
-    if (token !== expectedSecret) {
-      return NextResponse.json(
-        { error: "Unauthorized: invalid token." },
-        { status: 401 }
-      );
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return NextResponse.json(
+          { error: "Unauthorized: missing or invalid Authorization header." },
+          { status: 401 }
+        );
+      }
+
+      const token = authHeader.slice(7);
+      if (token !== expectedSecret) {
+        return NextResponse.json(
+          { error: "Unauthorized: invalid token." },
+          { status: 401 }
+        );
+      }
     }
 
     const dryRun = process.env.CRON_DRY_RUN === "true";
