@@ -36,7 +36,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { description, amount, category, expense_date, shift_id } = body ?? {};
+    const { description, amount, category, expense_date } = body ?? {};
 
     const supabase = createAdminClient();
     const { data: existing, error: findError } = await getExpenseForShop(supabase, id, shopId);
@@ -84,13 +84,7 @@ export async function PUT(
       update.expense_date = expense_date.trim();
     }
 
-    if (shift_id !== undefined) {
-      if (shift_id === null) {
-        update.shift_id = null;
-      } else if (typeof shift_id === "string" && shift_id.trim().length > 0) {
-        update.shift_id = shift_id;
-      }
-    }
+    // shift_id is never updated via client — it was set server-side at creation
 
     if (Object.keys(update).length === 0) {
       return NextResponse.json(
