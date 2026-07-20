@@ -86,7 +86,6 @@ export default async function TeamSettingsPage() {
         </div>
 
         <TeamManagementForm
-          shopId={user.shop_id}
           initialTeamMembers={teamMembers}
           canEdit={userPerms?.role === "owner" || userPerms?.permissions?.manage_team === true}
         />

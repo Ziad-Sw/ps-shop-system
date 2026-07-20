@@ -5,7 +5,6 @@ import type { User, StaffPermissions } from "@/types/database";
 import { useToast } from "@/components/ui/toast";
 
 interface TeamManagementFormProps {
-  shopId: string;
   initialTeamMembers: User[];
   canEdit?: boolean;
 }
@@ -19,7 +18,6 @@ const PERMISSION_LABELS: Record<keyof StaffPermissions, string> = {
 };
 
 export default function TeamManagementForm({
-  shopId,
   initialTeamMembers,
   canEdit = true,
 }: TeamManagementFormProps) {
@@ -35,8 +33,6 @@ export default function TeamManagementForm({
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [deleteConfirmUserId, setDeleteConfirmUserId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  const activeMembers = teamMembers;
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) {
@@ -191,14 +187,14 @@ export default function TeamManagementForm({
       {/* Active Members Section */}
       <div className="rounded-xl bg-surface-card p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">
-          الأعضاء النشطون ({activeMembers.length})
+          الأعضاء النشطون ({teamMembers.length})
         </h2>
 
-        {activeMembers.length === 0 ? (
+        {teamMembers.length === 0 ? (
           <p className="text-sm text-foreground-muted">لا يوجد أعضاء نشطون. قم بإضافة أول عضو.</p>
         ) : (
           <div className="space-y-4">
-            {activeMembers.map((member) => (
+            {teamMembers.map((member) => (
               <div key={member.id}>
                 {editingUserId === member.id ? (
                   /* Edit Mode */

@@ -1844,3 +1844,42 @@
 
 **قاعدة البيانات الآن في حالة نظيفة تمامًا وجاهزة لبدء الإنتاج الفعلي.**
 
+---
+
+## يوليو 2026 — Code Cleanup via clean-code-guard + test-guard ✅
+
+**الحراس المطبقون:**
+- `clean-code-guard` — مراجعة شاملة لقاعدة الكود وفق 24 مبدأ (أسماء دوال، تعليقات، SOLID، DRY/KISS/YAGNI، AI-specific guardrails)
+- `test-guard` — مراجعة ملفات الاختبار (لم يتم العثور على أي ملفات اختبار `.test.*` أو `.spec.*`)
+
+### ما تم تغييره (آمن، لا يؤثر على السلوك):
+
+| الملف | التغيير |
+|---|---|
+| `lib/pricing/calculation.ts:31` | إزالة `station_type` و `mode` من destructuring (غير مستخدمين في جسم الدالة) |
+| `components/settings/products-settings-form.tsx:3` | إزالة استيراد `useEffect` غير المستخدم |
+| `components/settings/products-settings-form.tsx:76-105` | إزالة دالة `handleUpdateProduct` الميتة (معرفة ولكن غير مستدعاة) |
+| `components/ui/toast.tsx:4` | إزالة استيراد `useEffect` غير المستخدم، نقل `import React` إلى أعلى الملف |
+| `components/sessions/stations-grid.tsx:7-12` | إزالة prop `shopId` غير المستخدم من الواجهة والمكون والمستدعي |
+| `app/page.tsx:96` | إزالة `shopId` من استدعاء `StationsGrid` (مطابق للتغيير أعلاه) |
+| `components/settings/team-form.tsx:8,22,39,194,197,201` | إزالة prop `shopId` غير المستخدم، دمج `activeMembers` ← `teamMembers` |
+| `app/settings/team/page.tsx:89` | إزالة `shopId` من استدعاء `TeamManagementForm` |
+
+### ما تم الإبلاغ عنه ولكن تُرك دون تغيير (يحتاج موافقة):
+
+| الملف:السطر | السبب |
+|---|---|
+| `components/layout/authenticated-shell.tsx:56,134` | ToastProvider مكرر (متداخل مرتين) — إزالة واحدة آمنة لكنها تمس موفر سياق |
+| `app/page.tsx:79-84` | `title`/`subtitle` محسوبان لكن غير مستخدمين في مسار المصادق — يحتاج إعادة هيكلة |
+| `app/api/sessions/remove-product/route.ts` | نقص `assertPermission()` — ثغرة أمنية تحتاج موافقة قبل الإصلاح |
+| `lib/auth/session.ts:45-48` | `getSessionSecret()` يقع fallback إلى `SUPABASE_SERVICE_ROLE_KEY` — خلط أسرار |
+| `lib/auth/session.ts:54-62` | `verifySessionCookieValue` يبتلع كل الأخطاء بصمت |
+| تكرار `getCurrentUser`/`getShopName`/`getOwnerName` في 10+ صفحة Server | تكرار معماري — يستحق استخراج helper مشترك |
+| `app/api/stations/list/route.ts:42-43` | `as any` casts على `stationType` |
+| `components/sessions/session-popup.tsx` | 570 سطر + مشاكل hoisting (`fetchProducts`, `fetchSaleItems`) — إعادة الترتيب تغير السلوك |
+| `lib/cleanup/archive-cleanup.ts` | N+1 queries في `deleteOrphanProducts()` — تحسين أداء لكنه ليس تجميليًا |
+
+### نتيجة التحقق:
+- ✅ `npm run build` (next build) — ناجح بدون أخطاء TypeScript أو compilation
+- ✅ `npm run lint` — يمر (جميع المشاكل المتبقية كانت موجودة قبل التغيير، أو تتطلب تغيير سلوك لإصلاحها)
+

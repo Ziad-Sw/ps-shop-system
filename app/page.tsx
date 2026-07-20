@@ -93,7 +93,7 @@ export default async function Home() {
         <ShiftControl canManageShifts={canManageShifts} />
         
         {user ? (
-          <StationsGrid shopId={user.shop_id} canManageSessions={canManageSessions} />
+          <StationsGrid canManageSessions={canManageSessions} />
         ) : (
           <div className="rounded-xl bg-surface-card p-8 shadow-none">
             <p className="text-sm text-foreground-muted">نظام إدارة المحل</p>

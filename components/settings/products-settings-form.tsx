@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/components/ui/toast";
 
 interface Product {
@@ -70,37 +70,6 @@ export default function ProductsSettingsForm({
       showToast("error", errorMessage);
     } finally {
       setIsAdding(false);
-    }
-  };
-
-  const handleUpdateProduct = async (
-    id: string,
-    name: string,
-    price: number
-  ) => {
-    setIsSavingEdit(true);
-    try {
-      const response = await fetch(`/api/products/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, price }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update product");
-      }
-
-      const result = await response.json();
-      setProducts(
-        products.map((p) => (p.id === id ? result.product : p))
-      );
-      showToast("success", "تم تحديث المشروب بنجاح");
-    } catch (err) {
-      console.error("Error updating product:", err);
-      showToast("error", "حدث خطأ أثناء تحديث المشروب");
-    } finally {
-      setIsSavingEdit(false);
     }
   };
 

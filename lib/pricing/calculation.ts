@@ -28,7 +28,7 @@ export interface SessionCostOutput {
  * - When unit = 'hour', cost = duration_hours * rate
  */
 export function calculateSessionCost(input: SessionCostInput): SessionCostOutput {
-  const { station_type, mode, unit, rate, start_time, end_time, games_count, sale_items_total } = input;
+  const { unit, rate, start_time, end_time, games_count, sale_items_total } = input;
 
   let duration_hours = 0;
   let session_cost = 0;

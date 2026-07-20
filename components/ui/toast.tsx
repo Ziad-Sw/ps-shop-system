@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React from "react";
+import { useState } from "react";
 
 interface Toast {
   id: string;
@@ -88,5 +89,3 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     </ToastContext.Provider>
   );
 }
-
-import React from "react";

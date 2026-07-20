@@ -5,11 +5,10 @@ import { Station, Session } from "@/types/database";
 import { StationCard } from "./station-card";
 
 interface StationsGridProps {
-  shopId: string;
   canManageSessions?: boolean;
 }
 
-export function StationsGrid({ shopId, canManageSessions = true }: StationsGridProps) {
+export function StationsGrid({ canManageSessions = true }: StationsGridProps) {
   const [stations, setStations] = useState<Station[]>([]);
   const [activeSessions, setActiveSessions] = useState<Record<string, Session>>({});
   const [loading, setLoading] = useState(true);
