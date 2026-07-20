@@ -1914,3 +1914,44 @@
 - ✅ لا تغيير في سلوك فتح/قفل الورديات
 - ✅ لا تغيير في سلوك Session Popup (يبقى مفتوحًا، المستخدم يقرأ الرسالة ويقفل البوب أب بنفسه)
 
+---
+
+## يوليو 2026 — تطبيق Migration 002_expenses_add_fields.sql على قاعدة البيانات المباشرة ✅
+
+### محتوى الملف (تمت المراجعة والتأكيد)
+ملف `002_expenses_add_fields.sql` (أُعيد تسميته إلى `012_expenses_add_fields.sql` لحل تعارض التسمية) يطبق التغييرات التالية على جدول `expenses`:
+1. `ALTER COLUMN shift_id DROP NOT NULL` — يجعل `shift_id` قابلًا للقيم الفارغة
+2. `ADD COLUMN category TEXT` — يضيف عمود الفئة
+3. `ADD COLUMN expense_date DATE NOT NULL DEFAULT CURRENT_DATE` — يضيف عمود التاريخ مع قيمة افتراضية لليوم الحالي
+4. إنشاء `INDEX` على `expense_date`
+
+### حالة ما قبل التطبيق
+- `category` column → ❌ غير موجود
+- `expense_date` column → ❌ غير موجود
+- `shift_id` nullable → ❌ لا يزال NOT NULL
+- عدد الصفوف: 0
+
+### التطبيق
+- تم تطبيق SQL عبر Supabase Management API (201 Created)
+- تم إصلاح سجل الهجرة (migration repair) لتسجيل `012` كمنفّذ
+- تم حل تعارض التسمية: `002_expenses_add_fields.sql` ← `012_expenses_add_fields.sql` (كان هناك ملفان بنفس البادئة `002`)
+
+### التحقق بعد التطبيق — `information_schema.columns` لجدول `expenses`:
+
+| column_name | is_nullable | data_type |
+|---|---|---|
+| `id` | NO | uuid |
+| `shop_id` | NO | uuid |
+| `shift_id` | **YES** | uuid |
+| `description` | NO | text |
+| `amount` | NO | numeric |
+| `created_at` | NO | timestamp with time zone |
+| `category` | **YES** | text |
+| `expense_date` | **NO** | date |
+
+- ✅ `category` column موجود
+- ✅ `expense_date` column موجود
+- ✅ `shift_id` قابل للقيم الفارغة
+- ✅ عدد الصفوف قبل وبعد: 0 ← 0 (لا فقدان بيانات)
+- ✅ جميع الهجرات في同步 (Local = Remote): 001 → 012 كلها متطابقة
+
