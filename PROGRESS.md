@@ -1800,9 +1800,9 @@
 - **التفعيل:** بعد الـ push والتdeploy التالي على Vercel — لا يمكن اختباره محليًا
 
 **🔧 إصلاح التوثيق:** تم تعديل `app/api/cron/cleanup/route.ts` لقبول مسارين توثيق منفصلين:
-- الأولوية الأولى: هيدر `x-vercel-cron: 1` (Vercel native cron) — يمر بدون حاجة لـ CRON_SECRET
+- الأولوية الأولى: هيدر `x-vercel-cron: 1` (Vercel native cron) — يمر فورًا بدون أي اعتماد على `CRON_SECRET` أو `Authorization` هيدر
 - Fallback: `Authorization: Bearer <CRON_SECRET>` (للاختبار اليدوي وموفري cron الخارجيين)
-- إذا لم يتحقق أي منهما: `401` كما كان
+- `authHeader` و `expectedSecret` معلنين مرة واحدة في أعلى الدالة، يستخدمهم مسار الـ Bearer فقط
 
 **الملف:** `vercel.json` (جديد)
 

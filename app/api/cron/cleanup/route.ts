@@ -5,11 +5,10 @@ import { runCleanup } from "@/lib/cleanup/archive-cleanup";
 export async function POST(request: NextRequest) {
   try {
     const isVercelCron = request.headers.get("x-vercel-cron") === "1";
+    const authHeader = request.headers.get("authorization");
+    const expectedSecret = process.env.CRON_SECRET;
 
     if (!isVercelCron) {
-      const authHeader = request.headers.get("authorization");
-      const expectedSecret = process.env.CRON_SECRET;
-
       if (!expectedSecret) {
         console.error("[cleanup] CRON_SECRET is not configured on the server.");
         return NextResponse.json(
