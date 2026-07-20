@@ -99,15 +99,6 @@ export default function ExpensesList({
         body.category = formCategory.trim();
       }
 
-      const shiftRes = await fetch("/api/shifts/current");
-      const shiftData = await shiftRes.json();
-      if (!shiftData.shift) {
-        showToast("error", "لا يمكن إضافة مصروف خارج الوردية. يرجى فتح وردية أولاً.");
-        setIsSaving(false);
-        return;
-      }
-      body.shift_id = shiftData.shift.id;
-
       let response: Response;
       if (editingExpense) {
         response = await fetch(`/api/expenses/${editingExpense.id}`, {

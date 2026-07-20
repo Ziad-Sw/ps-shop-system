@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     await assertPermission(userId, "manage_settings");
 
     const body = await request.json();
-    const { description, amount, category, expense_date, shift_id } = body ?? {};
+    const { description, amount, category, expense_date } = body ?? {};
 
     if (typeof description !== "string" || description.trim().length === 0) {
       return NextResponse.json(
@@ -100,32 +100,25 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient();
 
-    // Resolve shift_id from open shift
-    let resolvedShiftId: string;
+    // Always resolve shift_id server-side; ignore any client value
+    const { data: openShift, error: shiftError } = await supabase
+      .from("shifts")
+      .select("id")
+      .eq("shop_id", shopId)
+      .eq("status", "open")
+      .limit(1)
+      .maybeSingle();
 
-    if (typeof shift_id === "string" && shift_id.trim().length > 0) {
-      resolvedShiftId = shift_id;
-    } else {
-      const { data: openShift, error: shiftError } = await supabase
-        .from("shifts")
-        .select("id")
-        .eq("shop_id", shopId)
-        .eq("status", "open")
-        .limit(1)
-        .maybeSingle();
-
-      if (shiftError || !openShift) {
-        return NextResponse.json(
-          { error: "لا يمكن إضافة مصروف خارج الوردية. يرجى فتح وردية أولاً." },
-          { status: 400 }
-        );
-      }
-      resolvedShiftId = openShift.id;
+    if (shiftError || !openShift) {
+      return NextResponse.json(
+        { error: "لا يمكن إضافة مصروف خارج الوردية. يرجى فتح وردية أولاً." },
+        { status: 400 }
+      );
     }
 
     const insertData: any = {
       shop_id: shopId,
-      shift_id: resolvedShiftId,
+      shift_id: openShift.id,
       description: description.trim(),
       amount,
     };
