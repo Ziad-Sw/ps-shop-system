@@ -1756,7 +1756,27 @@
 1. **تعديل `.env.local`:** تغيير `CRON_DRY_RUN=false` (أو حذف المتغير كليًا)
 2. **نشر المشروع** على Vercel أو استضافة أخرى
 3. **ربط cron خارجي:** إضافة مهمة يومية في cron-job.org أو أي موفر مع الأمر:
-   `curl -X POST https://your-domain.com/api/cron/cleanup -H "Authorization: Bearer <CRON_SECRET>"`
+    `curl -X POST https://your-domain.com/api/cron/cleanup -H "Authorization: Bearer <CRON_SECRET>"`
+
+---
+
+## يوليو 2026 — Cron: حذف المنتجات المعطلة اليتيمة (غير النشطة فقط) ✅
+
+**التغيير:** تعديل `deleteOrphanProducts` في `lib/cleanup/archive-cleanup.ts` لاستهداف المنتجات غير النشطة (`is_active = false`) فقط، بدلاً من جميع المنتجات.
+
+**المنطق:**
+- بعد حذف الورديات القديمة (ومعها `sessions`/`sale_items`) مباشرة، يبحث عن المنتجات التي:
+  - `is_active = false`
+  - ليس لها أي صف في `sale_items` (عدد = 0)
+- يُسجّل في console أسماء المنتجات اليتيمة أثناء Dry Run
+- في الوضع الفعلي: يحذفها hard-delete من جدول `products`
+- `is_active = true` لا تُمس أبدًا، بغض النظر عن تاريخ المبيعات
+
+**الحماية:** `CRON_DRY_RUN=true` لا يزال مفعّلًا — لن يحدث أي حذف فعلي حتى يتم تغييره إلى `false` يدويًا.
+
+**الملف المتأثر:** `lib/cleanup/archive-cleanup.ts`
+
+**التحقق:** ✅ `npm run build` ناجح بدون أخطاء
 
 ---
 

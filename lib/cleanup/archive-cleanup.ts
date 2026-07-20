@@ -111,16 +111,18 @@ export async function deleteShiftData(
 export async function deleteOrphanProducts(dryRun: boolean): Promise<number> {
   const supabase = createAdminClient();
 
-  const { data: allProducts, error: prodErr } = await supabase
+  const { data: inactiveProducts, error: prodErr } = await supabase
     .from("products")
-    .select("id, name");
+    .select("id, name")
+    .eq("is_active", false);
   if (prodErr) throw prodErr;
 
-  if (!allProducts || allProducts.length === 0) return 0;
+  if (!inactiveProducts || inactiveProducts.length === 0) return 0;
 
   const orphanIds: string[] = [];
+  const orphanNames: string[] = [];
 
-  for (const product of allProducts) {
+  for (const product of inactiveProducts) {
     const { count, error: countErr } = await supabase
       .from("sale_items")
       .select("id", { count: "exact", head: true })
@@ -129,6 +131,7 @@ export async function deleteOrphanProducts(dryRun: boolean): Promise<number> {
 
     if (count === 0) {
       orphanIds.push(product.id);
+      orphanNames.push(product.name);
     }
   }
 
@@ -141,6 +144,10 @@ export async function deleteOrphanProducts(dryRun: boolean): Promise<number> {
       .in("id", orphanIds);
     if (delErr) throw delErr;
   }
+
+  console.log(
+    `[cleanup] ${dryRun ? "DRY RUN — would delete" : "Deleted"} ${orphanIds.length} orphan product(s): ${orphanNames.join(", ")}`
+  );
 
   return orphanIds.length;
 }
