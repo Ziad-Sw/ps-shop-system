@@ -166,6 +166,7 @@ export default function Sidebar({
         aria-label="القائمة الجانبية"
       >
         <div className="flex items-center gap-3 border-b border-foreground-muted/10 px-4 py-5">
+          <img src="/logo-ps.svg" alt="PS-System logo" className="h-8 w-8" />
           <span className="text-lg font-semibold text-foreground">
             PS-System
           </span>
