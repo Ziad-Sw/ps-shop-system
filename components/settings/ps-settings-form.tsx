@@ -27,18 +27,18 @@ export default function PsSettingsForm({
   const { showToast } = useToast();
   const [psEnabled, setPsEnabled] = useState(initialPsEnabled);
   const [singleHourRate, setSingleHourRate] = useState(
-    initialPricingRules.find((r) => r.mode === "single" && r.unit === "hour")?.rate || 0
+    initialPricingRules.find((r) => r.mode === "single" && r.unit === "hour")?.rate?.toString() || ""
   );
   const [multiHourRate, setMultiHourRate] = useState(
-    initialPricingRules.find((r) => r.mode === "multi" && r.unit === "hour")?.rate || 0
+    initialPricingRules.find((r) => r.mode === "multi" && r.unit === "hour")?.rate?.toString() || ""
   );
   const [singleGameRate, setSingleGameRate] = useState(
-    initialPricingRules.find((r) => r.mode === "single" && r.unit === "game")?.rate || 0
+    initialPricingRules.find((r) => r.mode === "single" && r.unit === "game")?.rate?.toString() || ""
   );
   const [multiGameRate, setMultiGameRate] = useState(
-    initialPricingRules.find((r) => r.mode === "multi" && r.unit === "game")?.rate || 0
+    initialPricingRules.find((r) => r.mode === "multi" && r.unit === "game")?.rate?.toString() || ""
   );
-  const [stationCount, setStationCount] = useState(initialStationCount);
+  const [stationCount, setStationCount] = useState(initialStationCount?.toString() || "");
   const [isSavingToggle, setIsSavingToggle] = useState(false);
   const [savingMode, setSavingMode] = useState<string | null>(null);
   const [isSavingStationCount, setIsSavingStationCount] = useState(false);
@@ -72,7 +72,8 @@ export default function PsSettingsForm({
   };
 
   const handleSaveStationCount = async () => {
-    if (stationCount < 0) {
+    const count = parseInt(stationCount) || 0;
+    if (count < 0) {
       showToast("error", "عدد الأجهزة لا يمكن أن يكون سالباً");
       return;
     }
@@ -82,7 +83,7 @@ export default function PsSettingsForm({
       const response = await fetch("/api/shops/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ps_station_count: stationCount }),
+        body: JSON.stringify({ ps_station_count: count }),
       });
 
       if (!response.ok) {
@@ -172,10 +173,10 @@ export default function PsSettingsForm({
             min="0"
             step="1"
             value={stationCount}
-            onChange={(e) => setStationCount(parseInt(e.target.value) || 0)}
+            onChange={(e) => setStationCount(e.target.value)}
             disabled={!canEdit}
             className="w-full sm:flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-            placeholder="0"
+            placeholder="العدد"
           />
           <button
             onClick={handleSaveStationCount}
@@ -209,13 +210,13 @@ export default function PsSettingsForm({
                     min="0"
                     step="1"
                     value={singleHourRate}
-                    onChange={(e) => setSingleHourRate(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => setSingleHourRate(e.target.value)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="0.00"
+                    placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing("single", "hour", singleHourRate)}
+                    onClick={() => handleSavePricing("single", "hour", parseFloat(singleHourRate) || 0)}
                     disabled={!canEdit || savingMode === "single_hour"}
                     className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -234,13 +235,13 @@ export default function PsSettingsForm({
                     min="0"
                     step="1"
                     value={multiHourRate}
-                    onChange={(e) => setMultiHourRate(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => setMultiHourRate(e.target.value)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="0.00"
+                    placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing("multi", "hour", multiHourRate)}
+                    onClick={() => handleSavePricing("multi", "hour", parseFloat(multiHourRate) || 0)}
                     disabled={!canEdit || savingMode === "multi_hour"}
                     className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -265,13 +266,13 @@ export default function PsSettingsForm({
                     min="0"
                     step="1"
                     value={singleGameRate}
-                    onChange={(e) => setSingleGameRate(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => setSingleGameRate(e.target.value)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="0.00"
+                    placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing("single", "game", singleGameRate)}
+                    onClick={() => handleSavePricing("single", "game", parseFloat(singleGameRate) || 0)}
                     disabled={!canEdit || savingMode === "single_game"}
                     className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -290,13 +291,13 @@ export default function PsSettingsForm({
                     min="0"
                     step="1"
                     value={multiGameRate}
-                    onChange={(e) => setMultiGameRate(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => setMultiGameRate(e.target.value)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="0.00"
+                    placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing("multi", "game", multiGameRate)}
+                    onClick={() => handleSavePricing("multi", "game", parseFloat(multiGameRate) || 0)}
                     disabled={!canEdit || savingMode === "multi_game"}
                     className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                   >

@@ -13,11 +13,12 @@ export default function ShiftsSettingsForm({
   canEdit = true,
 }: ShiftsSettingsFormProps) {
   const { showToast } = useToast();
-  const [shiftsPerDay, setShiftsPerDay] = useState(initialShiftsPerDay);
+  const [shiftsPerDay, setShiftsPerDay] = useState(initialShiftsPerDay.toString());
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
-    if (shiftsPerDay < 1 || shiftsPerDay > 4) {
+    const count = parseInt(shiftsPerDay) || 0;
+    if (count < 1 || count > 4) {
       showToast("error", "عدد الورديات يجب أن يكون بين 1 و 4");
       return;
     }
@@ -27,7 +28,7 @@ export default function ShiftsSettingsForm({
       const response = await fetch("/api/shops/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shifts_per_day: shiftsPerDay }),
+        body: JSON.stringify({ shifts_per_day: count }),
       });
 
       if (!response.ok) {
@@ -60,15 +61,13 @@ export default function ShiftsSettingsForm({
               min="1"
               max="4"
               value={shiftsPerDay}
-              onChange={(e) =>
-                setShiftsPerDay(parseInt(e.target.value) || 1)
-              }
+              onChange={(e) => setShiftsPerDay(e.target.value)}
               disabled={!canEdit}
               className="w-24 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
               onClick={handleSave}
-              disabled={!canEdit || isSaving || shiftsPerDay === initialShiftsPerDay}
+              disabled={!canEdit || isSaving || (parseInt(shiftsPerDay) || 0) === initialShiftsPerDay}
               className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? "جاري الحفظ..." : "حفظ"}

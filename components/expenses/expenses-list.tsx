@@ -290,7 +290,7 @@ export default function ExpensesList({
                   value={formAmount}
                   onChange={(e) => setFormAmount(e.target.value)}
                   className="w-full min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 text-right"
-                  placeholder="0"
+                  placeholder="المبلغ"
                   style={{ direction: "rtl" }}
                 />
               </div>

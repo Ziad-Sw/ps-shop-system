@@ -2157,3 +2157,37 @@
 - ✅ clean-code-guard: clean
 - ✅ test-guard: N/A
 
+---
+
+## يوليو 2026 — إصلاح حقل الرقم: Placeholder بدلاً من القيمة الافتراضية 0 ✅
+
+**السبب:** حقول الإدخال الرقمية (`<input type="number">`) كانت تهيئ حالة React بقيمة رقمية `0`، مما يجعل الحقل يظهر ممتلئاً بالرقم "0" بدلاً من أن يكون فارغاً مع نص توجيهي. هذا يسبب ارتباكاً على الجوال حيث لا تظهر القيمة الافتراضية كنص توجيهي.
+
+**الإصلاح:** تغيير نوع الحالة من `number` إلى `string`، مع تهيئتها بقيمة فارغة `""`، وتحويل القيمة وقت الحفظ فقط. هذا يسمح بظهور `placeholder` بشكل صحيح.
+
+**الحقول التي تم تغييرها (17 حقل عبر 5 ملفات):**
+
+| الملف | الحقل | الحالة السابقة | الحالة الجديدة |
+|---|---|---|---|
+| `ps-settings-form.tsx` | عدد أجهزة البلايستيشن | `number \| 0` / placeholder "0" | `string` / placeholder "العدد" |
+| `ps-settings-form.tsx` | 4 أسعار (فردي/مالتي × ساعة/جيم) | `number \| 0` / placeholder "0.00" | `string` / placeholder "السعر" |
+| `billiard-settings-form.tsx` | عدد طاولات البلياردو | `number \| 0` / placeholder "0" | `string` / placeholder "العدد" |
+| `billiard-settings-form.tsx` | 4 أسعار (فردي/مالتي × ساعة/جيم) | `number \| 0` / placeholder "0.00" | `string` / placeholder "السعر" |
+| `pingpong-settings-form.tsx` | عدد طاولات البينغ بونغ | `number \| 0` / placeholder "0" | `string` / placeholder "العدد" |
+| `pingpong-settings-form.tsx` | 4 أسعار (فردي/مالتي × ساعة/جيم) | `number \| 0` / placeholder "0.00" | `string` / placeholder "السعر" |
+| `shifts-settings-form.tsx` | عدد الورديات اليومية | `number` (initial 1-4) | `string` / placeholder "العدد" |
+| `expenses-list.tsx` | المبلغ في نموذج المصروفات | placeholder "0" (الحالة كانت string أصلاً) | placeholder "المبلغ" |
+
+**ملاحظات:**
+- `products-settings-form.tsx`: كان الحقلان أصلاً من نوع `string` مع `placeholder="السعر"` — لا حاجة للتغيير.
+- `session-popup.tsx`: حقول `gamesCount` و `gamesCountInput` و `selectedQuantity` لها قيم افتراضية منطقية (1 للكمية، عدد الجيمات الفعلي للجلسة) — لا حاجة للتغيير.
+- دالتا `handleSavePricing` و `handleSaveStationCount`/`handleSaveTableCount`/`handleSave` تم تحديثها لتحويل النص إلى رقم قبل الحفظ.
+- أزرار الحفظ: تم تحديث مقارنات `===` للمقارنة الرقمية بعد تحويل النص.
+
+**لم يتم تغيير (يحتاج قرارك):** صفوف التسعير (`<div className="flex gap-2">`) في ملفات PS/Billiard/Pingpong تستخدم `flex-1 input + min-w-[100px] button` — تعمل على معظم أحجام الجوال بعنصرين فقط، ولكن يمكن تحسينها بنمط `flex flex-col gap-2 sm:flex-row` للاتساق.
+
+**نتائج التحقق:**
+- ✅ `npm run build` — ناجح بدون أخطاء
+- ✅ clean-code-guard: clean (تغييرات حالة + واجهة فقط، لا منطق)
+- ✅ test-guard: N/A
+
