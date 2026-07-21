@@ -7,11 +7,11 @@ import {
   verifySessionCookieValue,
 } from "@/lib/auth/session";
 import { assertPermission, PermissionError } from "@/lib/auth/permissions";
-import type { BillingMode } from "@/types";
+import type { BillingMode, PlayType, PlaySubtype } from "@/types";
 
 /**
  * POST /api/sessions/start — starts a new session on a station
- * Body: { station_id: string, mode: 'single' | 'multi', billing_mode: 'time' | 'games', games_count?: number }
+ * Body: { station_id: string, mode: 'single' | 'multi', billing_mode: 'time' | 'games', games_count?: number, play_type?: 'normal' | 'combo', play_subtype?: 'single' | 'multi' | 'triple' | 'quad' }
  */
 export async function POST(request: NextRequest) {
   try {
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     // Parse body
     const body = await request.json();
-    const { station_id, mode, billing_mode, games_count } = body ?? {};
+    const { station_id, mode, billing_mode, games_count, play_type, play_subtype } = body ?? {};
 
     if (typeof station_id !== "string" || station_id.trim().length === 0) {
       return NextResponse.json(
@@ -69,6 +69,33 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Validate optional play_type (billiard-specific)
+    if (play_type !== undefined && play_type !== "normal" && play_type !== "combo") {
+      return NextResponse.json(
+        { error: "نوع اللعب غير صالح." },
+        { status: 400 }
+      );
+    }
+
+    // Validate optional play_subtype (billiard-specific)
+    if (
+      play_subtype !== undefined &&
+      play_subtype !== "single" &&
+      play_subtype !== "multi" &&
+      play_subtype !== "triple" &&
+      play_subtype !== "quad"
+    ) {
+      return NextResponse.json(
+        { error: "النوع الفرعي للعب غير صالح." },
+        { status: 400 }
+      );
+    }
+
+    // Require play_type + play_subtype for billiard, disallow for others
+    if (play_type !== undefined || play_subtype !== undefined) {
+      // station type will be resolved below; validation happens after
+    }
+
     const supabase = createAdminClient();
 
     // Get user shop_id
@@ -101,6 +128,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "الجهاز غير موجود." },
         { status: 404 }
+      );
+    }
+
+    // Validate play_type/play_subtype are only allowed for billiard
+    if ((play_type || play_subtype) && station.station_type !== "billiard") {
+      return NextResponse.json(
+        { error: "نوع اللعب والنوع الفرعي متاحان فقط للبلياردو." },
+        { status: 400 }
       );
     }
 
@@ -199,6 +234,8 @@ export async function POST(request: NextRequest) {
         status: "active",
         start_time: new Date().toISOString(),
         ...(games_count !== undefined ? { games_count } : {}),
+        ...(play_type !== undefined ? { play_type: play_type as PlayType } : {}),
+        ...(play_subtype !== undefined ? { play_subtype: play_subtype as PlaySubtype } : {}),
       })
       .select()
       .maybeSingle();
