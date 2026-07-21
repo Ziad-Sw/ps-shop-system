@@ -9,6 +9,7 @@ export type {
   Product,
   SaleItem,
   Expense,
+  BilliardGameEntry,
   UserRole,
   StationType,
   PricingMode,
@@ -17,6 +18,8 @@ export type {
   SessionStatus,
   ShiftStatus,
   StaffPermissions,
+  PlayType,
+  PlaySubtype,
 } from "./database";
 
 export {

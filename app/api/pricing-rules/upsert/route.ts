@@ -3,18 +3,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getShopIdFromRequest } from "@/lib/auth/require-shop";
 import { assertPermission, PermissionError, getUserIdFromRequest } from "@/lib/auth/permissions";
-import type { StationType, PricingMode, PricingUnit } from "@/types";
+import type { StationType, PricingMode, PricingUnit, PlayType, PlaySubtype } from "@/types";
 
 /**
- * Upserts a single pricing rule (one station_type + mode + unit combination).
+ * Upserts a single pricing rule.
  *
- * Body: { station_type, mode, unit, rate }
+ * Body: { station_type, mode, unit, rate, play_type?, play_subtype? }
  * - station_type: 'playstation' | 'billiard' | 'pingpong'
  * - mode: 'single' | 'multi'
  * - unit: 'hour' | 'game'
  * - rate: number >= 0
+ * - play_type (optional): 'normal' | 'combo'  — defaults to 'normal'
+ * - play_subtype (optional): 'single' | 'multi' | 'triple' | 'quad' — defaults to mode
  *
- * The UNIQUE constraint on (shop_id, station_type, mode, unit) ensures
+ * The UNIQUE constraint on (shop_id, station_type, play_type, play_subtype, unit) ensures
  * each combination has exactly one row per shop.
  */
 export async function POST(request: NextRequest) {
@@ -32,6 +34,18 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { station_type, mode, unit, rate } = body ?? {};
+    const play_type: PlayType =
+      body.play_type === "combo" ? "combo" : "normal";
+    const play_subtype: PlaySubtype =
+      body.play_subtype === "multi"
+        ? "multi"
+        : body.play_subtype === "triple"
+          ? "triple"
+          : body.play_subtype === "quad"
+            ? "quad"
+            : mode === "multi"
+              ? "multi"
+              : "single";
 
     // 1. Validate station_type
     if (
@@ -73,7 +87,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Upsert — relies on UNIQUE (shop_id, station_type, mode, unit)
+    // 5. Upsert — relies on UNIQUE (shop_id, station_type, play_type, play_subtype, unit)
     const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("pricing_rules")
@@ -84,10 +98,12 @@ export async function POST(request: NextRequest) {
           mode: mode as PricingMode,
           unit: unit as PricingUnit,
           rate,
+          play_type,
+          play_subtype,
         },
-        { onConflict: "shop_id,station_type,mode,unit" }
+        { onConflict: "shop_id,station_type,play_type,play_subtype,unit" }
       )
-      .select("id, station_type, mode, unit, rate")
+      .select("id, station_type, mode, unit, rate, play_type, play_subtype")
       .maybeSingle();
 
     if (error || !data) {

@@ -14,6 +14,10 @@ export type PricingMode = "single" | "multi";
 
 export type PricingUnit = "hour" | "game";
 
+export type PlayType = "normal" | "combo";
+
+export type PlaySubtype = "single" | "multi" | "triple" | "quad";
+
 export type BillingMode = "time" | "games";
 
 export type SessionStatus = "active" | "completed";
@@ -178,6 +182,8 @@ export interface Database {
           mode: PricingMode;
           unit: PricingUnit;
           rate: number;
+          play_type: PlayType;
+          play_subtype: PlaySubtype;
           created_at: string;
           updated_at: string;
         };
@@ -188,6 +194,8 @@ export interface Database {
           mode: PricingMode;
           unit: PricingUnit;
           rate: number;
+          play_type: PlayType;
+          play_subtype: PlaySubtype;
           created_at?: string;
           updated_at?: string;
         };
@@ -198,6 +206,8 @@ export interface Database {
           mode?: PricingMode;
           unit?: PricingUnit;
           rate?: number;
+          play_type?: PlayType;
+          play_subtype?: PlaySubtype;
           created_at?: string;
           updated_at?: string;
         };
@@ -279,6 +289,8 @@ export interface Database {
           games_count: number | null;
           calculated_cost: number | null;
           duration_hours: number | null;
+          play_type: PlayType | null;
+          play_subtype: PlaySubtype | null;
           created_at: string;
           updated_at: string;
         };
@@ -295,6 +307,8 @@ export interface Database {
           games_count?: number | null;
           calculated_cost?: number | null;
           duration_hours?: number | null;
+          play_type?: PlayType | null;
+          play_subtype?: PlaySubtype | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -311,6 +325,8 @@ export interface Database {
           games_count?: number | null;
           calculated_cost?: number | null;
           duration_hours?: number | null;
+          play_type?: PlayType | null;
+          play_subtype?: PlaySubtype | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -334,6 +350,54 @@ export interface Database {
             columns: ["station_id"];
             isOneToOne: false;
             referencedRelation: "stations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      billiard_game_entries: {
+        Row: {
+          id: string;
+          shop_id: string;
+          session_id: string;
+          play_type: PlayType;
+          play_subtype: PlaySubtype;
+          games_count: number;
+          price_per_game: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          session_id: string;
+          play_type: PlayType;
+          play_subtype: PlaySubtype;
+          games_count: number;
+          price_per_game: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          shop_id?: string;
+          session_id?: string;
+          play_type?: PlayType;
+          play_subtype?: PlaySubtype;
+          games_count?: number;
+          price_per_game?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "billiard_game_entries_shop_id_fkey";
+            columns: ["shop_id"];
+            isOneToOne: false;
+            referencedRelation: "shops";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "billiard_game_entries_session_id_fkey";
+            columns: ["session_id"];
+            isOneToOne: false;
+            referencedRelation: "sessions";
             referencedColumns: ["id"];
           },
         ];
@@ -506,6 +570,7 @@ export type Session = Database["public"]["Tables"]["sessions"]["Row"];
 export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type SaleItem = Database["public"]["Tables"]["sale_items"]["Row"];
 export type Expense = Database["public"]["Tables"]["expenses"]["Row"];
+export type BilliardGameEntry = Database["public"]["Tables"]["billiard_game_entries"]["Row"];
 
 export const OWNER_PERMISSIONS: StaffPermissions = {
   manage_sessions: true,
