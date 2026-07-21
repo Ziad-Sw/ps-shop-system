@@ -20,6 +20,27 @@ export async function GET(request: NextRequest) {
 
     const supabase = createAdminClient();
 
+    // Check which station types are enabled in the shop
+    const { data: shopSettings, error: shopError } = await supabase
+      .from("shops")
+      .select("ps_enabled, billiard_enabled, pingpong_enabled")
+      .eq("id", shopId)
+      .limit(1)
+      .maybeSingle();
+
+    if (shopError || !shopSettings) {
+      return NextResponse.json(
+        { error: "Shop not found" },
+        { status: 404 }
+      );
+    }
+
+    const enabledTypes: Record<string, boolean> = {
+      playstation: shopSettings.ps_enabled,
+      billiard: shopSettings.billiard_enabled,
+      pingpong: shopSettings.pingpong_enabled,
+    };
+
     // Build query
     let query = supabase
       .from("stations")
@@ -54,8 +75,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Filter out stations whose type is disabled in shop settings
+    const filteredStations = (stations ?? []).filter(
+      (s) => enabledTypes[s.station_type] !== false
+    );
+
     // Determine station status based on active sessions
-    const stationsWithStatus = stations.map((station) => {
+    const stationsWithStatus = filteredStations.map((station) => {
       const hasActiveSession = station.sessions && station.sessions.some(
         (session) => session.status === "active"
       );

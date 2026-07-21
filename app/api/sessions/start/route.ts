@@ -104,6 +104,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if the station type is enabled in shop settings
+    const { data: shopSettings, error: shopErr } = await supabase
+      .from("shops")
+      .select("ps_enabled, billiard_enabled, pingpong_enabled")
+      .eq("id", shopId)
+      .limit(1)
+      .maybeSingle();
+
+    if (shopErr || !shopSettings) {
+      console.error("Failed to fetch shop settings:", shopErr);
+      return NextResponse.json(
+        { error: "Failed to verify shop settings" },
+        { status: 500 }
+      );
+    }
+
+    const typeToEnabledFlag: Record<string, keyof typeof shopSettings> = {
+      playstation: "ps_enabled",
+      billiard: "billiard_enabled",
+      pingpong: "pingpong_enabled",
+    };
+
+    const flagName = typeToEnabledFlag[station.station_type];
+    if (flagName && !shopSettings[flagName]) {
+      const typeLabels: Record<string, string> = {
+        playstation: "البلايستيشن",
+        billiard: "البلياردو",
+        pingpong: "البينغ بونغ",
+      };
+      return NextResponse.json(
+        { error: `${typeLabels[station.station_type] || "هذا النوع"} معطل حاليًا من الإعدادات` },
+        { status: 400 }
+      );
+    }
+
     // Get the current open shift
     const { data: openShift, error: shiftError } = await supabase
       .from("shifts")
