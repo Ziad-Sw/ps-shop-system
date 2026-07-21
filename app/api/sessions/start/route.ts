@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
 
     if (!openShift) {
       return NextResponse.json(
-        { error: "لازم تفتح وردية الأول قبل ما تقدر تبدأ جلسة" },
+        { error: "لا يمكن بدء جلسة بدون وردية مفتوحة. يرجى فتح وردية أولاً." },
         { status: 400 }
       );
     }

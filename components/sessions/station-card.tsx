@@ -177,7 +177,7 @@ export function StationCard({
             }`}
           />
           <span className={`text-sm ${isAvailable ? "text-green-400" : "text-red-400"}`}>
-            {isAvailable ? "متاح" : "شغال"}
+            {isAvailable ? "متاح" : "نشط"}
           </span>
         </div>
 

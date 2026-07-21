@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     if (activeSessions && activeSessions.length > 0) {
       return NextResponse.json(
-        { error: "لا يزال هناك أجهزة شغالة. يجب إغلاق جميع الجلسات قبل إنهاء الوردية." },
+        { error: "لا تزال هناك أجهزة نشطة. يجب إغلاق جميع الجلسات قبل إنهاء الوردية." },
         { status: 409 }
       );
     }
