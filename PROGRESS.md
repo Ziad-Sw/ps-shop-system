@@ -2243,3 +2243,21 @@
 ### الخطوة التالية (خارج نطاق هذا التحديث — يُنفَّذ في جلسة لاحقة بخطة معتمدة):
 - بناء `billiard_game_entries` migration + نموذج API + UI للجلسات.
 
+## يوليو 2026 — تنفيذ البلياردو بالسطور المتراكمة (5 مراحل) + تصحيح ✅
+
+**المراحل المنجزة:**
+1. **الـ Migration (013_billiard_game_entries.sql):** جدول `billiard_game_entries` + أعمدة `play_type`/`play_subtype` في `pricing_rules` و`sessions` + 10 صفوف تسعير بلياردو (عادي/كومبو × فردي/مالتي/ثنائي/رباعي × ساعة/جيم) + تغيير UNIQUE constraint.
+2. **الأنواع (Types):** `PlayType`، `PlaySubtype`، `BilliardGameEntry` في `types/database.ts` و`index.ts`.
+3. **التسعير (Pricing):** دوال `calculateGameEntrySubtotal` و `calculateBilliardGameEntriesCost` في `calculation.ts` — المصدر الوحيد للحقيقة.
+4. **الـ API Routes:** 5 مسارات (`/add-game-entry`، `/game-entries`، تحديث `start`/`preview-close`/`confirm-close`).
+5. **الواجهة (UI):** إعدادات 10 حقول تسعير، عرض الجيمات المسجلة في session-popup مع إضافة دفعات جديدة، إظهار `game_entries_cost` في receipt-popup.
+
+**تصحيح لاحق:**
+- تم اكتشاف أن `session-popup.tsx` كانت تحسب `games_count * price_per_game` يدويًا في سطرين (عرض السطر والمجموع) بدل استخدام دالة التسعير المركزية. تم إصلاحه باستيراد `calculateGameEntrySubtotal` و `calculateBilliardGameEntriesCost` من `calculation.ts`. لم يعد أي ملف يحسب هذه القيمة يدويًا خارج `calculation.ts`.
+- تم حذف `if` بلوك فارغ (ميت) في `start/route.ts`.
+- تم إعادة تسمية الدالة `calculateSingleGameEntryCost` → `calculateGameEntrySubtotal` للوضوح.
+- تم تشغيل `clean-code-guard`: 3 إصلاحات، 0 ملاحظة.
+- تم تشغيل `test-guard`: لا يوجد إطار اختبار في المشروع لتنفيذ توصيات الاختبارات.
+
+**ملاحظة:** أسعار الكومبو (combo) هي قيم وهمية (placeholders) — يجب على صاحب المحل مراجعتها وتعديلها في `/settings/billiard`.
+

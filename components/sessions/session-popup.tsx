@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Station, Session, Product, BilliardGameEntry } from "@/types/database";
 import type { BillingMode, PlayType, PlaySubtype } from "@/types/database";
+import { calculateGameEntrySubtotal, calculateBilliardGameEntriesCost } from "@/lib/pricing/calculation";
 import { ReceiptPopup } from "./receipt-popup";
 import { useToast } from "@/components/ui/toast";
 
@@ -523,16 +524,14 @@ export function SessionPopup({
                             × {entry.games_count}
                           </span>
                           <span className="text-foreground">
-                            {(entry.games_count * entry.price_per_game).toFixed(2)} ج.م
+                            {calculateGameEntrySubtotal(entry.games_count, entry.price_per_game).toFixed(2)} ج.م
                           </span>
                         </div>
                       ))}
                       <div className="flex justify-between border-t border-foreground-muted/20 pt-2 text-sm font-medium">
                         <span className="text-foreground-muted">إجمالي الجيمات</span>
                         <span className="text-foreground">
-                          {gameEntries
-                            .reduce((sum, e) => sum + e.games_count * e.price_per_game, 0)
-                            .toFixed(2)}{" "}
+                          {calculateBilliardGameEntriesCost(gameEntries).toFixed(2)}{" "}
                           ج.م
                         </span>
                       </div>

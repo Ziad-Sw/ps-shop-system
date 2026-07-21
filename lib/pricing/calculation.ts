@@ -66,13 +66,27 @@ export function calculateSessionCost(input: SessionCostInput): SessionCostOutput
 }
 
 /**
+ * Single source of truth: compute one billiard game entry batch subtotal.
+ * Called by UI per-row display — never compute games_count * price_per_game inline.
+ */
+export function calculateGameEntrySubtotal(
+  games_count: number,
+  price_per_game: number
+): number {
+  return games_count * price_per_game;
+}
+
+/**
  * Single source of truth: sum billiard game entries cost.
  * Called by both preview-close and confirm-close — never duplicate inline.
  */
 export function calculateBilliardGameEntriesCost(
   entries: { games_count: number; price_per_game: number }[]
 ): number {
-  return entries.reduce((sum, e) => sum + e.games_count * e.price_per_game, 0);
+  return entries.reduce(
+    (sum, e) => sum + calculateGameEntrySubtotal(e.games_count, e.price_per_game),
+    0
+  );
 }
 
 /**

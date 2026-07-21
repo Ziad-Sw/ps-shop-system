@@ -91,11 +91,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Require play_type + play_subtype for billiard, disallow for others
-    if (play_type !== undefined || play_subtype !== undefined) {
-      // station type will be resolved below; validation happens after
-    }
-
     const supabase = createAdminClient();
 
     // Get user shop_id
