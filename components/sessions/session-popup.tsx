@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Station, Session, Product } from "@/types/database";
-import type { BillingMode } from "@/types/database";
+import { Station, Session, Product, BilliardGameEntry } from "@/types/database";
+import type { BillingMode, PlayType, PlaySubtype } from "@/types/database";
 import { ReceiptPopup } from "./receipt-popup";
 import { useToast } from "@/components/ui/toast";
 
@@ -48,6 +48,13 @@ export function SessionPopup({
     activeSession?.games_count ?? 0
   );
 
+  // Billiard game entries
+  const [gameEntries, setGameEntries] = useState<BilliardGameEntry[]>([]);
+  const [newEntryPlayType, setNewEntryPlayType] = useState<PlayType>("normal");
+  const [newEntryPlaySubtype, setNewEntryPlaySubtype] = useState<PlaySubtype>("single");
+  const [newEntryGamesCount, setNewEntryGamesCount] = useState(1);
+  const [isAddingGameEntry, setIsAddingGameEntry] = useState(false);
+
   const activeBillingMode = activeSession?.billing_mode ?? billingMode;
   const isGameBased = activeBillingMode === "games";
 
@@ -56,15 +63,19 @@ export function SessionPopup({
     fetchProducts();
   }, []);
 
-  // Sync gamesCount and fetch existing sale items when activeSession changes
+  // Sync gamesCount and fetch existing sale items / game entries when activeSession changes
   useEffect(() => {
     if (activeSession) {
       const g = activeSession.games_count ?? 0;
       setGamesCount(g);
       setGamesCountInput(g);
       fetchSaleItems(activeSession.id);
+      if (station.station_type === "billiard" && activeSession.billing_mode === "games") {
+        fetchGameEntries(activeSession.id);
+      }
     } else {
       setSaleItems([]);
+      setGameEntries([]);
     }
   }, [activeSession]);
 
@@ -246,6 +257,50 @@ export function SessionPopup({
     }
   };
 
+  const fetchGameEntries = async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/sessions/game-entries?session_id=${sessionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setGameEntries(data.entries || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch game entries:", error);
+    }
+  };
+
+  const handleAddGameEntry = async () => {
+    if (!activeSession) return;
+    setIsAddingGameEntry(true);
+    try {
+      const response = await fetch("/api/sessions/add-game-entry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: activeSession.id,
+          games_count: newEntryGamesCount,
+          play_type: newEntryPlayType,
+          play_subtype: newEntryPlaySubtype,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showToast("success", "تم إضافة الجيمات بنجاح");
+        setNewEntryGamesCount(1);
+        fetchGameEntries(activeSession.id);
+      } else {
+        showToast("error", data.error || "فشل إضافة الجيمات");
+      }
+    } catch (error) {
+      console.error("Failed to add game entry:", error);
+      showToast("error", "حدث خطأ أثناء إضافة الجيمات");
+    } finally {
+      setIsAddingGameEntry(false);
+    }
+  };
+
   const hasGamesChanged = gamesCountInput !== gamesCount;
 
   const handlePreviewClose = async () => {
@@ -419,8 +474,8 @@ export function SessionPopup({
           ) : (
             /* Active Session - Add Products / End Session */
             <div className="space-y-4">
-              {/* Games Count (Game-based only) */}
-              {isGameBased && (
+              {/* Games Count (Game-based only - non-billiard) */}
+              {isGameBased && station.station_type !== "billiard" && (
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground">
                     عدد الجيمات
@@ -439,6 +494,88 @@ export function SessionPopup({
                       className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       حفظ
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Billiard Game Entries (billiard/games only) */}
+              {isGameBased && station.station_type === "billiard" && (
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">
+                    الجيمات المسجلة
+                  </label>
+
+                  {/* Entries Table */}
+                  {gameEntries.length > 0 ? (
+                    <div className="mb-3 rounded-lg bg-surface-page/50 p-3 space-y-1.5">
+                      {gameEntries.map((entry) => (
+                        <div key={entry.id} className="flex items-center justify-between text-sm">
+                          <span className="text-foreground-muted">
+                            {entry.play_type === "combo" ? "كومبو" : "عادي"} /{" "}
+                            {entry.play_subtype === "single"
+                              ? "فردي"
+                              : entry.play_subtype === "multi"
+                                ? "مالتي"
+                                : entry.play_subtype === "triple"
+                                  ? "ثنائي"
+                                  : "رباعي"}{" "}
+                            × {entry.games_count}
+                          </span>
+                          <span className="text-foreground">
+                            {(entry.games_count * entry.price_per_game).toFixed(2)} ج.م
+                          </span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between border-t border-foreground-muted/20 pt-2 text-sm font-medium">
+                        <span className="text-foreground-muted">إجمالي الجيمات</span>
+                        <span className="text-foreground">
+                          {gameEntries
+                            .reduce((sum, e) => sum + e.games_count * e.price_per_game, 0)
+                            .toFixed(2)}{" "}
+                          ج.م
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mb-3 text-sm text-foreground-muted">لا توجد جيمات مسجلة بعد</p>
+                  )}
+
+                  {/* Add Entry Form */}
+                  <div className="space-y-2 rounded-lg border border-foreground-muted/20 p-3">
+                    <div className="grid grid-cols-3 gap-2">
+                      <select
+                        value={newEntryPlayType}
+                        onChange={(e) => setNewEntryPlayType(e.target.value as PlayType)}
+                        className="rounded-lg bg-surface-page px-2 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="normal">عادي</option>
+                        <option value="combo">كومبو</option>
+                      </select>
+                      <select
+                        value={newEntryPlaySubtype}
+                        onChange={(e) => setNewEntryPlaySubtype(e.target.value as PlaySubtype)}
+                        className="rounded-lg bg-surface-page px-2 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="single">فردي</option>
+                        <option value="multi">مالتي</option>
+                        <option value="triple">ثنائي</option>
+                        <option value="quad">رباعي</option>
+                      </select>
+                      <input
+                        type="number"
+                        min="1"
+                        value={newEntryGamesCount}
+                        onChange={(e) => setNewEntryGamesCount(Math.max(1, Number(e.target.value)))}
+                        className="rounded-lg bg-surface-page px-2 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <button
+                      onClick={handleAddGameEntry}
+                      disabled={isAddingGameEntry}
+                      className="w-full rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      {isAddingGameEntry ? "جاري الإضافة..." : "إضافة جيمات"}
                     </button>
                   </div>
                 </div>

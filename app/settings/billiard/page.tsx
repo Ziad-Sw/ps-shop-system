@@ -90,7 +90,7 @@ async function getPricingRules(shopId: string) {
   const supabase = createAdminClient();
   const { data: rules, error } = await supabase
     .from("pricing_rules")
-    .select("id, station_type, mode, unit, rate")
+    .select("id, station_type, mode, unit, rate, play_type, play_subtype")
     .eq("shop_id", shopId)
     .eq("station_type", "billiard");
 

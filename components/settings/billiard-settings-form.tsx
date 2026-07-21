@@ -9,6 +9,8 @@ interface PricingRule {
   mode: string;
   unit: string;
   rate: number;
+  play_type: string;
+  play_subtype: string;
 }
 
 interface BilliardSettingsFormProps {
@@ -28,17 +30,45 @@ export default function BilliardSettingsForm({
   const [billiardEnabled, setBilliardEnabled] = useState(
     initialBilliardEnabled
   );
-  const [singleHourRate, setSingleHourRate] = useState(
-    initialPricingRules.find((r) => r.mode === "single" && r.unit === "hour")?.rate?.toString() || ""
+  const findRule = (playType: string, playSubtype: string, unit: string) =>
+    initialPricingRules.find(
+      (r) => r.play_type === playType && r.play_subtype === playSubtype && r.unit === unit
+    );
+
+  // Normal / Single
+  const [normalSingleHourRate, setNormalSingleHourRate] = useState(
+    findRule("normal", "single", "hour")?.rate?.toString() || ""
   );
-  const [multiHourRate, setMultiHourRate] = useState(
-    initialPricingRules.find((r) => r.mode === "multi" && r.unit === "hour")?.rate?.toString() || ""
+  const [normalSingleGameRate, setNormalSingleGameRate] = useState(
+    findRule("normal", "single", "game")?.rate?.toString() || ""
   );
-  const [singleGameRate, setSingleGameRate] = useState(
-    initialPricingRules.find((r) => r.mode === "single" && r.unit === "game")?.rate?.toString() || ""
+  // Normal / Multi
+  const [normalMultiHourRate, setNormalMultiHourRate] = useState(
+    findRule("normal", "multi", "hour")?.rate?.toString() || ""
   );
-  const [multiGameRate, setMultiGameRate] = useState(
-    initialPricingRules.find((r) => r.mode === "multi" && r.unit === "game")?.rate?.toString() || ""
+  const [normalMultiGameRate, setNormalMultiGameRate] = useState(
+    findRule("normal", "multi", "game")?.rate?.toString() || ""
+  );
+  // Combo / Single
+  const [comboSingleHourRate, setComboSingleHourRate] = useState(
+    findRule("combo", "single", "hour")?.rate?.toString() || ""
+  );
+  const [comboSingleGameRate, setComboSingleGameRate] = useState(
+    findRule("combo", "single", "game")?.rate?.toString() || ""
+  );
+  // Combo / Triple
+  const [comboTripleHourRate, setComboTripleHourRate] = useState(
+    findRule("combo", "triple", "hour")?.rate?.toString() || ""
+  );
+  const [comboTripleGameRate, setComboTripleGameRate] = useState(
+    findRule("combo", "triple", "game")?.rate?.toString() || ""
+  );
+  // Combo / Quad
+  const [comboQuadHourRate, setComboQuadHourRate] = useState(
+    findRule("combo", "quad", "hour")?.rate?.toString() || ""
+  );
+  const [comboQuadGameRate, setComboQuadGameRate] = useState(
+    findRule("combo", "quad", "game")?.rate?.toString() || ""
   );
   const [tableCount, setTableCount] = useState(initialTableCount?.toString() || "");
   const [isSavingToggle, setIsSavingToggle] = useState(false);
@@ -102,8 +132,15 @@ export default function BilliardSettingsForm({
     }
   };
 
-  const handleSavePricing = async (mode: "single" | "multi", unit: "hour" | "game", rate: number) => {
-    const key = `${mode}_${unit}`;
+  interface SavePricingParams {
+    playType: "normal" | "combo";
+    playSubtype: "single" | "multi" | "triple" | "quad";
+    unit: "hour" | "game";
+    rate: number;
+  }
+
+  const handleSavePricing = async ({ playType, playSubtype, unit, rate }: SavePricingParams) => {
+    const key = `${playType}_${playSubtype}_${unit}`;
     setSavingMode(key);
     try {
       const response = await fetch("/api/pricing-rules/upsert", {
@@ -111,9 +148,11 @@ export default function BilliardSettingsForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           station_type: "billiard",
-          mode,
+          mode: playSubtype === "multi" || playSubtype === "triple" || playSubtype === "quad" ? "multi" : "single",
           unit,
           rate,
+          play_type: playType,
+          play_subtype: playSubtype,
         }),
       });
 
@@ -195,113 +234,231 @@ export default function BilliardSettingsForm({
           أسعار اللعب بالساعة وبعدد الجيمات لكل نوع لعب
         </p>
 
-        <div className="mt-6 space-y-6">
-          {/* Hourly Pricing */}
+        <div className="mt-6 space-y-8">
+          {/* ===== Normal / Single ===== */}
           <div>
-            <h3 className="text-md font-medium text-foreground mb-3">التسعير بالساعة</h3>
-            <div className="space-y-4">
+            <h3 className="text-md font-medium text-foreground mb-1">عادي — فردي</h3>
+            <p className="text-xs text-foreground-muted mb-3">التسعير الأساسي للعب الفردي</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  لعب فردي (جنيه/ساعة)
-                </label>
+                <label className="block text-xs font-medium text-foreground mb-1">جنيه/ساعة</label>
                 <div className="flex gap-2">
                   <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={singleHourRate}
-                    onChange={(e) => setSingleHourRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="السعر"
+                    type="number" min="0" step="1"
+                    value={normalSingleHourRate}
+                    onChange={(e) => setNormalSingleHourRate(e.target.value)}
+                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing("single", "hour", parseFloat(singleHourRate) || 0)}
-                    disabled={!canEdit || savingMode === "single_hour"}
-                    className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => handleSavePricing({ playType: "normal", playSubtype: "single", unit: "hour", rate: parseFloat(normalSingleHourRate) || 0 })}
+                    disabled={!canEdit || savingMode === "normal_single_hour"}
+                    className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {savingMode === "single_hour" ? "جاري..." : "حفظ"}
+                    {savingMode === "normal_single_hour" ? "..." : "حفظ"}
                   </button>
                 </div>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  لعب مالتي (جنيه/ساعة)
-                </label>
+                <label className="block text-xs font-medium text-foreground mb-1">جنيه/جيم</label>
                 <div className="flex gap-2">
                   <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={multiHourRate}
-                    onChange={(e) => setMultiHourRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="السعر"
+                    type="number" min="0" step="1"
+                    value={normalSingleGameRate}
+                    onChange={(e) => setNormalSingleGameRate(e.target.value)}
+                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing("multi", "hour", parseFloat(multiHourRate) || 0)}
-                    disabled={!canEdit || savingMode === "multi_hour"}
-                    className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => handleSavePricing({ playType: "normal", playSubtype: "single", unit: "game", rate: parseFloat(normalSingleGameRate) || 0 })}
+                    disabled={!canEdit || savingMode === "normal_single_game"}
+                    className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {savingMode === "multi_hour" ? "جاري..." : "حفظ"}
+                    {savingMode === "normal_single_game" ? "..." : "حفظ"}
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Per-Game Pricing */}
+          {/* ===== Normal / Multi ===== */}
           <div className="border-t border-foreground-muted/20 pt-6">
-            <h3 className="text-md font-medium text-foreground mb-3">التسعير بعدد الجيمات</h3>
-            <div className="space-y-4">
+            <h3 className="text-md font-medium text-foreground mb-1">عادي — مالتي</h3>
+            <p className="text-xs text-foreground-muted mb-3">التسعير الأساسي للعب الجماعي</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  لعب فردي (جنيه/جيم)
-                </label>
+                <label className="block text-xs font-medium text-foreground mb-1">جنيه/ساعة</label>
                 <div className="flex gap-2">
                   <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={singleGameRate}
-                    onChange={(e) => setSingleGameRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="السعر"
+                    type="number" min="0" step="1"
+                    value={normalMultiHourRate}
+                    onChange={(e) => setNormalMultiHourRate(e.target.value)}
+                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing("single", "game", parseFloat(singleGameRate) || 0)}
-                    disabled={!canEdit || savingMode === "single_game"}
-                    className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => handleSavePricing({ playType: "normal", playSubtype: "multi", unit: "hour", rate: parseFloat(normalMultiHourRate) || 0 })}
+                    disabled={!canEdit || savingMode === "normal_multi_hour"}
+                    className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {savingMode === "single_game" ? "جاري..." : "حفظ"}
+                    {savingMode === "normal_multi_hour" ? "..." : "حفظ"}
                   </button>
                 </div>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  لعب مالتي (جنيه/جيم)
-                </label>
+                <label className="block text-xs font-medium text-foreground mb-1">جنيه/جيم</label>
                 <div className="flex gap-2">
                   <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={multiGameRate}
-                    onChange={(e) => setMultiGameRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="السعر"
+                    type="number" min="0" step="1"
+                    value={normalMultiGameRate}
+                    onChange={(e) => setNormalMultiGameRate(e.target.value)}
+                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing("multi", "game", parseFloat(multiGameRate) || 0)}
-                    disabled={!canEdit || savingMode === "multi_game"}
-                    className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => handleSavePricing({ playType: "normal", playSubtype: "multi", unit: "game", rate: parseFloat(normalMultiGameRate) || 0 })}
+                    disabled={!canEdit || savingMode === "normal_multi_game"}
+                    className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {savingMode === "multi_game" ? "جاري..." : "حفظ"}
+                    {savingMode === "normal_multi_game" ? "..." : "حفظ"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ===== Combo / Single ===== */}
+          <div className="border-t border-foreground-muted/20 pt-6">
+            <h3 className="text-md font-medium text-foreground mb-1">كومبو — فردي</h3>
+            <p className="text-xs text-foreground-muted mb-3">تسعير العروض للاعب واحد. راجعه في /settings/billiard</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">جنيه/ساعة</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number" min="0" step="1"
+                    value={comboSingleHourRate}
+                    onChange={(e) => setComboSingleHourRate(e.target.value)}
+                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                    disabled={!canEdit}
+                  />
+                  <button
+                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "single", unit: "hour", rate: parseFloat(comboSingleHourRate) || 0 })}
+                    disabled={!canEdit || savingMode === "combo_single_hour"}
+                    className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {savingMode === "combo_single_hour" ? "..." : "حفظ"}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">جنيه/جيم</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number" min="0" step="1"
+                    value={comboSingleGameRate}
+                    onChange={(e) => setComboSingleGameRate(e.target.value)}
+                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                    disabled={!canEdit}
+                  />
+                  <button
+                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "single", unit: "game", rate: parseFloat(comboSingleGameRate) || 0 })}
+                    disabled={!canEdit || savingMode === "combo_single_game"}
+                    className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {savingMode === "combo_single_game" ? "..." : "حفظ"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ===== Combo / Triple ===== */}
+          <div className="border-t border-foreground-muted/20 pt-6">
+            <h3 className="text-md font-medium text-foreground mb-1">كومبو — ثنائي</h3>
+            <p className="text-xs text-foreground-muted mb-3">تسعير العروض للاعبَين. راجعه في /settings/billiard</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">جنيه/ساعة</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number" min="0" step="1"
+                    value={comboTripleHourRate}
+                    onChange={(e) => setComboTripleHourRate(e.target.value)}
+                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                    disabled={!canEdit}
+                  />
+                  <button
+                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "triple", unit: "hour", rate: parseFloat(comboTripleHourRate) || 0 })}
+                    disabled={!canEdit || savingMode === "combo_triple_hour"}
+                    className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {savingMode === "combo_triple_hour" ? "..." : "حفظ"}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">جنيه/جيم</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number" min="0" step="1"
+                    value={comboTripleGameRate}
+                    onChange={(e) => setComboTripleGameRate(e.target.value)}
+                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                    disabled={!canEdit}
+                  />
+                  <button
+                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "triple", unit: "game", rate: parseFloat(comboTripleGameRate) || 0 })}
+                    disabled={!canEdit || savingMode === "combo_triple_game"}
+                    className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {savingMode === "combo_triple_game" ? "..." : "حفظ"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ===== Combo / Quad ===== */}
+          <div className="border-t border-foreground-muted/20 pt-6">
+            <h3 className="text-md font-medium text-foreground mb-1">كومبو — رباعي</h3>
+            <p className="text-xs text-foreground-muted mb-3">تسعير العروض لأربعة لاعبين. راجعه في /settings/billiard</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">جنيه/ساعة</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number" min="0" step="1"
+                    value={comboQuadHourRate}
+                    onChange={(e) => setComboQuadHourRate(e.target.value)}
+                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                    disabled={!canEdit}
+                  />
+                  <button
+                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "quad", unit: "hour", rate: parseFloat(comboQuadHourRate) || 0 })}
+                    disabled={!canEdit || savingMode === "combo_quad_hour"}
+                    className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {savingMode === "combo_quad_hour" ? "..." : "حفظ"}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">جنيه/جيم</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number" min="0" step="1"
+                    value={comboQuadGameRate}
+                    onChange={(e) => setComboQuadGameRate(e.target.value)}
+                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                    disabled={!canEdit}
+                  />
+                  <button
+                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "quad", unit: "game", rate: parseFloat(comboQuadGameRate) || 0 })}
+                    disabled={!canEdit || savingMode === "combo_quad_game"}
+                    className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {savingMode === "combo_quad_game" ? "..." : "حفظ"}
                   </button>
                 </div>
               </div>

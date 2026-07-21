@@ -16,6 +16,7 @@ interface ReceiptData {
   duration_formatted: string;
   time_cost: number;
   drinks_cost: number;
+  game_entries_cost: number;
   total_cost: number;
   items: Array<{
     id: string;
@@ -193,6 +194,14 @@ export function ReceiptPopup({
                 <span className="text-foreground">{receiptData.drinks_cost.toFixed(2)} ج.م</span>
               </div>
             </>
+          )}
+
+          {/* Game Entries Cost (billiard) */}
+          {receiptData.game_entries_cost > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-foreground-muted">تكلفة الجيمات المسجلة</span>
+              <span className="text-foreground">{receiptData.game_entries_cost.toFixed(2)} ج.م</span>
+            </div>
           )}
 
           {/* Total */}
