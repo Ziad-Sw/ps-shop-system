@@ -53,25 +53,10 @@ function LoginForm() {
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm rounded-xl bg-surface-card p-8 border border-foreground-muted/10 shadow-xl">
         <div className="flex flex-col items-center mb-6">
-          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6 text-primary"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM5.25 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12 5.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM12 20.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
-              />
-            </svg>
-          </div>
+          <img src="/logo-ps.svg" alt="PS-System logo" className="h-14 w-14 mb-3" />
           <h1 className="text-2xl font-bold text-foreground text-center">PS-System</h1>
           <p className="mt-2 text-sm text-foreground-muted text-center">
-            نظام إدارة المحل
+            نظام إدارة محلات الألعاب والترفيه
           </p>
         </div>
 
