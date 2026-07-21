@@ -9,12 +9,14 @@ export interface SessionCostInput {
   end_time: string | null;
   games_count: number | null;
   sale_items_total: number;
+  billiard_game_entries_cost?: number;
 }
 
 export interface SessionCostOutput {
   duration_hours: number;
   session_cost: number;
   products_cost: number;
+  billiard_game_entries_cost: number;
   total_cost: number;
 }
 
@@ -26,9 +28,10 @@ export interface SessionCostOutput {
  * - rate is the hourly/game rate from pricing_rules
  * - When unit = 'game', cost = games_count * rate
  * - When unit = 'hour', cost = duration_hours * rate
+ * - When billiard/billing_mode=games, cost includes billiard_game_entries_cost
  */
 export function calculateSessionCost(input: SessionCostInput): SessionCostOutput {
-  const { unit, rate, start_time, end_time, games_count, sale_items_total } = input;
+  const { unit, rate, start_time, end_time, games_count, sale_items_total, billiard_game_entries_cost } = input;
 
   let duration_hours = 0;
   let session_cost = 0;
@@ -50,14 +53,26 @@ export function calculateSessionCost(input: SessionCostInput): SessionCostOutput
     session_cost = duration_hours * rate;
   }
 
-  const total_cost = session_cost + sale_items_total;
+  const game_entries_cost = billiard_game_entries_cost ?? 0;
+  const total_cost = session_cost + sale_items_total + game_entries_cost;
 
   return {
     duration_hours,
     session_cost,
     products_cost: sale_items_total,
+    billiard_game_entries_cost: game_entries_cost,
     total_cost,
   };
+}
+
+/**
+ * Single source of truth: sum billiard game entries cost.
+ * Called by both preview-close and confirm-close — never duplicate inline.
+ */
+export function calculateBilliardGameEntriesCost(
+  entries: { games_count: number; price_per_game: number }[]
+): number {
+  return entries.reduce((sum, e) => sum + e.games_count * e.price_per_game, 0);
 }
 
 /**
