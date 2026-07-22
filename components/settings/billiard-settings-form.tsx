@@ -208,7 +208,7 @@ export default function BilliardSettingsForm({
 
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
           <input
-            type="number"
+            type="text" inputMode="numeric" pattern="[0-9]*"
             min="0"
             step="1"
             value={tableCount}
@@ -244,7 +244,7 @@ export default function BilliardSettingsForm({
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/ساعة</label>
                 <div className="flex gap-2">
                   <input
-                    type="number" min="0" step="1"
+                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
                     value={normalSingleHourRate}
                     onChange={(e) => setNormalSingleHourRate(e.target.value)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
@@ -263,7 +263,7 @@ export default function BilliardSettingsForm({
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/جيم</label>
                 <div className="flex gap-2">
                   <input
-                    type="number" min="0" step="1"
+                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
                     value={normalSingleGameRate}
                     onChange={(e) => setNormalSingleGameRate(e.target.value)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
@@ -290,7 +290,7 @@ export default function BilliardSettingsForm({
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/ساعة</label>
                 <div className="flex gap-2">
                   <input
-                    type="number" min="0" step="1"
+                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
                     value={normalMultiHourRate}
                     onChange={(e) => setNormalMultiHourRate(e.target.value)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
@@ -309,7 +309,7 @@ export default function BilliardSettingsForm({
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/جيم</label>
                 <div className="flex gap-2">
                   <input
-                    type="number" min="0" step="1"
+                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
                     value={normalMultiGameRate}
                     onChange={(e) => setNormalMultiGameRate(e.target.value)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
@@ -329,14 +329,14 @@ export default function BilliardSettingsForm({
 
           {/* ===== Combo / Single ===== */}
           <div className="border-t border-foreground-muted/20 pt-6">
-            <h3 className="text-md font-medium text-foreground mb-1">كومبو — فردي</h3>
+            <h3 className="text-md font-medium text-foreground mb-1">كومب — فردي</h3>
             <p className="text-xs text-foreground-muted mb-3">تسعير العروض للاعب واحد. راجعه في /settings/billiard</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/ساعة</label>
                 <div className="flex gap-2">
                   <input
-                    type="number" min="0" step="1"
+                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
                     value={comboSingleHourRate}
                     onChange={(e) => setComboSingleHourRate(e.target.value)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
@@ -355,7 +355,7 @@ export default function BilliardSettingsForm({
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/جيم</label>
                 <div className="flex gap-2">
                   <input
-                    type="number" min="0" step="1"
+                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
                     value={comboSingleGameRate}
                     onChange={(e) => setComboSingleGameRate(e.target.value)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
@@ -375,14 +375,14 @@ export default function BilliardSettingsForm({
 
           {/* ===== Combo / Triple ===== */}
           <div className="border-t border-foreground-muted/20 pt-6">
-            <h3 className="text-md font-medium text-foreground mb-1">كومبو — ثنائي</h3>
+            <h3 className="text-md font-medium text-foreground mb-1">كومب — متولتة</h3>
             <p className="text-xs text-foreground-muted mb-3">تسعير العروض للاعبَين. راجعه في /settings/billiard</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/ساعة</label>
                 <div className="flex gap-2">
                   <input
-                    type="number" min="0" step="1"
+                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
                     value={comboTripleHourRate}
                     onChange={(e) => setComboTripleHourRate(e.target.value)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
@@ -401,7 +401,7 @@ export default function BilliardSettingsForm({
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/جيم</label>
                 <div className="flex gap-2">
                   <input
-                    type="number" min="0" step="1"
+                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
                     value={comboTripleGameRate}
                     onChange={(e) => setComboTripleGameRate(e.target.value)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
@@ -421,14 +421,14 @@ export default function BilliardSettingsForm({
 
           {/* ===== Combo / Quad ===== */}
           <div className="border-t border-foreground-muted/20 pt-6">
-            <h3 className="text-md font-medium text-foreground mb-1">كومبو — رباعي</h3>
+            <h3 className="text-md font-medium text-foreground mb-1">كومب — مربعة</h3>
             <p className="text-xs text-foreground-muted mb-3">تسعير العروض لأربعة لاعبين. راجعه في /settings/billiard</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/ساعة</label>
                 <div className="flex gap-2">
                   <input
-                    type="number" min="0" step="1"
+                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
                     value={comboQuadHourRate}
                     onChange={(e) => setComboQuadHourRate(e.target.value)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
@@ -447,7 +447,7 @@ export default function BilliardSettingsForm({
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/جيم</label>
                 <div className="flex gap-2">
                   <input
-                    type="number" min="0" step="1"
+                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
                     value={comboQuadGameRate}
                     onChange={(e) => setComboQuadGameRate(e.target.value)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"

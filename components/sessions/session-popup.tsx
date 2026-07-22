@@ -366,7 +366,13 @@ export function SessionPopup({
 
           {/* Station Info */}
           <div className="mb-6 rounded-lg bg-surface-page/50 p-4">
-            <div className="text-sm text-foreground-muted">الجهاز</div>
+            <div className="text-sm text-foreground-muted">
+              {station.station_type === "billiard"
+                ? "بلياردو"
+                : station.station_type === "playstation"
+                  ? "بلايستيشن"
+                  : "بينغ بونغ"}
+            </div>
             <div className="mt-1 text-lg font-semibold text-foreground">{station.name}</div>
 
             {!isAvailable && (
@@ -455,7 +461,7 @@ export function SessionPopup({
                     عدد الجيمات
                   </label>
                   <input
-                    type="number"
+                    type="text" inputMode="numeric" pattern="[0-9]*"
                     min="0"
                     value={gamesCount}
                     onChange={(e) => setGamesCount(Math.max(0, Number(e.target.value)))}
@@ -483,7 +489,7 @@ export function SessionPopup({
                   </label>
                   <div className="flex gap-3">
                     <input
-                      type="number"
+                      type="text" inputMode="numeric" pattern="[0-9]*"
                       min="0"
                       value={gamesCountInput}
                       onChange={(e) => setGamesCountInput(Math.max(0, Number(e.target.value)))}
@@ -513,14 +519,14 @@ export function SessionPopup({
                       {gameEntries.map((entry) => (
                         <div key={entry.id} className="flex items-center justify-between text-sm">
                           <span className="text-foreground-muted">
-                            {entry.play_type === "combo" ? "كومبو" : "عادي"} /{" "}
+                            {entry.play_type === "combo" ? "كومب" : "عادي"} /{" "}
                             {entry.play_subtype === "single"
                               ? "فردي"
                               : entry.play_subtype === "multi"
                                 ? "مالتي"
                                 : entry.play_subtype === "triple"
-                                  ? "ثنائي"
-                                  : "رباعي"}{" "}
+                                  ? "متولتة"
+                                  : "مربعة"}{" "}
                             × {entry.games_count}
                           </span>
                           <span className="text-foreground">
@@ -543,26 +549,69 @@ export function SessionPopup({
                   {/* Add Entry Form */}
                   <div className="space-y-2 rounded-lg border border-foreground-muted/20 p-3">
                     <div className="grid grid-cols-3 gap-2">
-                      <select
-                        value={newEntryPlayType}
-                        onChange={(e) => setNewEntryPlayType(e.target.value as PlayType)}
-                        className="rounded-lg bg-surface-page px-2 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-primary"
-                      >
-                        <option value="normal">عادي</option>
-                        <option value="combo">كومبو</option>
-                      </select>
-                      <select
-                        value={newEntryPlaySubtype}
-                        onChange={(e) => setNewEntryPlaySubtype(e.target.value as PlaySubtype)}
-                        className="rounded-lg bg-surface-page px-2 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-primary"
-                      >
-                        <option value="single">فردي</option>
-                        <option value="multi">مالتي</option>
-                        <option value="triple">ثنائي</option>
-                        <option value="quad">رباعي</option>
-                      </select>
+                      <div className="relative">
+                        <select
+                          value={newEntryPlayType}
+                          onChange={(e) => {
+                            setNewEntryPlayType(e.target.value as PlayType);
+                            setNewEntryPlaySubtype("single");
+                          }}
+                          className="w-full appearance-none rounded-lg bg-surface-page px-2 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="normal">عادي</option>
+                          <option value="combo">كومب</option>
+                        </select>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-foreground-muted"
+                        >
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </div>
+                      <div className="relative">
+                        <select
+                          value={newEntryPlaySubtype}
+                          onChange={(e) => setNewEntryPlaySubtype(e.target.value as PlaySubtype)}
+                          className="w-full appearance-none rounded-lg bg-surface-page px-2 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          {newEntryPlayType === "normal" ? (
+                            <>
+                              <option value="single">فردي</option>
+                              <option value="multi">مالتي</option>
+                            </>
+                          ) : (
+                            <>
+                              <option value="single">فردي</option>
+                              <option value="triple">متولتة</option>
+                              <option value="quad">مربعة</option>
+                            </>
+                          )}
+                        </select>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-foreground-muted"
+                        >
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </div>
                       <input
-                        type="number"
+                        type="text" inputMode="numeric" pattern="[0-9]*"
                         min="1"
                         value={newEntryGamesCount}
                         onChange={(e) => setNewEntryGamesCount(Math.max(1, Number(e.target.value)))}
@@ -617,7 +666,7 @@ export function SessionPopup({
 
                   <div className="flex gap-3">
                     <input
-                      type="number"
+                      type="text" inputMode="numeric" pattern="[0-9]*"
                       min="1"
                       value={selectedQuantity}
                       onChange={(e) => setSelectedQuantity(Number(e.target.value))}

@@ -57,7 +57,7 @@ export default function ShiftsSettingsForm({
         <div className="mt-4 space-y-3">
           <div className="flex gap-2">
             <input
-              type="number"
+              type="text" inputMode="numeric" pattern="[0-9]*"
               min="1"
               max="4"
               value={shiftsPerDay}

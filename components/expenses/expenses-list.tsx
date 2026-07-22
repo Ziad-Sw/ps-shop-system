@@ -284,7 +284,7 @@ export default function ExpensesList({
                   المبلغ <span className="text-red-400">*</span>
                 </label>
                 <input
-                  type="number"
+                  type="text" inputMode="numeric" pattern="[0-9]*"
                   min="1"
                   step="1"
                   value={formAmount}

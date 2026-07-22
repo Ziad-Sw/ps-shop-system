@@ -182,7 +182,7 @@ export default function ProductsSettingsForm({
             placeholder="اسم المشروب"
           />
           <input
-            type="number"
+            type="text" inputMode="numeric" pattern="[0-9]*"
             min="0"
             step="1"
             value={newProductPrice}
@@ -235,7 +235,7 @@ export default function ProductsSettingsForm({
                 <div className="w-24">
                   {editingProductId === product.id ? (
                     <input
-                      type="number"
+                      type="text" inputMode="numeric" pattern="[0-9]*"
                       min="0"
                       step="1"
                       value={editingPrice}

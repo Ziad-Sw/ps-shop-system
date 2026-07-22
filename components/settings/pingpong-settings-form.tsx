@@ -170,7 +170,7 @@ export default function PingpongSettingsForm({
 
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
           <input
-            type="number"
+            type="text" inputMode="numeric" pattern="[0-9]*"
             min="0"
             step="1"
             value={tableCount}
@@ -207,7 +207,7 @@ export default function PingpongSettingsForm({
                 </label>
                 <div className="flex gap-2">
                   <input
-                    type="number"
+                    type="text" inputMode="numeric" pattern="[0-9]*"
                     min="0"
                     step="1"
                     value={singleHourRate}
@@ -232,7 +232,7 @@ export default function PingpongSettingsForm({
                 </label>
                 <div className="flex gap-2">
                   <input
-                    type="number"
+                    type="text" inputMode="numeric" pattern="[0-9]*"
                     min="0"
                     step="1"
                     value={multiHourRate}
@@ -263,7 +263,7 @@ export default function PingpongSettingsForm({
                 </label>
                 <div className="flex gap-2">
                   <input
-                    type="number"
+                    type="text" inputMode="numeric" pattern="[0-9]*"
                     min="0"
                     step="1"
                     value={singleGameRate}
@@ -288,7 +288,7 @@ export default function PingpongSettingsForm({
                 </label>
                 <div className="flex gap-2">
                   <input
-                    type="number"
+                    type="text" inputMode="numeric" pattern="[0-9]*"
                     min="0"
                     step="1"
                     value={multiGameRate}
