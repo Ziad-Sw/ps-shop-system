@@ -377,7 +377,11 @@ export function SessionPopup({
 
             {!isAvailable && (
               <>
-                {isGameBased ? (
+                {isGameBased && station.station_type === "billiard" ? (
+                  <div className="mt-3 text-sm text-green-400">
+                    عدد الجيمات: {gameEntries.reduce((sum, e) => sum + e.games_count, 0)}
+                  </div>
+                ) : isGameBased ? (
                   <div className="mt-3 text-sm text-green-400">
                     عدد الجيمات: {gamesCount}
                   </div>
@@ -556,7 +560,15 @@ export function SessionPopup({
                             setNewEntryPlayType(e.target.value as PlayType);
                             setNewEntryPlaySubtype("single");
                           }}
-                          className="w-full appearance-none rounded-lg bg-surface-page px-2 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-primary"
+                          className="w-full appearance-none rounded-lg bg-surface-page px-2 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-primary" style={{
+                            WebkitAppearance: 'none',
+                            MozAppearance: 'none',
+                            appearance: 'none',
+                            backgroundImage: 'none',
+                            direction: 'rtl',
+                            paddingLeft: '8px',
+                            paddingRight: '24px'
+                          }}
                         >
                           <option value="normal">عادي</option>
                           <option value="combo">كومب</option>
@@ -580,7 +592,15 @@ export function SessionPopup({
                         <select
                           value={newEntryPlaySubtype}
                           onChange={(e) => setNewEntryPlaySubtype(e.target.value as PlaySubtype)}
-                          className="w-full appearance-none rounded-lg bg-surface-page px-2 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-primary"
+                          className="w-full appearance-none rounded-lg bg-surface-page px-2 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-primary" style={{
+                            WebkitAppearance: 'none',
+                            MozAppearance: 'none',
+                            appearance: 'none',
+                            backgroundImage: 'none',
+                            direction: 'rtl',
+                            paddingLeft: '8px',
+                            paddingRight: '24px'
+                          }}
                         >
                           {newEntryPlayType === "normal" ? (
                             <>

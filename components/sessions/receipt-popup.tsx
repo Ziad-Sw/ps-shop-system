@@ -147,7 +147,13 @@ export function ReceiptPopup({
 
         {/* Station Info */}
         <div className="mb-6 rounded-lg bg-surface-page/50 p-4">
-          <div className="text-sm text-foreground-muted">الجهاز</div>
+          <div className="text-sm text-foreground-muted">
+            {station.station_type === "billiard"
+              ? "بلياردو"
+              : station.station_type === "playstation"
+                ? "بلايستيشن"
+                : "بينغ بونغ"}
+          </div>
           <div className="mt-1 text-lg font-semibold text-foreground">{station.name}</div>
           {receiptData.unit === "game" ? (
             <div className="mt-2 text-sm text-foreground-muted">
