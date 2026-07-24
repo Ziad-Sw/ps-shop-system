@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/components/ui/toast";
+import { NumericInput } from "@/components/ui/numeric-input";
 
 interface PricingRule {
   id: string;
@@ -29,18 +30,18 @@ export default function PingpongSettingsForm({
     initialPingpongEnabled
   );
   const [singleHourRate, setSingleHourRate] = useState(
-    initialPricingRules.find((r) => r.mode === "single" && r.unit === "hour")?.rate?.toString() || ""
+    initialPricingRules.find((r) => r.mode === "single" && r.unit === "hour")?.rate ?? 0
   );
   const [multiHourRate, setMultiHourRate] = useState(
-    initialPricingRules.find((r) => r.mode === "multi" && r.unit === "hour")?.rate?.toString() || ""
+    initialPricingRules.find((r) => r.mode === "multi" && r.unit === "hour")?.rate ?? 0
   );
   const [singleGameRate, setSingleGameRate] = useState(
-    initialPricingRules.find((r) => r.mode === "single" && r.unit === "game")?.rate?.toString() || ""
+    initialPricingRules.find((r) => r.mode === "single" && r.unit === "game")?.rate ?? 0
   );
   const [multiGameRate, setMultiGameRate] = useState(
-    initialPricingRules.find((r) => r.mode === "multi" && r.unit === "game")?.rate?.toString() || ""
+    initialPricingRules.find((r) => r.mode === "multi" && r.unit === "game")?.rate ?? 0
   );
-  const [tableCount, setTableCount] = useState(initialTableCount?.toString() || "");
+  const [tableCount, setTableCount] = useState(initialTableCount ?? 0);
   const [isSavingToggle, setIsSavingToggle] = useState(false);
   const [savingMode, setSavingMode] = useState<string | null>(null);
   const [isSavingTableCount, setIsSavingTableCount] = useState(false);
@@ -73,7 +74,7 @@ export default function PingpongSettingsForm({
   };
 
   const handleSaveTableCount = async () => {
-    const count = parseInt(tableCount) || 0;
+    const count = tableCount;
     if (count < 0) {
       showToast("error", "عدد الطاولات لا يمكن أن يكون سالباً");
       return;
@@ -169,13 +170,11 @@ export default function PingpongSettingsForm({
         </p>
 
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-          <input
-            type="text" inputMode="numeric" pattern="[0-9]*"
-            min="0"
-            step="1"
+          <NumericInput
+            min={0}
+            step={1}
             value={tableCount}
-            onChange={(e) => setTableCount(e.target.value)}
-            className="w-full sm:flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            onChange={(v) => setTableCount(v)}
             placeholder="العدد"
             disabled={!canEdit}
           />
@@ -206,18 +205,16 @@ export default function PingpongSettingsForm({
                   لعب فردي (جنيه/ساعة)
                 </label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*"
-                    min="0"
-                    step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={singleHourRate}
-                    onChange={(e) => setSingleHourRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onChange={(v) => setSingleHourRate(v)}
                     placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing("single", "hour", parseFloat(singleHourRate) || 0)}
+                    onClick={() => handleSavePricing("single", "hour", singleHourRate)}
                     disabled={!canEdit || savingMode === "single_hour"}
                     className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -231,18 +228,16 @@ export default function PingpongSettingsForm({
                   لعب مالتي (جنيه/ساعة)
                 </label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*"
-                    min="0"
-                    step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={multiHourRate}
-                    onChange={(e) => setMultiHourRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onChange={(v) => setMultiHourRate(v)}
                     placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing("multi", "hour", parseFloat(multiHourRate) || 0)}
+                    onClick={() => handleSavePricing("multi", "hour", multiHourRate)}
                     disabled={!canEdit || savingMode === "multi_hour"}
                     className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -262,18 +257,16 @@ export default function PingpongSettingsForm({
                   لعب فردي (جنيه/جيم)
                 </label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*"
-                    min="0"
-                    step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={singleGameRate}
-                    onChange={(e) => setSingleGameRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onChange={(v) => setSingleGameRate(v)}
                     placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing("single", "game", parseFloat(singleGameRate) || 0)}
+                    onClick={() => handleSavePricing("single", "game", singleGameRate)}
                     disabled={!canEdit || savingMode === "single_game"}
                     className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -287,18 +280,16 @@ export default function PingpongSettingsForm({
                   لعب مالتي (جنيه/جيم)
                 </label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*"
-                    min="0"
-                    step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={multiGameRate}
-                    onChange={(e) => setMultiGameRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onChange={(v) => setMultiGameRate(v)}
                     placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing("multi", "game", parseFloat(multiGameRate) || 0)}
+                    onClick={() => handleSavePricing("multi", "game", multiGameRate)}
                     disabled={!canEdit || savingMode === "multi_game"}
                     className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                   >

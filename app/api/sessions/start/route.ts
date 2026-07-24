@@ -252,6 +252,9 @@ export async function POST(request: NextRequest) {
         insertData.mode = play_subtype === "single" ? "single" : "multi";
         insertData.play_type = play_type;
         insertData.play_subtype = play_subtype;
+      } else {
+        // Billiard+games: mode is informational, default to "single"
+        insertData.mode = "single";
       }
     } else {
       insertData.mode = mode;

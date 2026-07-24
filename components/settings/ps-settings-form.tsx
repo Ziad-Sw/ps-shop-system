@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { useToast } from "@/components/ui/toast";
 
 interface PricingRule {
@@ -27,18 +28,18 @@ export default function PsSettingsForm({
   const { showToast } = useToast();
   const [psEnabled, setPsEnabled] = useState(initialPsEnabled);
   const [singleHourRate, setSingleHourRate] = useState(
-    initialPricingRules.find((r) => r.mode === "single" && r.unit === "hour")?.rate?.toString() || ""
+    initialPricingRules.find((r) => r.mode === "single" && r.unit === "hour")?.rate ?? 0
   );
   const [multiHourRate, setMultiHourRate] = useState(
-    initialPricingRules.find((r) => r.mode === "multi" && r.unit === "hour")?.rate?.toString() || ""
+    initialPricingRules.find((r) => r.mode === "multi" && r.unit === "hour")?.rate ?? 0
   );
   const [singleGameRate, setSingleGameRate] = useState(
-    initialPricingRules.find((r) => r.mode === "single" && r.unit === "game")?.rate?.toString() || ""
+    initialPricingRules.find((r) => r.mode === "single" && r.unit === "game")?.rate ?? 0
   );
   const [multiGameRate, setMultiGameRate] = useState(
-    initialPricingRules.find((r) => r.mode === "multi" && r.unit === "game")?.rate?.toString() || ""
+    initialPricingRules.find((r) => r.mode === "multi" && r.unit === "game")?.rate ?? 0
   );
-  const [stationCount, setStationCount] = useState(initialStationCount?.toString() || "");
+  const [stationCount, setStationCount] = useState(initialStationCount ?? 0);
   const [isSavingToggle, setIsSavingToggle] = useState(false);
   const [savingMode, setSavingMode] = useState<string | null>(null);
   const [isSavingStationCount, setIsSavingStationCount] = useState(false);
@@ -72,7 +73,7 @@ export default function PsSettingsForm({
   };
 
   const handleSaveStationCount = async () => {
-    const count = parseInt(stationCount) || 0;
+    const count = stationCount;
     if (count < 0) {
       showToast("error", "عدد الأجهزة لا يمكن أن يكون سالباً");
       return;
@@ -168,12 +169,11 @@ export default function PsSettingsForm({
         </p>
 
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-          <input
-            type="text" inputMode="numeric" pattern="[0-9]*"
-            min="0"
-            step="1"
+          <NumericInput
+            min={0}
+            step={1}
             value={stationCount}
-            onChange={(e) => setStationCount(e.target.value)}
+            onChange={(v) => setStationCount(v)}
             disabled={!canEdit}
             className="w-full sm:flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder="العدد"
@@ -205,18 +205,17 @@ export default function PsSettingsForm({
                   لعب فردي (جنيه/ساعة)
                 </label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*"
-                    min="0"
-                    step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={singleHourRate}
-                    onChange={(e) => setSingleHourRate(e.target.value)}
+                    onChange={(v) => setSingleHourRate(v)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing("single", "hour", parseFloat(singleHourRate) || 0)}
+                    onClick={() => handleSavePricing("single", "hour", singleHourRate)}
                     disabled={!canEdit || savingMode === "single_hour"}
                     className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -230,18 +229,17 @@ export default function PsSettingsForm({
                   لعب مالتي (جنيه/ساعة)
                 </label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*"
-                    min="0"
-                    step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={multiHourRate}
-                    onChange={(e) => setMultiHourRate(e.target.value)}
+                    onChange={(v) => setMultiHourRate(v)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing("multi", "hour", parseFloat(multiHourRate) || 0)}
+                    onClick={() => handleSavePricing("multi", "hour", multiHourRate)}
                     disabled={!canEdit || savingMode === "multi_hour"}
                     className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -261,18 +259,17 @@ export default function PsSettingsForm({
                   لعب فردي (جنيه/جيم)
                 </label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*"
-                    min="0"
-                    step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={singleGameRate}
-                    onChange={(e) => setSingleGameRate(e.target.value)}
+                    onChange={(v) => setSingleGameRate(v)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing("single", "game", parseFloat(singleGameRate) || 0)}
+                    onClick={() => handleSavePricing("single", "game", singleGameRate)}
                     disabled={!canEdit || savingMode === "single_game"}
                     className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -286,18 +283,17 @@ export default function PsSettingsForm({
                   لعب مالتي (جنيه/جيم)
                 </label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*"
-                    min="0"
-                    step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={multiGameRate}
-                    onChange={(e) => setMultiGameRate(e.target.value)}
+                    onChange={(v) => setMultiGameRate(v)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing("multi", "game", parseFloat(multiGameRate) || 0)}
+                    onClick={() => handleSavePricing("multi", "game", multiGameRate)}
                     disabled={!canEdit || savingMode === "multi_game"}
                     className="min-h-[44px] min-w-[100px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                   >

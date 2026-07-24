@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { useToast } from "@/components/ui/toast";
 
 interface Product {
@@ -22,23 +23,23 @@ export default function ProductsSettingsForm({
   const { showToast } = useToast();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [newProductName, setNewProductName] = useState("");
-  const [newProductPrice, setNewProductPrice] = useState("");
+  const [newProductPrice, setNewProductPrice] = useState(0);
   const [isAdding, setIsAdding] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
-  const [editingPrice, setEditingPrice] = useState("");
+  const [editingPrice, setEditingPrice] = useState(0);
 
   const handleAddProduct = async () => {
-    if (!newProductName.trim() || !newProductPrice) {
+    if (!newProductName.trim() || newProductPrice <= 0) {
       showToast("error", "يجب إدخال اسم المشروب والسعر");
       return;
     }
 
-    const price = parseFloat(newProductPrice);
-    if (isNaN(price) || price < 0) {
+    const price = newProductPrice;
+    if (price < 0) {
       showToast("error", "السعر يجب أن يكون رقمًا موجبًا");
       return;
     }
@@ -62,7 +63,7 @@ export default function ProductsSettingsForm({
       const result = await response.json();
       setProducts([...products, result.product]);
       setNewProductName("");
-      setNewProductPrice("");
+      setNewProductPrice(0);
       showToast("success", "تم إضافة المشروب بنجاح");
     } catch (err) {
       console.error("Error adding product:", err);
@@ -111,23 +112,23 @@ export default function ProductsSettingsForm({
   const handleStartEdit = (product: Product) => {
     setEditingProductId(product.id);
     setEditingName(product.name);
-    setEditingPrice(product.price.toString());
+    setEditingPrice(product.price);
   };
 
   const handleCancelEdit = () => {
     setEditingProductId(null);
     setEditingName("");
-    setEditingPrice("");
+    setEditingPrice(0);
   };
 
   const handleSaveEdit = async () => {
-    if (!editingProductId || !editingName.trim() || !editingPrice) {
+    if (!editingProductId || !editingName.trim() || editingPrice <= 0) {
       showToast("error", "يجب إدخال اسم المشروب والسعر");
       return;
     }
 
-    const price = parseFloat(editingPrice);
-    if (isNaN(price) || price < 0) {
+    const price = editingPrice;
+    if (price < 0) {
       showToast("error", "السعر يجب أن يكون رقمًا موجبًا");
       return;
     }
@@ -181,16 +182,15 @@ export default function ProductsSettingsForm({
             className="w-full sm:flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder="اسم المشروب"
           />
-          <input
-            type="text" inputMode="numeric" pattern="[0-9]*"
-            min="0"
-            step="1"
-            value={newProductPrice}
-            onChange={(e) => setNewProductPrice(e.target.value)}
-            disabled={!canEdit}
-            className="w-full sm:w-32 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-            placeholder="السعر"
-          />
+          <NumericInput
+              min={0}
+              step={1}
+              value={newProductPrice}
+              onChange={(v) => setNewProductPrice(Math.max(0, v))}
+              disabled={!canEdit}
+              className="w-full sm:w-32 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder="السعر"
+            />
           <button
             onClick={handleAddProduct}
             disabled={!canEdit || isAdding}
@@ -234,12 +234,11 @@ export default function ProductsSettingsForm({
                 </div>
                 <div className="w-24">
                   {editingProductId === product.id ? (
-                    <input
-                      type="text" inputMode="numeric" pattern="[0-9]*"
-                      min="0"
-                      step="1"
+                    <NumericInput
+                      min={0}
+                      step={1}
                       value={editingPrice}
-                      onChange={(e) => setEditingPrice(e.target.value)}
+                      onChange={(v) => setEditingPrice(Math.max(0, v))}
                       className="w-full min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={!canEdit || isSavingEdit}
                     />

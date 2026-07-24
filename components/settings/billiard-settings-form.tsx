@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/components/ui/toast";
+import { NumericInput } from "@/components/ui/numeric-input";
 
 interface PricingRule {
   id: string;
@@ -37,40 +38,40 @@ export default function BilliardSettingsForm({
 
   // Normal / Single
   const [normalSingleHourRate, setNormalSingleHourRate] = useState(
-    findRule("normal", "single", "hour")?.rate?.toString() || ""
+    findRule("normal", "single", "hour")?.rate ?? 0
   );
   const [normalSingleGameRate, setNormalSingleGameRate] = useState(
-    findRule("normal", "single", "game")?.rate?.toString() || ""
+    findRule("normal", "single", "game")?.rate ?? 0
   );
   // Normal / Multi
   const [normalMultiHourRate, setNormalMultiHourRate] = useState(
-    findRule("normal", "multi", "hour")?.rate?.toString() || ""
+    findRule("normal", "multi", "hour")?.rate ?? 0
   );
   const [normalMultiGameRate, setNormalMultiGameRate] = useState(
-    findRule("normal", "multi", "game")?.rate?.toString() || ""
+    findRule("normal", "multi", "game")?.rate ?? 0
   );
   // Combo / Single
   const [comboSingleHourRate, setComboSingleHourRate] = useState(
-    findRule("combo", "single", "hour")?.rate?.toString() || ""
+    findRule("combo", "single", "hour")?.rate ?? 0
   );
   const [comboSingleGameRate, setComboSingleGameRate] = useState(
-    findRule("combo", "single", "game")?.rate?.toString() || ""
+    findRule("combo", "single", "game")?.rate ?? 0
   );
   // Combo / Triple
   const [comboTripleHourRate, setComboTripleHourRate] = useState(
-    findRule("combo", "triple", "hour")?.rate?.toString() || ""
+    findRule("combo", "triple", "hour")?.rate ?? 0
   );
   const [comboTripleGameRate, setComboTripleGameRate] = useState(
-    findRule("combo", "triple", "game")?.rate?.toString() || ""
+    findRule("combo", "triple", "game")?.rate ?? 0
   );
   // Combo / Quad
   const [comboQuadHourRate, setComboQuadHourRate] = useState(
-    findRule("combo", "quad", "hour")?.rate?.toString() || ""
+    findRule("combo", "quad", "hour")?.rate ?? 0
   );
   const [comboQuadGameRate, setComboQuadGameRate] = useState(
-    findRule("combo", "quad", "game")?.rate?.toString() || ""
+    findRule("combo", "quad", "game")?.rate ?? 0
   );
-  const [tableCount, setTableCount] = useState(initialTableCount?.toString() || "");
+  const [tableCount, setTableCount] = useState(initialTableCount ?? 0);
   const [isSavingToggle, setIsSavingToggle] = useState(false);
   const [savingMode, setSavingMode] = useState<string | null>(null);
   const [isSavingTableCount, setIsSavingTableCount] = useState(false);
@@ -103,7 +104,7 @@ export default function BilliardSettingsForm({
   };
 
   const handleSaveTableCount = async () => {
-    const count = parseInt(tableCount) || 0;
+    const count = tableCount;
     if (count < 0) {
       showToast("error", "عدد الطاولات لا يمكن أن يكون سالباً");
       return;
@@ -207,13 +208,11 @@ export default function BilliardSettingsForm({
         </p>
 
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-          <input
-            type="text" inputMode="numeric" pattern="[0-9]*"
-            min="0"
-            step="1"
+          <NumericInput
+            min={0}
+            step={1}
             value={tableCount}
-            onChange={(e) => setTableCount(e.target.value)}
-            className="w-full sm:flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            onChange={(v) => setTableCount(v)}
             placeholder="العدد"
             disabled={!canEdit}
           />
@@ -243,15 +242,15 @@ export default function BilliardSettingsForm({
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/ساعة</label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={normalSingleHourRate}
-                    onChange={(e) => setNormalSingleHourRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                    onChange={(v) => setNormalSingleHourRate(v)}
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing({ playType: "normal", playSubtype: "single", unit: "hour", rate: parseFloat(normalSingleHourRate) || 0 })}
+                    onClick={() => handleSavePricing({ playType: "normal", playSubtype: "single", unit: "hour", rate: normalSingleHourRate })}
                     disabled={!canEdit || savingMode === "normal_single_hour"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
@@ -262,15 +261,15 @@ export default function BilliardSettingsForm({
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/جيم</label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={normalSingleGameRate}
-                    onChange={(e) => setNormalSingleGameRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                    onChange={(v) => setNormalSingleGameRate(v)}
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing({ playType: "normal", playSubtype: "single", unit: "game", rate: parseFloat(normalSingleGameRate) || 0 })}
+                    onClick={() => handleSavePricing({ playType: "normal", playSubtype: "single", unit: "game", rate: normalSingleGameRate })}
                     disabled={!canEdit || savingMode === "normal_single_game"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
@@ -289,15 +288,15 @@ export default function BilliardSettingsForm({
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/ساعة</label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={normalMultiHourRate}
-                    onChange={(e) => setNormalMultiHourRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                    onChange={(v) => setNormalMultiHourRate(v)}
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing({ playType: "normal", playSubtype: "multi", unit: "hour", rate: parseFloat(normalMultiHourRate) || 0 })}
+                    onClick={() => handleSavePricing({ playType: "normal", playSubtype: "multi", unit: "hour", rate: normalMultiHourRate })}
                     disabled={!canEdit || savingMode === "normal_multi_hour"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
@@ -308,15 +307,15 @@ export default function BilliardSettingsForm({
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/جيم</label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={normalMultiGameRate}
-                    onChange={(e) => setNormalMultiGameRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                    onChange={(v) => setNormalMultiGameRate(v)}
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing({ playType: "normal", playSubtype: "multi", unit: "game", rate: parseFloat(normalMultiGameRate) || 0 })}
+                    onClick={() => handleSavePricing({ playType: "normal", playSubtype: "multi", unit: "game", rate: normalMultiGameRate })}
                     disabled={!canEdit || savingMode === "normal_multi_game"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
@@ -335,15 +334,15 @@ export default function BilliardSettingsForm({
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/ساعة</label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={comboSingleHourRate}
-                    onChange={(e) => setComboSingleHourRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                    onChange={(v) => setComboSingleHourRate(v)}
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "single", unit: "hour", rate: parseFloat(comboSingleHourRate) || 0 })}
+                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "single", unit: "hour", rate: comboSingleHourRate })}
                     disabled={!canEdit || savingMode === "combo_single_hour"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
@@ -354,15 +353,15 @@ export default function BilliardSettingsForm({
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/جيم</label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={comboSingleGameRate}
-                    onChange={(e) => setComboSingleGameRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                    onChange={(v) => setComboSingleGameRate(v)}
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "single", unit: "game", rate: parseFloat(comboSingleGameRate) || 0 })}
+                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "single", unit: "game", rate: comboSingleGameRate })}
                     disabled={!canEdit || savingMode === "combo_single_game"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
@@ -381,15 +380,15 @@ export default function BilliardSettingsForm({
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/ساعة</label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={comboTripleHourRate}
-                    onChange={(e) => setComboTripleHourRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                    onChange={(v) => setComboTripleHourRate(v)}
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "triple", unit: "hour", rate: parseFloat(comboTripleHourRate) || 0 })}
+                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "triple", unit: "hour", rate: comboTripleHourRate })}
                     disabled={!canEdit || savingMode === "combo_triple_hour"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
@@ -400,15 +399,15 @@ export default function BilliardSettingsForm({
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/جيم</label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={comboTripleGameRate}
-                    onChange={(e) => setComboTripleGameRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                    onChange={(v) => setComboTripleGameRate(v)}
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "triple", unit: "game", rate: parseFloat(comboTripleGameRate) || 0 })}
+                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "triple", unit: "game", rate: comboTripleGameRate })}
                     disabled={!canEdit || savingMode === "combo_triple_game"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
@@ -427,15 +426,15 @@ export default function BilliardSettingsForm({
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/ساعة</label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={comboQuadHourRate}
-                    onChange={(e) => setComboQuadHourRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                    onChange={(v) => setComboQuadHourRate(v)}
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "quad", unit: "hour", rate: parseFloat(comboQuadHourRate) || 0 })}
+                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "quad", unit: "hour", rate: comboQuadHourRate })}
                     disabled={!canEdit || savingMode === "combo_quad_hour"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
@@ -446,15 +445,15 @@ export default function BilliardSettingsForm({
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1">جنيه/جيم</label>
                 <div className="flex gap-2">
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*" min="0" step="1"
+                  <NumericInput
+                    min={0}
+                    step={1}
                     value={comboQuadGameRate}
-                    onChange={(e) => setComboQuadGameRate(e.target.value)}
-                    className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                    onChange={(v) => setComboQuadGameRate(v)}
                     disabled={!canEdit}
                   />
                   <button
-                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "quad", unit: "game", rate: parseFloat(comboQuadGameRate) || 0 })}
+                    onClick={() => handleSavePricing({ playType: "combo", playSubtype: "quad", unit: "game", rate: comboQuadGameRate })}
                     disabled={!canEdit || savingMode === "combo_quad_game"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >

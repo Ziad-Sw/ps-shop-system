@@ -2366,3 +2366,51 @@
 - ✅ لا يوجد `<input type="number">` في أي ملف
 - ✅ لا يوجد ضرب سعري مضمّن خارج calculation.ts
 
+---
+
+## يوليو 2026 — إصلاح bug حرج + مكوّن NumericInput الموحّد
+
+### إصلاح bug حرج: "Failed to create session" عند بدء جلسة بلياردو+Games
+
+**الجذر:** جلسات البلياردو+Games كانت تُنشأ بدون تعيين `mode` في جدول `sessions`، والعمود `mode TEXT NOT NULL` في قاعدة البيانات يرفض الإدراج بقيمة فارغة.
+
+**سبب ظهوره:** التغيير السابق (بدء جلسة بلياردو بدون mode) أزال `mode` من الـ request body للبلياردو، لكن الـ API لم يضبط `mode` في `insertData` لجلسات البلياردو+Games. فقط جلسات البلياردو+Time كانت تضبط `mode` (مشتق من `play_subtype`).
+
+**الإصلاح:** `app/api/sessions/start/route.ts` — إضافة else branch للبلياردو+Games يضبط `insertData.mode = "single"` (mode للبلياردو معلوماتي فقط — التسعير يتم عبر play_type/play_subtype لكل entry).
+
+**التحقق المباشر:**
+- ✅ بدء جلسة بلياردو+Games: `{"ok":true,"session":{"mode":"single",...}}`
+- ✅ إضافة entry combo/triple/1 للسجل: `{"ok":true,"entry":{...}}`
+- ✅ التدفق الكامل (start + add-game-entry) يعمل بنجاح
+- ✅ التدفق بدون تحديد أولي (start only) يعمل بنجاح
+
+### مكوّن NumericInput الموحّد
+
+تم إنشاء `components/ui/numeric-input.tsx` ليحل محل جميع حقول الإدخال الرقمية الـ 30 في النظام، مما يوحّد سلوكها حسب الجهاز.
+
+**السلوك:**
+| الخاصية | سطح المكتب (pointer: fine) | الموبايل (pointer: coarse) |
+|---------|---------------------------|---------------------------|
+| `type` | `number` | `text` مع `inputMode="numeric"` |
+| القيمة الافتراضية | `0` مرئي في الحقل | فارغ (يظهر placeholder) |
+| أسهم الزيادة/النقص | نعم (native spinners) | لا |
+| إرسال فارغ | يُرسل `0` | يُرسل `0` |
+
+**الكشف عن الموبايل:** `window.matchMedia("(pointer: coarse)")` — يستمع للتغييرات عبر event listener.
+
+**الملفات المعتمدة على NumericInput:**
+- `components/sessions/session-popup.tsx` (5 حقول: startGamesCount, gamesCount, gamesCountInput, newEntryGamesCount, selectedQuantity)
+- `components/expenses/expenses-list.tsx` (حقل المبلغ)
+- `components/settings/ps-settings-form.tsx` (5 حقول: stationCount + 4 أسعار)
+- `components/settings/pingpong-settings-form.tsx` (5 حقول: tableCount + 4 أسعار)
+- `components/settings/billiard-settings-form.tsx` (11 حقول: tableCount + 10 أسعار)
+- `components/settings/shifts-settings-form.tsx` (حقل عدد الورديات)
+- `components/settings/products-settings-form.tsx` (حقلان: سعر المنتج الجديد + سعر التعديل)
+
+**تغيير معماري:** 24 حالة state كانت تُخزّن أرقاماً كـ `string` (بسبب `useState(variable.toString() || "")`) وتم تحويلها إلى `number` لتتوافق مع `NumericInput` الذي يقبل `value: number`. تم تحديث دوال الحفظ (`parseFloat`/`parseInt` → المتغير مباشرة).
+
+**نتائج التحقق:**
+- ✅ `npm run build` — ناجح بدون أخطاء
+- ✅ 0 `<input type="text" inputMode="numeric" pattern="[0-9]*">` متبقية في النظام
+- ✅ 7 ملفات تستورد `NumericInput` ضمن `import { NumericInput } from "@/components/ui/numeric-input"`
+

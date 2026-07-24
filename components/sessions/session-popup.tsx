@@ -6,6 +6,7 @@ import type { BillingMode, PlayType, PlaySubtype } from "@/types/database";
 import { calculateGameEntrySubtotal, calculateBilliardGameEntriesCost } from "@/lib/pricing/calculation";
 import { ReceiptPopup } from "./receipt-popup";
 import { useToast } from "@/components/ui/toast";
+import { NumericInput } from "@/components/ui/numeric-input";
 
 interface SessionPopupProps {
   station: Station;
@@ -687,12 +688,11 @@ export function SessionPopup({
                         <label className="mb-2 block text-sm font-medium text-foreground">
                           عدد الجيمات
                         </label>
-                        <input
-                          type="text" inputMode="numeric" pattern="[0-9]*"
-                          min="1"
+                        <NumericInput
+                          min={1}
                           value={startGamesCount}
-                          onChange={(e) => setStartGamesCount(Math.max(1, Number(e.target.value)))}
-                          className="w-full rounded-lg bg-surface-page px-3 py-2 text-foreground outline-none focus:ring-2 focus:ring-primary"
+                          onChange={(v) => setStartGamesCount(Math.max(1, v))}
+                          placeholder="عدد الجيمات"
                         />
                       </div>
                     </>
@@ -737,12 +737,11 @@ export function SessionPopup({
                   <label className="mb-2 block text-sm font-medium text-foreground">
                     عدد الجيمات
                   </label>
-                  <input
-                    type="text" inputMode="numeric" pattern="[0-9]*"
-                    min="0"
+                  <NumericInput
+                    min={0}
                     value={gamesCount}
-                    onChange={(e) => setGamesCount(Math.max(0, Number(e.target.value)))}
-                    className="w-full rounded-lg bg-surface-page px-3 py-2 text-foreground outline-none focus:ring-2 focus:ring-primary"
+                    onChange={(v) => setGamesCount(Math.max(0, v))}
+                    placeholder="عدد الجيمات"
                   />
                 </div>
               )}
@@ -765,12 +764,12 @@ export function SessionPopup({
                     عدد الجيمات
                   </label>
                   <div className="flex gap-3">
-                    <input
-                      type="text" inputMode="numeric" pattern="[0-9]*"
-                      min="0"
+                    <NumericInput
+                      min={0}
                       value={gamesCountInput}
-                      onChange={(e) => setGamesCountInput(Math.max(0, Number(e.target.value)))}
-                      className="flex-1 rounded-lg bg-surface-page px-3 py-2 text-foreground outline-none focus:ring-2 focus:ring-primary"
+                      onChange={(v) => setGamesCountInput(Math.max(0, v))}
+                      placeholder="عدد الجيمات"
+                      className="flex-1"
                     />
                     <button
                       onClick={handleSaveGames}
@@ -903,12 +902,12 @@ export function SessionPopup({
                           <path d="m6 9 6 6 6-6" />
                         </svg>
                       </div>
-                      <input
-                        type="text" inputMode="numeric" pattern="[0-9]*"
-                        min="1"
+                      <NumericInput
+                        min={1}
                         value={newEntryGamesCount}
-                        onChange={(e) => setNewEntryGamesCount(Math.max(1, Number(e.target.value)))}
-                        className="rounded-lg bg-surface-page px-2 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-primary"
+                        onChange={(v) => setNewEntryGamesCount(Math.max(1, v))}
+                        placeholder="عدد الجيمات"
+                        className="px-2 py-2 text-xs"
                       />
                     </div>
                     <button
@@ -958,12 +957,12 @@ export function SessionPopup({
                   </div>
 
                   <div className="flex gap-3">
-                    <input
-                      type="text" inputMode="numeric" pattern="[0-9]*"
-                      min="1"
+                    <NumericInput
+                      min={1}
                       value={selectedQuantity}
-                      onChange={(e) => setSelectedQuantity(Number(e.target.value))}
-                      className="w-24 rounded-lg bg-surface-page px-3 py-2 text-foreground outline-none focus:ring-2 focus:ring-primary"
+                      onChange={(v) => setSelectedQuantity(v)}
+                      placeholder="العدد"
+                      className="w-24"
                     />
                     <button
                       onClick={handleAddProduct}

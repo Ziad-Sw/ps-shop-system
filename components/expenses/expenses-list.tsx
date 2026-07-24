@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { useToast } from "@/components/ui/toast";
 
 interface Expense {
@@ -43,14 +44,14 @@ export default function ExpensesList({
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [formDescription, setFormDescription] = useState("");
-  const [formAmount, setFormAmount] = useState("");
+  const [formAmount, setFormAmount] = useState(0);
   const [formCategory, setFormCategory] = useState("");
   const [formDate, setFormDate] = useState("");
 
   const handleOpenAdd = () => {
     setEditingExpense(null);
     setFormDescription("");
-    setFormAmount("");
+    setFormAmount(0);
     setFormCategory("");
     setFormDate(new Date().toISOString().split("T")[0]);
     setShowModal(true);
@@ -59,7 +60,7 @@ export default function ExpensesList({
   const handleOpenEdit = (expense: Expense) => {
     setEditingExpense(expense);
     setFormDescription(expense.description);
-    setFormAmount(expense.amount.toString());
+    setFormAmount(expense.amount);
     setFormCategory(expense.category ?? "");
     setFormDate(expense.expense_date);
     setShowModal(true);
@@ -76,8 +77,8 @@ export default function ExpensesList({
       return;
     }
 
-    const amount = parseFloat(formAmount);
-    if (isNaN(amount) || amount <= 0) {
+    const amount = formAmount;
+    if (amount <= 0) {
       showToast("error", "المبلغ يجب أن يكون رقمًا موجبًا.");
       return;
     }
@@ -283,15 +284,14 @@ export default function ExpensesList({
                 <label className="block text-sm font-medium text-foreground mb-1">
                   المبلغ <span className="text-red-400">*</span>
                 </label>
-                <input
-                  type="text" inputMode="numeric" pattern="[0-9]*"
-                  min="1"
-                  step="1"
+                <NumericInput
+                  min={1}
+                  step={1}
                   value={formAmount}
-                  onChange={(e) => setFormAmount(e.target.value)}
+                  onChange={(v) => setFormAmount(Math.max(1, v))}
                   className="w-full min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 text-right"
                   placeholder="المبلغ"
-                  style={{ direction: "rtl" }}
+                  required
                 />
               </div>
 
