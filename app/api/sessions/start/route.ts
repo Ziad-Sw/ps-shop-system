@@ -53,10 +53,10 @@ export async function POST(request: NextRequest) {
         typeof games_count !== "number" ||
         !Number.isFinite(games_count) ||
         !Number.isInteger(games_count) ||
-        games_count < 0
+        games_count < 1
       ) {
         return NextResponse.json(
-          { error: "عدد الجيمات يجب أن يكون رقمًا صحيحًا غير سالب." },
+          { error: "عدد الجيمات يجب أن يكون رقمًا صحيحًا موجبًا." },
           { status: 400 }
         );
       }

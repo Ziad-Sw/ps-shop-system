@@ -738,9 +738,9 @@ export function SessionPopup({
                     عدد الجيمات
                   </label>
                   <NumericInput
-                    min={0}
+                    min={1}
                     value={gamesCount}
-                    onChange={(v) => setGamesCount(Math.max(0, v))}
+                    onChange={(v) => setGamesCount(Math.max(1, v))}
                     placeholder="عدد الجيمات"
                   />
                 </div>
