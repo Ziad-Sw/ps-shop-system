@@ -41,13 +41,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (mode !== "single" && mode !== "multi") {
-      return NextResponse.json(
-        { error: "وضع الجلسة غير صالح." },
-        { status: 400 }
-      );
-    }
-
     if (billing_mode !== "time" && billing_mode !== "games") {
       return NextResponse.json(
         { error: "طريقة الفوترة غير صالحة." },
@@ -124,6 +117,33 @@ export async function POST(request: NextRequest) {
         { error: "الجهاز غير موجود." },
         { status: 404 }
       );
+    }
+
+    // Station-type-dependent validations
+    if (station.station_type !== "billiard") {
+      // Non-billiard: mode is required
+      if (mode !== "single" && mode !== "multi") {
+        return NextResponse.json(
+          { error: "وضع الجلسة مطلوب." },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Billiard+time: play_type and play_subtype are required
+      if (billing_mode === "time") {
+        if (!play_type) {
+          return NextResponse.json(
+            { error: "نوع اللعب مطلوب للبلياردو بالوقت." },
+            { status: 400 }
+          );
+        }
+        if (!play_subtype) {
+          return NextResponse.json(
+            { error: "النوع الفرعي مطلوب للبلياردو بالوقت." },
+            { status: 400 }
+          );
+        }
+      }
     }
 
     // Validate play_type/play_subtype are only allowed for billiard
@@ -218,20 +238,31 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the new session
+    const insertData: Record<string, unknown> = {
+      shop_id: shopId,
+      shift_id: openShift.id,
+      station_id: station_id,
+      billing_mode: billing_mode,
+      status: "active",
+      start_time: new Date().toISOString(),
+    };
+
+    if (station.station_type === "billiard") {
+      if (billing_mode === "time") {
+        insertData.mode = play_subtype === "single" ? "single" : "multi";
+        insertData.play_type = play_type;
+        insertData.play_subtype = play_subtype;
+      }
+    } else {
+      insertData.mode = mode;
+      if (games_count !== undefined) {
+        insertData.games_count = games_count;
+      }
+    }
+
     const { data: newSession, error: sessionError } = await supabase
       .from("sessions")
-      .insert({
-        shop_id: shopId,
-        shift_id: openShift.id,
-        station_id: station_id,
-        mode: mode,
-        billing_mode: billing_mode as BillingMode,
-        status: "active",
-        start_time: new Date().toISOString(),
-        ...(games_count !== undefined ? { games_count } : {}),
-        ...(play_type !== undefined ? { play_type: play_type as PlayType } : {}),
-        ...(play_subtype !== undefined ? { play_subtype: play_subtype as PlaySubtype } : {}),
-      })
+      .insert(insertData as any)
       .select()
       .maybeSingle();
 

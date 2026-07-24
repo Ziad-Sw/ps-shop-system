@@ -56,6 +56,10 @@ export function SessionPopup({
   const [newEntryGamesCount, setNewEntryGamesCount] = useState(1);
   const [isAddingGameEntry, setIsAddingGameEntry] = useState(false);
 
+  // Billiard start-session play_type/subtype (used when creating a billiard+time session)
+  const [startPlayType, setStartPlayType] = useState<PlayType>("normal");
+  const [startPlaySubtype, setStartPlaySubtype] = useState<PlaySubtype>("single");
+
   const activeBillingMode = activeSession?.billing_mode ?? billingMode;
   const isGameBased = activeBillingMode === "games";
 
@@ -137,11 +141,19 @@ export function SessionPopup({
     try {
       const body: Record<string, unknown> = {
         station_id: station.id,
-        mode: mode,
         billing_mode: billingMode,
       };
-      if (billingMode === "games") {
-        body.games_count = gamesCount;
+
+      if (station.station_type === "billiard") {
+        if (billingMode === "time") {
+          body.play_type = startPlayType;
+          body.play_subtype = startPlaySubtype;
+        }
+      } else {
+        body.mode = mode;
+        if (billingMode === "games") {
+          body.games_count = gamesCount;
+        }
       }
 
       const response = await fetch("/api/sessions/start", {
@@ -429,37 +441,150 @@ export function SessionPopup({
                 </div>
               </div>
 
-              {/* Mode Selection */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-foreground">
-                  وضع اللعب
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setMode("single")}
-                    className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                      mode === "single"
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
-                    }`}
-                  >
-                    فردي
-                  </button>
-                  <button
-                    onClick={() => setMode("multi")}
-                    className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                      mode === "multi"
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
-                    }`}
-                  >
-                    مالتي
-                  </button>
-                </div>
-              </div>
+              {/* Billiard + Time: Play Type + Play Subtype selectors */}
+              {station.station_type === "billiard" && billingMode === "time" && (
+                <>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-foreground">
+                      نوع اللعب
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => {
+                          setStartPlayType("normal");
+                          setStartPlaySubtype("single");
+                        }}
+                        className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                          startPlayType === "normal"
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                        }`}
+                      >
+                        عادي
+                      </button>
+                      <button
+                        onClick={() => {
+                          setStartPlayType("combo");
+                          setStartPlaySubtype("single");
+                        }}
+                        className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                          startPlayType === "combo"
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                        }`}
+                      >
+                        كومب
+                      </button>
+                    </div>
+                  </div>
 
-              {/* Games Count (only for games billing mode) */}
-              {billingMode === "games" && (
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-foreground">
+                      النوع الفرعي
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {startPlayType === "normal" ? (
+                        <>
+                          <button
+                            onClick={() => setStartPlaySubtype("single")}
+                            className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                              startPlaySubtype === "single"
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                            }`}
+                          >
+                            فردي
+                          </button>
+                          <button
+                            onClick={() => setStartPlaySubtype("multi")}
+                            className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                              startPlaySubtype === "multi"
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                            }`}
+                          >
+                            مالتي
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => setStartPlaySubtype("single")}
+                            className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                              startPlaySubtype === "single"
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                            }`}
+                          >
+                            فردي
+                          </button>
+                          <button
+                            onClick={() => setStartPlaySubtype("triple")}
+                            className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                              startPlaySubtype === "triple"
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                            }`}
+                          >
+                            متولتة
+                          </button>
+                          <button
+                            onClick={() => setStartPlaySubtype("quad")}
+                            className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                              startPlaySubtype === "quad"
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                            }`}
+                          >
+                            مربعة
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Billiard + Games: No mode or games_count — just the start button below */}
+              {station.station_type === "billiard" && billingMode === "games" && (
+                <p className="text-sm text-foreground-muted">
+                  سيتم إضافة أنواع اللعب وعدد الجيمات بعد بدء الجلسة
+                </p>
+              )}
+
+              {/* PS / Pingpong: Mode Selection (legacy) */}
+              {station.station_type !== "billiard" && (
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">
+                    وضع اللعب
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setMode("single")}
+                      className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                        mode === "single"
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                      }`}
+                    >
+                      فردي
+                    </button>
+                    <button
+                      onClick={() => setMode("multi")}
+                      className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                        mode === "multi"
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                      }`}
+                    >
+                      مالتي
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Games Count (only for PS/pingpong + games billing mode) */}
+              {station.station_type !== "billiard" && billingMode === "games" && (
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground">
                     عدد الجيمات

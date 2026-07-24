@@ -2310,3 +2310,59 @@
 - ✅ لا يوجد أي ضرب سعري مضمّن خارج `lib/pricing/calculation.ts`
 - ✅ تدفق إضافة الجيمات في البلياردو يعمل بشكل صحيح (تم اختباره مباشرة)
 
+---
+
+## يوليو 2026 — إصلاح start-session view للبلياردو (B-Cause)
+
+### الخلفية
+في التنفيذ الأصلي للمرحلة الخامسة (phase 5: billiard accumulated game entries)، تم تحديث **view الجلسة النشطة** فقط (قائمة الجيمات المسجلة + نموذج إضافة دفعة). أما **view بدء الجلسة** (available station) فبقي يعرضelements الـ legacy لجميع أنواع الأجهزة:
+- "وضع اللعب: فردي/مالتي" لقيم mode
+- "عدد الجيمات" input لحقل number
+
+هذا تسبب في ظهور واجهة قديمة خاطئة عند محاولة بدء جلسة بلياردو من الإنتاج.
+
+### الإصلاحات
+
+#### 1. `components/sessions/session-popup.tsx` — UI start-session branching
+
+تم إعادة هيكلة view بدء الجلسة ليتفرع حسب `station_type` و `billing_mode`:
+
+| الحالة | المعروض |
+|---|---|
+| **بلياردو + Games** | فقط toggle طريقة الفوترة + رسالة "سيتم إضافة أنواع اللعب وعدد الجيمات بعد بدء الجلسة" + زر البدء |
+| **بلياردو + Time** | toggle طريقة الفوترة + أزرار نوع اللعب (عادي/كومب) + أزرار النوع الفرعي الديناميكية (فردي/مالتي أو فردي/متولتة/مربعة) + زر البدء |
+| **PS/Pingpong + Games** | الوضع القديم: toggle + وضع اللعب (فردي/مالتي) + عدد الجيمات + زر البدء |
+| **PS/Pingpong + Time** | الوضع القديم: toggle + وضع اللعب (فردي/مالتي) + زر البدء |
+
+تمت إضافة حالتي `startPlayType` و `startPlaySubtype` لحفظ اختيار نوع اللعب عند بدء جلسة بلياردو بالوقت.
+
+#### 2. `components/sessions/session-popup.tsx` — handleStartSession branching
+
+تم تعديل `handleStartSession` ليرسل:
+- بلياردو+Games: `{ station_id, billing_mode }` فقط (بدون mode أو games_count)
+- بلياردو+Time: `{ station_id, billing_mode, play_type, play_subtype }` بدلاً من mode
+- PS/Pingpong: `{ station_id, mode, billing_mode, optional games_count }` كما كان
+
+#### 3. `app/api/sessions/start/route.ts` — API validation branching
+
+تم تعديل API:
+- `mode` أصبح اختيارياً للبلياردو (مطلوب فقط لـ PS/Pingpong حيث لا يزال مستخدماً في التسعير)
+- للبلياردو+Time: `play_type` و `play_subtype` مطلوبان
+- للبلياردو+Games: لا mode ولا games_count ولا play_type/subtype مطلوبان
+- `mode` يُشتق من `play_subtype` عند بدء جلسة بلياردو بالوقت (single → single, multi/triple/quad → multi)
+
+#### 4. تم حذف `components/sessions/SessionPopupVerificationTest.tsx`
+- ملف اختبار وهمي غير مستورد في أي مكان في التطبيق — تم تأكيد عدم وجود أي مرجع Import له
+
+### التحقق اليدوي للحالات الأربع
+
+1. ✅ **بلياردو + Games:** يعرض: toggle + رسالة توضيحية + زر البدء (لا mode, لا games_count)
+2. ✅ **بلياردو + Time:** يعرض: toggle + أزرار عادي/كومب + أزرار فردي/مالتي/متولتة/مربعة + زر البدء
+3. ✅ **PS + Games:** يعرض: toggle + أزرار فردي/مالتي + input عدد الجيمات + زر البدء (كما كان)
+4. ✅ **PS + Time:** يعرض: toggle + أزرار فردي/مالتي + زر البدء (كما كان)
+
+### نتائج التحقق
+- ✅ `npm run build` — ناجح بدون أخطاء
+- ✅ لا يوجد `<input type="number">` في أي ملف
+- ✅ لا يوجد ضرب سعري مضمّن خارج calculation.ts
+
