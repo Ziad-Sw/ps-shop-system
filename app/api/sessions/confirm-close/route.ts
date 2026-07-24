@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
         .select("rate, unit")
         .eq("shop_id", shopId)
         .eq("station_type", stationType)
-        .eq("play_type", "normal")
+        .eq("play_type", session.play_type ?? "normal")
         .eq("play_subtype", playSubtype)
         .eq("unit", unit)
         .limit(1)
