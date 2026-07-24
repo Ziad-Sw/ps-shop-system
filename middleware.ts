@@ -17,6 +17,11 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  // Apply no-cache to all responses including static assets
+  if (pathname.startsWith("/_next/static")) {
+    return addNoCacheHeaders(NextResponse.next());
+  }
+
   // Allow public auth paths
   if (
     pathname === "/login" ||
@@ -66,8 +71,8 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except static assets and files with extensions
+     * Match all request paths — middleware handles static vs dynamic internally
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)",
+    "/((?!_next/image|favicon.ico).*)",
   ],
 };
