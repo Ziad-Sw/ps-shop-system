@@ -7,16 +7,26 @@ import { verifyUserActive } from "@/lib/auth/verify-active";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Allow public auth paths
+  function addNoCacheHeaders(response: NextResponse): NextResponse {
+    response.headers.set(
+      "Cache-Control",
+      "no-cache, no-store, must-revalidate"
+    );
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+    return response;
+  }
+
+  // Allow public auth paths
   if (
     pathname === "/login" ||
     pathname.startsWith("/api/auth/") ||
     pathname.startsWith("/api/cron/")
   ) {
-    return NextResponse.next();
+    return addNoCacheHeaders(NextResponse.next());
   }
 
-  // 2. Retrieve session cookie
+  // Retrieve session cookie
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
 
   if (!sessionCookie) {
@@ -26,7 +36,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // 3. Verify session signature and expiry
+  // Verify session signature and expiry
   const session = await verifySessionCookieValue(sessionCookie.value);
 
   if (!session) {
@@ -38,7 +48,7 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // 4. Verify user still exists and is active in the database
+  // Verify user still exists and is active in the database
   const activeUser = await verifyUserActive(session.user_id);
 
   if (!activeUser) {
@@ -50,17 +60,13 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  return NextResponse.next();
+  return addNoCacheHeaders(NextResponse.next());
 }
 
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - any files with an extension (e.g. logo.png, robots.txt)
+     * Match all request paths except static assets and files with extensions
      */
     "/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)",
   ],
