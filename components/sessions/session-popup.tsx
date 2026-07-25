@@ -402,7 +402,8 @@ export function SessionPopup({
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div
-            className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-xl bg-surface-card shadow-none"
+            dir="ltr"
+            className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-xl bg-surface-card shadow-none scrollbar-dark"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -431,7 +432,7 @@ export function SessionPopup({
               </button>
             </div>
 
-            <div className="px-6 pb-6">
+            <div dir="rtl" className="px-6 pb-6">
             {/* Station Info */}
             <div className="mt-4 mb-6 rounded-lg bg-surface-page/50 p-4">
             <div className="text-sm text-foreground-muted">

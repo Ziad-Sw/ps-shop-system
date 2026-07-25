@@ -4,3 +4,25 @@
 body {
   font-family: var(--font-ibm-plex-arabic), sans-serif;
 }
+
+.scrollbar-dark {
+  scrollbar-width: thin;
+  scrollbar-color: #252830 #1A1C23;
+}
+
+.scrollbar-dark::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-track {
+  background: #1A1C23;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb {
+  background: #252830;
+  border-radius: 3px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: #A0A3AC;
+}
