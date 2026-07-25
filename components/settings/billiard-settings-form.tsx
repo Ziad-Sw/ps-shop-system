@@ -255,7 +255,7 @@ export default function BilliardSettingsForm({
                     disabled={!canEdit || savingMode === "normal_single_hour"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {savingMode === "normal_single_hour" ? "..." : "حفظ"}
+                    {savingMode === "normal_single_hour" ? "جاري..." : "حفظ"}
                   </button>
                 </div>
               </div>
@@ -275,7 +275,7 @@ export default function BilliardSettingsForm({
                     disabled={!canEdit || savingMode === "normal_single_game"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {savingMode === "normal_single_game" ? "..." : "حفظ"}
+                    {savingMode === "normal_single_game" ? "جاري..." : "حفظ"}
                   </button>
                 </div>
               </div>
@@ -303,7 +303,7 @@ export default function BilliardSettingsForm({
                     disabled={!canEdit || savingMode === "normal_multi_hour"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {savingMode === "normal_multi_hour" ? "..." : "حفظ"}
+                    {savingMode === "normal_multi_hour" ? "جاري..." : "حفظ"}
                   </button>
                 </div>
               </div>
@@ -323,7 +323,7 @@ export default function BilliardSettingsForm({
                     disabled={!canEdit || savingMode === "normal_multi_game"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {savingMode === "normal_multi_game" ? "..." : "حفظ"}
+                    {savingMode === "normal_multi_game" ? "جاري..." : "حفظ"}
                   </button>
                 </div>
               </div>
@@ -351,7 +351,7 @@ export default function BilliardSettingsForm({
                     disabled={!canEdit || savingMode === "combo_single_hour"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {savingMode === "combo_single_hour" ? "..." : "حفظ"}
+                    {savingMode === "combo_single_hour" ? "جاري..." : "حفظ"}
                   </button>
                 </div>
               </div>
@@ -371,7 +371,7 @@ export default function BilliardSettingsForm({
                     disabled={!canEdit || savingMode === "combo_single_game"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {savingMode === "combo_single_game" ? "..." : "حفظ"}
+                    {savingMode === "combo_single_game" ? "جاري..." : "حفظ"}
                   </button>
                 </div>
               </div>
@@ -399,7 +399,7 @@ export default function BilliardSettingsForm({
                     disabled={!canEdit || savingMode === "combo_triple_hour"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {savingMode === "combo_triple_hour" ? "..." : "حفظ"}
+                    {savingMode === "combo_triple_hour" ? "جاري..." : "حفظ"}
                   </button>
                 </div>
               </div>
@@ -419,7 +419,7 @@ export default function BilliardSettingsForm({
                     disabled={!canEdit || savingMode === "combo_triple_game"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {savingMode === "combo_triple_game" ? "..." : "حفظ"}
+                    {savingMode === "combo_triple_game" ? "جاري..." : "حفظ"}
                   </button>
                 </div>
               </div>
@@ -447,7 +447,7 @@ export default function BilliardSettingsForm({
                     disabled={!canEdit || savingMode === "combo_quad_hour"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {savingMode === "combo_quad_hour" ? "..." : "حفظ"}
+                    {savingMode === "combo_quad_hour" ? "جاري..." : "حفظ"}
                   </button>
                 </div>
               </div>
@@ -467,7 +467,7 @@ export default function BilliardSettingsForm({
                     disabled={!canEdit || savingMode === "combo_quad_game"}
                     className="min-h-[44px] min-w-[80px] rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {savingMode === "combo_quad_game" ? "..." : "حفظ"}
+                    {savingMode === "combo_quad_game" ? "جاري..." : "حفظ"}
                   </button>
                 </div>
               </div>

@@ -57,6 +57,8 @@ export function SessionPopup({
   const [newEntryPlaySubtype, setNewEntryPlaySubtype] = useState<PlaySubtype>("single");
   const [newEntryGamesCount, setNewEntryGamesCount] = useState(1);
   const [isAddingGameEntry, setIsAddingGameEntry] = useState(false);
+  const [isSavingGames, setIsSavingGames] = useState(false);
+  const [isPreviewingClose, setIsPreviewingClose] = useState(false);
 
   // Billiard start-session play_type/subtype (used when creating a billiard+time session)
   const [startPlayType, setStartPlayType] = useState<PlayType>("normal");
@@ -301,6 +303,7 @@ export function SessionPopup({
   const handleSaveGames = async () => {
     if (!activeSession) return;
 
+    setIsSavingGames(true);
     try {
       const response = await fetch("/api/sessions/update-games", {
         method: "POST",
@@ -322,6 +325,8 @@ export function SessionPopup({
     } catch (error) {
       console.error("Failed to update games count:", error);
       showToast("error", "حدث خطأ أثناء تحديث عدد الجيمات");
+    } finally {
+      setIsSavingGames(false);
     }
   };
 
@@ -374,6 +379,7 @@ export function SessionPopup({
   const handlePreviewClose = async () => {
     if (!activeSession) return;
 
+    setIsPreviewingClose(true);
     try {
       const response = await fetch("/api/sessions/preview-close", {
         method: "POST",
@@ -393,6 +399,8 @@ export function SessionPopup({
     } catch (error) {
       console.error("Failed to preview close:", error);
       showToast("error", "حدث خطأ أثناء حساب الإيصال");
+    } finally {
+      setIsPreviewingClose(false);
     }
   };
 
@@ -798,10 +806,10 @@ export function SessionPopup({
                     />
                     <button
                       onClick={handleSaveGames}
-                      disabled={!hasGamesChanged}
+                      disabled={!hasGamesChanged || isSavingGames}
                       className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      حفظ
+                      {isSavingGames ? "جاري حفظ..." : "حفظ"}
                     </button>
                   </div>
                 </div>
@@ -1087,9 +1095,10 @@ export function SessionPopup({
               <div className="border-t border-foreground-muted/20 pt-4">
                 <button
                   onClick={handlePreviewClose}
-                  className="w-full rounded-lg bg-red-500 px-4 py-3 text-sm font-medium text-white hover:bg-red-600"
+                  disabled={isPreviewingClose}
+                  className="w-full rounded-lg bg-red-500 px-4 py-3 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isGameBased ? "إنهاء الجيمات" : "إنهاء الوقت"}
+                  {isPreviewingClose ? "جاري احتساب..." : isGameBased ? "إنهاء الجيمات" : "إنهاء الوقت"}
                 </button>
               </div>
             </div>
