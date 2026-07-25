@@ -73,12 +73,14 @@ export function NumericInput({
         type="text"
         inputMode="numeric"
         pattern="[0-9]*"
+        lang="en"
         value={mobileInput}
         onChange={handleChange}
         placeholder={placeholder}
         required={required}
         disabled={disabled}
         aria-required={required}
+        style={{ fontSize: '16px' }}
         className={`${baseClass} ${className}`}
       />
     );
