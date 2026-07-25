@@ -33,6 +33,7 @@ export function SessionPopup({
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
+  const [removingEntryId, setRemovingEntryId] = useState<string | null>(null);
   const [elapsedTime, setElapsedTime] = useState<string>("");
   const [saleItems, setSaleItems] = useState<
     Array<{
@@ -232,6 +233,29 @@ export function SessionPopup({
     }
   };
 
+  const handleRemoveGameEntry = async (entryId: string) => {
+    setRemovingEntryId(entryId);
+    try {
+      const response = await fetch(
+        `/api/sessions/remove-game-entry?entry_id=${entryId}`,
+        { method: "DELETE" }
+      );
+
+      if (response.ok) {
+        setGameEntries((prev) => prev.filter((e) => e.id !== entryId));
+        showToast("success", "تم حذف إدخال الجيم بنجاح");
+      } else {
+        const data = await response.json();
+        showToast("error", data.error || "فشل حذف إدخال الجيم");
+      }
+    } catch (error) {
+      console.error("Failed to remove game entry:", error);
+      showToast("error", "حدث خطأ أثناء حذف إدخال الجيم");
+    } finally {
+      setRemovingEntryId(null);
+    }
+  };
+
   const handleAddProduct = async () => {
     if (!selectedProductId || !activeSession) return;
 
@@ -377,38 +401,39 @@ export function SessionPopup({
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-        <div
-          className="w-full max-w-md rounded-xl bg-surface-card p-6 shadow-none"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-foreground">
-              {isAvailable ? "بدء جلسة جديدة" : "الجلسة الحالية"}
-            </h2>
-            <button
-              onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground-muted hover:bg-surface-page hover:text-foreground"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+          <div
+            className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-xl bg-surface-card shadow-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="sticky top-0 z-10 bg-surface-card px-6 pt-6 pb-0 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-foreground">
+                {isAvailable ? "بدء جلسة جديدة" : "الجلسة الحالية"}
+              </h2>
+              <button
+                onClick={onClose}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground-muted hover:bg-surface-page hover:text-foreground"
               >
-                <path d="M18 6 6 18" />
-                <path d="m6 6 12 12" />
-              </svg>
-            </button>
-          </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
+              </button>
+            </div>
 
-          {/* Station Info */}
-          <div className="mb-6 rounded-lg bg-surface-page/50 p-4">
+            <div className="px-6 pb-6">
+            {/* Station Info */}
+            <div className="mt-4 mb-6 rounded-lg bg-surface-page/50 p-4">
             <div className="text-sm text-foreground-muted">
               {station.station_type === "billiard"
                 ? "بلياردو"
@@ -438,7 +463,6 @@ export function SessionPopup({
                 )}
               </>
             )}
-          </div>
 
           {isAvailable ? (
             /* Available Station - Start Session */
@@ -805,9 +829,28 @@ export function SessionPopup({
                                   : "مربعة"}{" "}
                             × {entry.games_count}
                           </span>
-                          <span className="text-foreground">
-                            {calculateGameEntrySubtotal(entry.games_count, entry.price_per_game).toFixed(2)} ج.م
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-foreground">
+                              {calculateGameEntrySubtotal(entry.games_count, entry.price_per_game).toFixed(2)} ج.م
+                            </span>
+                            <button
+                              onClick={() => handleRemoveGameEntry(entry.id)}
+                              disabled={removingEntryId === entry.id}
+                              className="flex h-5 w-5 items-center justify-center rounded text-red-400 hover:bg-red-500/10 disabled:opacity-30"
+                            >
+                              {removingEntryId === entry.id ? (
+                                <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                              ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M18 6 6 18" />
+                                  <path d="m6 6 12 12" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
                         </div>
                       ))}
                       <div className="flex justify-between border-t border-foreground-muted/20 pt-2 text-sm font-medium">
@@ -1050,6 +1093,8 @@ export function SessionPopup({
               </div>
             </div>
           )}
+            </div>
+          </div>
         </div>
       </div>
 

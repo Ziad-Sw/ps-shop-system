@@ -2451,3 +2451,40 @@
 **التحقق من clean-code-guard:** نظيف — لا مخالفات.
 **التحقق من test-guard:** غير قابل للتطبيق — لا يوجد كود اختبار متأثر.
 
+## 2026-07-26 — Fix: Popup overflow scroll + Remove game entry button
+
+**BUG 1 — Popup overflow no scroll on mobile:**
+- **المشكلة:** محتوى session-popup و receipt-popup (جلسات + مشروبات) يزيد عن طول الشاشة على الموبايل ولا يوجد سكرول للوصول لزر الإجراء (الإنهاء).
+- **الحل في `session-popup.tsx`:**
+  - تغيير `card` div من `p-6` إلى `flex flex-col max-h-[85vh]`
+  - الهيدر: `shrink-0 px-6 pt-6 pb-0` (ثابت لا يتقلص)
+  - المحتوى القابل للسكرول: لفّ في `overflow-y-auto flex-1 px-6 pb-6`
+- **الحل في `receipt-popup.tsx`:** نفس النمط مطبق.
+
+**BUG 2 — No way to remove billiard game entry:**
+- إنشاء `app/api/sessions/remove-game-entry/route.ts` — DELETE endpoint maps remove-product pattern:
+  - Query: `?entry_id=xxx`
+  - يتحقق من `getShopIdFromRequest`
+  - يتحقق من وجود `entry_id`
+  - يستعلم الـ entry مع `sessions!inner` للتحقق من نشاط الجلسة
+  - يحذف السجل من `billiard_game_entries` مع `shop_id`
+- إضافة state `removingEntryId` وإضافة `handleRemoveGameEntry` في `session-popup.tsx`
+- إضافة زر حذف (×) أحمر لكل صف جيمات — نفس تصميم زر حذف المشروبات
+
+**نتائج التحقق:**
+- ✅ `npm run build` — ناجح بدون أخطاء
+- ✅ session-popup: محتوى الجلسات قابل للسكرول
+- ✅ receipt-popup: محتوى الإيصال قابل للسكرول
+- ✅ API remove-game-entry: 404, 409, 400, 500 معالجة
+- ✅ زر حذف (×) يظهر لكل جيم مع loading spinner
+- ✅ toast نجاح/فشل بعد كل عملية حذف
+- ✅ إجمالي الجيمات يتحدّث تلقائياً بعد الحذف
+
+**ملفات التنفيذ:**
+- `components/sessions/session-popup.tsx` — سكرول + زر حذف + handler
+- `components/sessions/receipt-popup.tsx` — سكرول
+- `app/api/sessions/remove-game-entry/route.ts` — API جديد
+
+**التحقق من clean-code-guard:** نظيف — لا مخالفات.
+**التحقق من test-guard:** غير قابل للتطبيق — لا يوجد كود اختبار متأثر.
+

@@ -120,9 +120,9 @@ export function ReceiptPopup({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-xl bg-surface-card p-6 shadow-none">
+      <div className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-xl bg-surface-card shadow-none">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="sticky top-0 z-10 bg-surface-card px-6 pt-6 pb-0 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-foreground">إيصال الدفع</h2>
           <button
             onClick={onClose}
@@ -145,8 +145,9 @@ export function ReceiptPopup({
           </button>
         </div>
 
+        <div className="px-6 pb-6">
         {/* Station Info */}
-        <div className="mb-6 rounded-lg bg-surface-page/50 p-4">
+        <div className="mt-4 mb-6 rounded-lg bg-surface-page/50 p-4">
           <div className="text-sm text-foreground-muted">
             {station.station_type === "billiard"
               ? "بلياردو"
@@ -234,6 +235,7 @@ export function ReceiptPopup({
           >
             {isConfirming ? "جاري القفل..." : "تأكيد القفل"}
           </button>
+        </div>
         </div>
       </div>
     </div>
