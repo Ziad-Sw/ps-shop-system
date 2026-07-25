@@ -824,99 +824,122 @@ export function SessionPopup({
 
                   {/* Add Entry Form */}
                   <div className="space-y-2 rounded-lg border border-foreground-muted/20 p-3">
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="relative">
-                        <select
-                          value={newEntryPlayType}
-                          onChange={(e) => {
-                            setNewEntryPlayType(e.target.value as PlayType);
+                    {/* Play Type Buttons */}
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-foreground">نوع اللعب</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => {
+                            setNewEntryPlayType("normal");
                             setNewEntryPlaySubtype("single");
                           }}
-                          className="w-full appearance-none rounded-lg bg-surface-page px-2 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-primary" style={{
-                            WebkitAppearance: 'none',
-                            MozAppearance: 'none',
-                            appearance: 'none',
-                            backgroundImage: 'none',
-                            direction: 'rtl',
-                            paddingLeft: '8px',
-                            paddingRight: '24px'
+                          className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+                            newEntryPlayType === "normal"
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                          }`}
+                        >
+                          عادي
+                        </button>
+                        <button
+                          onClick={() => {
+                            setNewEntryPlayType("combo");
+                            setNewEntryPlaySubtype("single");
                           }}
+                          className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+                            newEntryPlayType === "combo"
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                          }`}
                         >
-                          <option value="normal">عادي</option>
-                          <option value="combo">كومب</option>
-                        </select>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-foreground-muted"
-                        >
-                          <path d="m6 9 6 6 6-6" />
-                        </svg>
+                          كومب
+                        </button>
                       </div>
-                      <div className="relative">
-                        <select
-                          value={newEntryPlaySubtype}
-                          onChange={(e) => setNewEntryPlaySubtype(e.target.value as PlaySubtype)}
-                          className="w-full appearance-none rounded-lg bg-surface-page px-2 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-primary" style={{
-                            WebkitAppearance: 'none',
-                            MozAppearance: 'none',
-                            appearance: 'none',
-                            backgroundImage: 'none',
-                            direction: 'rtl',
-                            paddingLeft: '8px',
-                            paddingRight: '24px'
-                          }}
-                        >
-                          {newEntryPlayType === "normal" ? (
-                            <>
-                              <option value="single">فردي</option>
-                              <option value="multi">مالتي</option>
-                            </>
-                          ) : (
-                            <>
-                              <option value="single">فردي</option>
-                              <option value="triple">متولتة</option>
-                              <option value="quad">مربعة</option>
-                            </>
-                          )}
-                        </select>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-foreground-muted"
-                        >
-                          <path d="m6 9 6 6 6-6" />
-                        </svg>
+                    </div>
+
+                    {/* Play Subtype Buttons (single row) */}
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-foreground">النوع الفرعي</label>
+                      <div className={`grid gap-2 ${
+                        newEntryPlayType === "combo" ? "grid-cols-3" : "grid-cols-2"
+                      }`}>
+                        {newEntryPlayType === "normal" ? (
+                          <>
+                            <button
+                              onClick={() => setNewEntryPlaySubtype("single")}
+                              className={`rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${
+                                newEntryPlaySubtype === "single"
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                              }`}
+                            >
+                              فردي
+                            </button>
+                            <button
+                              onClick={() => setNewEntryPlaySubtype("multi")}
+                              className={`rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${
+                                newEntryPlaySubtype === "multi"
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                              }`}
+                            >
+                              مالتي
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => setNewEntryPlaySubtype("single")}
+                              className={`rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${
+                                newEntryPlaySubtype === "single"
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                              }`}
+                            >
+                              فردي
+                            </button>
+                            <button
+                              onClick={() => setNewEntryPlaySubtype("triple")}
+                              className={`rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${
+                                newEntryPlaySubtype === "triple"
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                              }`}
+                            >
+                              متولتة
+                            </button>
+                            <button
+                              onClick={() => setNewEntryPlaySubtype("quad")}
+                              className={`rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${
+                                newEntryPlaySubtype === "quad"
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                              }`}
+                            >
+                              مربعة
+                            </button>
+                          </>
+                        )}
                       </div>
+                    </div>
+
+                    {/* Games Count + Submit */}
+                    <div className="flex gap-2">
                       <NumericInput
                         min={1}
                         value={newEntryGamesCount}
                         onChange={(v) => setNewEntryGamesCount(Math.max(1, v))}
                         placeholder="عدد الجيمات"
-                        className="px-2 py-2 text-xs"
+                        className="flex-1 px-2 py-2 text-xs"
                       />
+                      <button
+                        onClick={handleAddGameEntry}
+                        disabled={isAddingGameEntry}
+                        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
+                      >
+                        {isAddingGameEntry ? "جاري..." : "إضافة جيمات"}
+                      </button>
                     </div>
-                    <button
-                      onClick={handleAddGameEntry}
-                      disabled={isAddingGameEntry}
-                      className="w-full rounded-lg bg-primary px-3 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
-                    >
-                      {isAddingGameEntry ? "جاري الإضافة..." : "إضافة جيمات"}
-                    </button>
                   </div>
                 </div>
               )}
