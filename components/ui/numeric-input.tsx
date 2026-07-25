@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface NumericInputProps {
   value: number;
@@ -20,12 +20,14 @@ export function NumericInput({
   min,
   max,
   step = 1,
-  placeholder = "أدخل العدد",
+  placeholder = "أدخل القيمة",
   required = false,
   disabled = false,
   className = "",
 }: NumericInputProps) {
   const [isTouch, setIsTouch] = useState(false);
+  const [mobileInput, setMobileInput] = useState("");
+  const prevValueRef = useRef(value);
 
   useEffect(() => {
     const mq = window.matchMedia("(pointer: coarse)");
@@ -35,12 +37,23 @@ export function NumericInput({
     return () => mq.removeEventListener("change", handler);
   }, []);
 
+  useEffect(() => {
+    if (!isTouch) return;
+    const prev = prevValueRef.current;
+    prevValueRef.current = value;
+    if (value === 0 && prev !== 0) {
+      setMobileInput("");
+    } else if (value !== 0 && prev === 0) {
+      setMobileInput(String(value));
+    }
+  }, [value, isTouch]);
+
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value;
-      if (isTouch && raw === "") {
-        onChange(0);
-        return;
+      if (isTouch) {
+        if (raw !== "" && !/^\d*$/.test(raw)) return;
+        setMobileInput(raw);
       }
       const parsed = parseInt(raw, 10);
       let num = isNaN(parsed) ? 0 : parsed;
@@ -55,13 +68,12 @@ export function NumericInput({
     "w-full rounded-lg bg-surface-page px-3 py-2 text-foreground outline-none focus:ring-2 focus:ring-primary";
 
   if (isTouch) {
-    const displayValue = value === 0 ? "" : String(value);
     return (
       <input
         type="text"
         inputMode="numeric"
         pattern="[0-9]*"
-        value={displayValue}
+        value={mobileInput}
         onChange={handleChange}
         placeholder={placeholder}
         required={required}

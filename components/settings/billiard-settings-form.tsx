@@ -213,7 +213,7 @@ export default function BilliardSettingsForm({
             step={1}
             value={tableCount}
             onChange={(v) => setTableCount(v)}
-            placeholder="العدد"
+            placeholder="أدخل عدد الطاولات"
             disabled={!canEdit}
           />
           <button
@@ -246,6 +246,7 @@ export default function BilliardSettingsForm({
                     min={0}
                     step={1}
                     value={normalSingleHourRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setNormalSingleHourRate(v)}
                     disabled={!canEdit}
                   />
@@ -265,6 +266,7 @@ export default function BilliardSettingsForm({
                     min={0}
                     step={1}
                     value={normalSingleGameRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setNormalSingleGameRate(v)}
                     disabled={!canEdit}
                   />
@@ -292,6 +294,7 @@ export default function BilliardSettingsForm({
                     min={0}
                     step={1}
                     value={normalMultiHourRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setNormalMultiHourRate(v)}
                     disabled={!canEdit}
                   />
@@ -311,6 +314,7 @@ export default function BilliardSettingsForm({
                     min={0}
                     step={1}
                     value={normalMultiGameRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setNormalMultiGameRate(v)}
                     disabled={!canEdit}
                   />
@@ -338,6 +342,7 @@ export default function BilliardSettingsForm({
                     min={0}
                     step={1}
                     value={comboSingleHourRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setComboSingleHourRate(v)}
                     disabled={!canEdit}
                   />
@@ -357,6 +362,7 @@ export default function BilliardSettingsForm({
                     min={0}
                     step={1}
                     value={comboSingleGameRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setComboSingleGameRate(v)}
                     disabled={!canEdit}
                   />
@@ -384,6 +390,7 @@ export default function BilliardSettingsForm({
                     min={0}
                     step={1}
                     value={comboTripleHourRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setComboTripleHourRate(v)}
                     disabled={!canEdit}
                   />
@@ -403,6 +410,7 @@ export default function BilliardSettingsForm({
                     min={0}
                     step={1}
                     value={comboTripleGameRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setComboTripleGameRate(v)}
                     disabled={!canEdit}
                   />
@@ -430,6 +438,7 @@ export default function BilliardSettingsForm({
                     min={0}
                     step={1}
                     value={comboQuadHourRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setComboQuadHourRate(v)}
                     disabled={!canEdit}
                   />
@@ -449,6 +458,7 @@ export default function BilliardSettingsForm({
                     min={0}
                     step={1}
                     value={comboQuadGameRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setComboQuadGameRate(v)}
                     disabled={!canEdit}
                   />

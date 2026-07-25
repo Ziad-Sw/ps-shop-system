@@ -176,7 +176,7 @@ export default function PsSettingsForm({
             onChange={(v) => setStationCount(v)}
             disabled={!canEdit}
             className="w-full sm:flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-            placeholder="العدد"
+            placeholder="أدخل عدد الأجهزة"
           />
           <button
             onClick={handleSaveStationCount}
@@ -209,9 +209,9 @@ export default function PsSettingsForm({
                     min={0}
                     step={1}
                     value={singleHourRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setSingleHourRate(v)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
@@ -233,9 +233,9 @@ export default function PsSettingsForm({
                     min={0}
                     step={1}
                     value={multiHourRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setMultiHourRate(v)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
@@ -263,9 +263,9 @@ export default function PsSettingsForm({
                     min={0}
                     step={1}
                     value={singleGameRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setSingleGameRate(v)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
@@ -287,9 +287,9 @@ export default function PsSettingsForm({
                     min={0}
                     step={1}
                     value={multiGameRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setMultiGameRate(v)}
                     className="flex-1 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button

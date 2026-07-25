@@ -186,10 +186,8 @@ export default function ProductsSettingsForm({
               min={0}
               step={1}
               value={newProductPrice}
+              placeholder="أدخل السعر"
               onChange={(v) => setNewProductPrice(Math.max(0, v))}
-              disabled={!canEdit}
-              className="w-full sm:w-32 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-              placeholder="السعر"
             />
           <button
             onClick={handleAddProduct}
@@ -238,6 +236,7 @@ export default function ProductsSettingsForm({
                       min={0}
                       step={1}
                       value={editingPrice}
+                      placeholder="أدخل السعر"
                       onChange={(v) => setEditingPrice(Math.max(0, v))}
                       className="w-full min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={!canEdit || isSavingEdit}

@@ -61,6 +61,7 @@ export default function ShiftsSettingsForm({
               min={1}
               max={4}
               value={shiftsPerDay}
+              placeholder="أدخل عدد الورديات"
               onChange={(v) => setShiftsPerDay(Math.max(1, Math.min(4, v)))}
               disabled={!canEdit}
               className="w-24 min-h-[44px] rounded-lg border border-foreground-muted/20 bg-surface-page px-3 py-2 text-foreground placeholder-foreground-muted/50 transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"

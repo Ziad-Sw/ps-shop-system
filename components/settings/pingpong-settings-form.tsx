@@ -175,7 +175,7 @@ export default function PingpongSettingsForm({
             step={1}
             value={tableCount}
             onChange={(v) => setTableCount(v)}
-            placeholder="العدد"
+            placeholder="أدخل عدد الطاولات"
             disabled={!canEdit}
           />
           <button
@@ -209,8 +209,8 @@ export default function PingpongSettingsForm({
                     min={0}
                     step={1}
                     value={singleHourRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setSingleHourRate(v)}
-                    placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
@@ -232,8 +232,8 @@ export default function PingpongSettingsForm({
                     min={0}
                     step={1}
                     value={multiHourRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setMultiHourRate(v)}
-                    placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
@@ -261,8 +261,8 @@ export default function PingpongSettingsForm({
                     min={0}
                     step={1}
                     value={singleGameRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setSingleGameRate(v)}
-                    placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button
@@ -284,8 +284,8 @@ export default function PingpongSettingsForm({
                     min={0}
                     step={1}
                     value={multiGameRate}
+                    placeholder="أدخل السعر"
                     onChange={(v) => setMultiGameRate(v)}
-                    placeholder="السعر"
                     disabled={!canEdit}
                   />
                   <button

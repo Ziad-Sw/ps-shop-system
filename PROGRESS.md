@@ -2414,3 +2414,26 @@
 - ✅ 0 `<input type="text" inputMode="numeric" pattern="[0-9]*">` متبقية في النظام
 - ✅ 7 ملفات تستورد `NumericInput` ضمن `import { NumericInput } from "@/components/ui/numeric-input"`
 
+## 2026-07-26 — NumericInput: لا أرقام افتراضية على الموبايل + Placeholders محدّدة
+
+**المشكلة:** على أجهزة اللمس (mobile/touch)، كانت حقول NumericInput تظهر رقمًا افتراضيًا (0 أو 1) عند التحميل بدلاً من أن تبدأ فارغة بتعليمات إرشادية.
+
+**الحل الجذري في `components/ui/numeric-input.tsx`:**
+- تم إضافة حالة داخلية `mobileInput` تبدأ `""` دائمًا على الموبايل
+- حقل الإدخال على الموبايل يُظهر دائمًا `mobileInput` فقط (فارغ عند البداية، يُملأ بكتابة المستخدم)
+- التزامن مع القيمة الخارجية: عند إعادة تعيين النموذج إلى `0`، يتم مسح `mobileInput` تلقائيًا
+- تم تغيير الـ default placeholder من `"أدخل العدد"` إلى `"أدخل القيمة"`
+
+**تدقيق جميع مواقع الاستخدام (30 موقع):**
+- `session-popup.tsx`: 5 مواقع — `placeholder="أدخل عدد الجيمات"` (4) + `"أدخل الكمية"` (1)
+- `billiard-settings-form.tsx`: 11 موقع — `placeholder="أدخل عدد الطاولات"` (1) + `"أدخل السعر"` (10)
+- `ps-settings-form.tsx`: 5 مواقع — `placeholder="أدخل عدد الأجهزة"` (1) + `"أدخل السعر"` (4)
+- `pingpong-settings-form.tsx`: 5 مواقع — `placeholder="أدخل عدد الطاولات"` (1) + `"أدخل السعر"` (4)
+- `products-settings-form.tsx`: موقعان — `placeholder="أدخل السعر"`
+- `expenses-list.tsx`: موقع — `placeholder="أدخل المبلغ"`
+- `shifts-settings-form.tsx`: موقع — `placeholder="أدخل عدد الورديات"`
+
+**التحقق من clean-code-guard:** تم تمرير جميع الضوابط. تم إصلاح ازدواجية في `handleChange`.
+
+**التحقق من test-guard:** لا يوجد كود اختبار متأثر — كل التغييرات في كود الإنتاج فقط.
+

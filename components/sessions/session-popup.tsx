@@ -692,7 +692,7 @@ export function SessionPopup({
                           min={1}
                           value={startGamesCount}
                           onChange={(v) => setStartGamesCount(Math.max(1, v))}
-                          placeholder="عدد الجيمات"
+                          placeholder="أدخل عدد الجيمات"
                         />
                       </div>
                     </>
@@ -741,7 +741,7 @@ export function SessionPopup({
                     min={1}
                     value={gamesCount}
                     onChange={(v) => setGamesCount(Math.max(1, v))}
-                    placeholder="عدد الجيمات"
+                    placeholder="أدخل عدد الجيمات"
                   />
                 </div>
               )}
@@ -768,7 +768,7 @@ export function SessionPopup({
                       min={0}
                       value={gamesCountInput}
                       onChange={(v) => setGamesCountInput(Math.max(0, v))}
-                      placeholder="عدد الجيمات"
+                      placeholder="أدخل عدد الجيمات"
                       className="flex-1"
                     />
                     <button
@@ -929,7 +929,7 @@ export function SessionPopup({
                         min={1}
                         value={newEntryGamesCount}
                         onChange={(v) => setNewEntryGamesCount(Math.max(1, v))}
-                        placeholder="عدد الجيمات"
+                        placeholder="أدخل عدد الجيمات"
                         className="flex-1 px-2 py-2 text-xs"
                       />
                       <button
@@ -984,7 +984,7 @@ export function SessionPopup({
                       min={1}
                       value={selectedQuantity}
                       onChange={(v) => setSelectedQuantity(v)}
-                      placeholder="العدد"
+                      placeholder="أدخل الكمية"
                       className="w-24"
                     />
                     <button
