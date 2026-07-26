@@ -188,6 +188,7 @@ export default function ProductsSettingsForm({
               value={newProductPrice}
               placeholder="أدخل السعر"
               onChange={(v) => setNewProductPrice(Math.max(0, v))}
+              className="sm:w-32"
             />
           <button
             onClick={handleAddProduct}

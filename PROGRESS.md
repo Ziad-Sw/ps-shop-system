@@ -2585,3 +2585,33 @@
 **التحقق من clean-code-guard:** غير قابل للتطبيق — تعديل ملف أصول ثابتة (SVG) فقط.
 **التحقق من test-guard:** غير قابل للتطبيق — لا يوجد تغيير في كود الاختبار.
 
+---
+
+## يوليو 2026 — إصلاح عرض حقل اسم المشروب في صفحة المنتجات
+
+**السبب الجذري:** Commit `d0433b4` ("fix NumericInput: mobile shows empty+placeholder, no default number; contextual placeholders across all 30 call sites") حوّل حقل السعر من `<input type="number">` مباشر إلى مكون `<NumericInput>` في صف "إضافة مشروب جديد"، لكنه **لم ينقل خاصية `className="sm:w-32"`** التي كانت تضبط عرض الحقل على الدسكتوب. قبل الترحيل:
+
+```tsx
+// Before (commit 341aef0 — layout fix):
+<input className="w-full sm:w-32 ..." placeholder="السعر" />
+```
+
+```tsx
+// After (commit d0433b4 — NumericInput migration):
+<NumericInput ... />  // ← sm:w-32 مفقودة!
+```
+
+كان `sm:w-32` يحدد عرض حقل السعر بـ 8rem (~128px) على الشاشات المتوسطة فأكبر، مما يسمح لحقل الاسم (`flex-1`) بأخذ المساحة المتبقية. بفقدان هذا القيد، ورث `<NumericInput>` القيمة الافتراضية `w-full` من `baseClass` الداخلي، مما جعله يتنافس مع حقل الاسم على المساحة — ونتج عن ذلك تضييق حقل الاسم.
+
+**الإصلاح:** إضافة `className="sm:w-32"` إلى `<NumericInput>` في صف "إضافة مشروب جديد" لاستعادة قيد العرض المفقود. حقل الاسم يبقى `sm:flex-1` فيأخذ المساحة المتبقية.
+
+**الملف المتأثر:**
+- `components/settings/products-settings-form.tsx` — إضافة `className="sm:w-32"` إلى NumericInput (السعر) في صف الإضافة
+
+**التحقق من النماذج الأخرى:** لا توجد نماذج إعدادات أخرى (billiard, pingpong, ps) تحتوي على نفس النمط (حقل اسم + حقل سعر جنبًا إلى جنب)، وبالتالي لم تتأثر.
+
+**نتائج التحقق:**
+- ✅ `npm run build` — ناجح بدون أخطاء
+- ✅ clean-code-guard: clean
+- ✅ test-guard: N/A
+
