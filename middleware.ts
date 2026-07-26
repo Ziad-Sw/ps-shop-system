@@ -22,11 +22,12 @@ export async function middleware(request: NextRequest) {
     return addNoCacheHeaders(NextResponse.next());
   }
 
-  // Allow public auth paths
+  // Allow public auth paths and static assets
   if (
     pathname === "/login" ||
     pathname.startsWith("/api/auth/") ||
-    pathname.startsWith("/api/cron/")
+    pathname.startsWith("/api/cron/") ||
+    pathname.match(/\.(svg|png|jpg|jpeg|gif|ico|webp|woff2?|ttf|eot)$/)
   ) {
     return addNoCacheHeaders(NextResponse.next());
   }
