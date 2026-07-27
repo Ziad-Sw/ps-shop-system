@@ -174,13 +174,15 @@ export function ReceiptPopup({
 
         {/* Items */}
         <div className="mb-6 space-y-3">
-          {/* Session Cost */}
-          <div className="flex justify-between text-sm">
-            <span className="text-foreground-muted">
-              {receiptData.unit === "game" ? "تكلفة اللعب" : "تكلفة الوقت"}
-            </span>
-            <span className="text-foreground">{receiptData.time_cost.toFixed(2)} ج.م</span>
-          </div>
+          {/* Session Cost — suppressed for billiard+games (game_entries_cost covers it) */}
+          {receiptData.unit === "hour" || receiptData.game_entries_cost === 0 ? (
+            <div className="flex justify-between text-sm">
+              <span className="text-foreground-muted">
+                {receiptData.unit === "game" ? "تكلفة اللعب" : "تكلفة الوقت"}
+              </span>
+              <span className="text-foreground">{receiptData.time_cost.toFixed(2)} ج.م</span>
+            </div>
+          ) : null}
 
           {/* Products */}
           {receiptData.items.length > 0 && (

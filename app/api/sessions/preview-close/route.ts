@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
     let rate = 0;
     let pricingUnit: "hour" | "game" = unit;
     let billiardGameEntriesCost = 0;
+    let totalGamesCount = 0;
 
     if (isBilliardGames) {
       // Fetch billiard game entries and sum them
@@ -91,6 +92,7 @@ export async function POST(request: NextRequest) {
       }
 
       billiardGameEntriesCost = calculateBilliardGameEntriesCost(gameEntries ?? []);
+      totalGamesCount = (gameEntries ?? []).reduce((sum, e) => sum + e.games_count, 0);
       pricingUnit = "game";
     } else {
       const playSubtype = session.play_subtype ?? (session.mode === "multi" ? "multi" : "single");
@@ -178,7 +180,7 @@ export async function POST(request: NextRequest) {
       start_time: session.start_time,
       end_time: previewEndTime,
       unit: pricingUnit,
-      games_count: isBilliardGames ? 0 : session.games_count,
+      games_count: isBilliardGames ? totalGamesCount : session.games_count,
     });
   } catch (err) {
     if (err instanceof PermissionError) {

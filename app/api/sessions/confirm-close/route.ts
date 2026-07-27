@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
     let rate = 0;
     let pricingUnit: "hour" | "game" = unit;
     let billiardGameEntriesCost = 0;
+    let totalGamesCount = 0;
 
     if (isBilliardGames) {
       const { data: gameEntries, error: entriesError } = await supabase
@@ -98,6 +99,7 @@ export async function POST(request: NextRequest) {
       }
 
       billiardGameEntriesCost = calculateBilliardGameEntriesCost(gameEntries ?? []);
+      totalGamesCount = (gameEntries ?? []).reduce((sum, e) => sum + e.games_count, 0);
       pricingUnit = "game";
     } else {
       const playSubtype = session.play_subtype ?? (session.mode === "multi" ? "multi" : "single");

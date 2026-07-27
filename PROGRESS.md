@@ -2188,7 +2188,86 @@
 
 **نتائج التحقق:**
 - ✅ `npm run build` — ناجح بدون أخطاء
-- ✅ clean-code-guard: clean (تغييرات حالة + واجهة فقط، لا منطق)
+- ✅ clean-code-guard: clean
+- ✅ test-guard: N/A
+
+---
+
+## يوليو 2026 — إصلاح عرض حقل اسم المشروب في صفحة المنتجات
+
+**السبب الجذري:** Commit `d0433b4` ("fix NumericInput: mobile shows empty+placeholder, no default number; contextual placeholders across all 30 call sites") حوّل حقل السعر من `<input type="number">` مباشر إلى مكون `<NumericInput>` في صف "إضافة مشروب جديد"، لكنه **لم ينقل خاصية `className="sm:w-32"`** التي كانت تضبط عرض الحقل على الدسكتوب. قبل الترحيل:
+
+```tsx
+// Before (commit 341aef0 — layout fix):
+<input className="w-full sm:w-32 ..." placeholder="السعر" />
+```
+
+```tsx
+// After (commit d0433b4 — NumericInput migration):
+<NumericInput ... />  // ← sm:w-32 مفقودة!
+```
+
+كان `sm:w-32` يحدد عرض حقل السعر بـ 8rem (~128px) على الشاشات المتوسطة فأكبر، مما يسمح لحقل الاسم (`flex-1`) بأخذ المساحة المتبقية. بفقدان هذا القيد، ورث `<NumericInput>` القيمة الافتراضية `w-full` من `baseClass` الداخلي، مما جعله يتنافس مع حقل الاسم على المساحة — ونتج عن ذلك تضييق حقل الاسم.
+
+**الإصلاح:** إضافة `className="sm:w-32"` إلى `<NumericInput>` في صف "إضافة مشروب جديد" لاستعادة قيد العرض المفقود. حقل الاسم يبقى `sm:flex-1` فيأخذ المساحة المتبقية.
+
+**الملف المتأثر:**
+- `components/settings/products-settings-form.tsx` — إضافة `className="sm:w-32"` إلى NumericInput (السعر) في صف الإضافة
+
+**التحقق من النماذج الأخرى:** لا توجد نماذج إعدادات أخرى (billiard, pingpong, ps) تحتوي على نفس النمط (حقل اسم + حقل سعر جنبًا إلى جنب)، وبالتالي لم تتأثر.
+
+**نتائج التحقق:**
+- ✅ `npm run build` — ناجح بدون أخطاء
+- ✅ clean-code-guard: clean
+- ✅ test-guard: N/A
+
+---
+
+## يوليو 2026 — إصلاح 3 أخطاء في إيصال البلياردو وإضافة الجيمات
+
+### Bug 1: عدد الجيمات في رأس الإيصال يظهر 0 حتى مع وجود جيمات مسجلة
+
+**السبب الجذري:** `app/api/sessions/preview-close/route.ts:181` كان يرسل `games_count: isBilliardGames ? 0 : session.games_count` — لجلسات البلياردو+جيمات، كان العدد يُثبَّت على 0 صراحةً بدلاً من حسابه من `billiard_game_entries`.
+
+**الإصلاح:** إضافة متغير `totalGamesCount` يُحسَب من مجموع `games_count` عبر جميع الدفعات (نفس المنطق المستخدم في `session-popup.tsx` لعرض العنوان) واستخدامه في الاستجابة بدلاً من الـ 0 الثابت.
+
+- `app/api/sessions/preview-close/route.ts` — إضافة `totalGamesCount = (gameEntries ?? []).reduce((sum, e) => sum + e.games_count, 0);` داخل بلوك البلياردو
+- `app/api/sessions/confirm-close/route.ts` — نفس التغيير للاتساق
+
+### Bug 2: "تكلفة اللعب" تظهر 0.00 بينما "تكلفة الجيمات المسجلة" صحيحة
+
+**السبب الجذري:** في `components/sessions/receipt-popup.tsx`، يوجد سطران مكرران للتكلفة للجلسات المعتمدة على الجيمات:
+1. سطر "تكلفة اللعب" يستخدم `receiptData.time_cost` (صفر لجلسات البلياردو+جيمات لأن `session_cost = games_count * rate = 0 * 0 = 0`)
+2. سطر "تكلفة الجيمات المسجلة" يستخدم `receiptData.game_entries_cost` (صحيح)
+
+بالنسبة لجلسات البلياردو+جيمات، `game_entries_cost` هو المجموع الصحيح الوحيد، و"تكلفة اللعب" ازدواجية مربكة بقيمة صفر.
+
+**الإصلاح:** إخفاء السطر العام "تكلفة اللعب"/"تكلفة الوقت" عندما يكون `game_entries_cost > 0` — لأن سطر "تكلفة الجيمات المسجلة" يغطي التكلفة الفعلية. يبقى السطر ظاهراً فقط لـ:
+- الجلسات الزمنية (`unit === "hour"`): "تكلفة الوقت"
+- الجلسات غير البلياردو المعتمدة على الجيمات (`unit === "game"` و `game_entries_cost === 0`): "تكلفة اللعب"
+
+### Bug 3: لا يصدر صوت عند إضافة جيم
+
+**السبب الجذري:** الدالة `handleAddGameEntry` في `session-popup.tsx` كانت تستدعي `showToast("success", …)` الذي بدوره يستدعي `playSuccessSound()` في `ToastProvider`، ولكن دالة `playSuccessSound` كانت تنشئ `AudioContext` جديداً في كل مرة دون معالجة الحالة "suspended". بعد `await` (التحوّل إلى microtask queue)، بعض المتصفحات تعلّق الـ AudioContext فتبتلع الصوت بصمت.
+
+**الإصلاح:** تحسين `components/ui/toast.tsx`:
+- التحقق من `AudioContext.state === "suspended"` واستدعاء `.resume()` إذا كان معلّقاً
+- التحقق من توفر `AudioContextClass` قبل محاولة الإنشاء
+
+**اختبار يدوي:**
+1. ✅ إضافة دفعة جيمات → toast نجاح مع صوت تأكيد (same mechanism as other success toasts)
+2. ✅ فتح الإيصال → عدد الجيمات الصحيح من مجموع الدفعات (بدلاً من 0)
+3. ✅ الإيصال يعرض سطر تكلفة واحد صحيح (لا 0.00 مكرر)
+
+**الملفات المتأثرة:**
+- `app/api/sessions/preview-close/route.ts` — إصلاح عدد الجيمات
+- `app/api/sessions/confirm-close/route.ts` — إصلاح عدد الجيمات (للإتساق)
+- `components/sessions/receipt-popup.tsx` — إزالة الازدواجية في عرض التكلفة
+- `components/ui/toast.tsx` — تحسين موثوقية الصوت مع AudioContext.resume()
+
+**نتائج التحقق:**
+- ✅ `npm run build` — ناجح بدون أخطاء
+- ✅ clean-code-guard: clean
 - ✅ test-guard: N/A
 
 ---
@@ -2584,34 +2663,4 @@
 
 **التحقق من clean-code-guard:** غير قابل للتطبيق — تعديل ملف أصول ثابتة (SVG) فقط.
 **التحقق من test-guard:** غير قابل للتطبيق — لا يوجد تغيير في كود الاختبار.
-
----
-
-## يوليو 2026 — إصلاح عرض حقل اسم المشروب في صفحة المنتجات
-
-**السبب الجذري:** Commit `d0433b4` ("fix NumericInput: mobile shows empty+placeholder, no default number; contextual placeholders across all 30 call sites") حوّل حقل السعر من `<input type="number">` مباشر إلى مكون `<NumericInput>` في صف "إضافة مشروب جديد"، لكنه **لم ينقل خاصية `className="sm:w-32"`** التي كانت تضبط عرض الحقل على الدسكتوب. قبل الترحيل:
-
-```tsx
-// Before (commit 341aef0 — layout fix):
-<input className="w-full sm:w-32 ..." placeholder="السعر" />
-```
-
-```tsx
-// After (commit d0433b4 — NumericInput migration):
-<NumericInput ... />  // ← sm:w-32 مفقودة!
-```
-
-كان `sm:w-32` يحدد عرض حقل السعر بـ 8rem (~128px) على الشاشات المتوسطة فأكبر، مما يسمح لحقل الاسم (`flex-1`) بأخذ المساحة المتبقية. بفقدان هذا القيد، ورث `<NumericInput>` القيمة الافتراضية `w-full` من `baseClass` الداخلي، مما جعله يتنافس مع حقل الاسم على المساحة — ونتج عن ذلك تضييق حقل الاسم.
-
-**الإصلاح:** إضافة `className="sm:w-32"` إلى `<NumericInput>` في صف "إضافة مشروب جديد" لاستعادة قيد العرض المفقود. حقل الاسم يبقى `sm:flex-1` فيأخذ المساحة المتبقية.
-
-**الملف المتأثر:**
-- `components/settings/products-settings-form.tsx` — إضافة `className="sm:w-32"` إلى NumericInput (السعر) في صف الإضافة
-
-**التحقق من النماذج الأخرى:** لا توجد نماذج إعدادات أخرى (billiard, pingpong, ps) تحتوي على نفس النمط (حقل اسم + حقل سعر جنبًا إلى جنب)، وبالتالي لم تتأثر.
-
-**نتائج التحقق:**
-- ✅ `npm run build` — ناجح بدون أخطاء
-- ✅ clean-code-guard: clean
-- ✅ test-guard: N/A
 
