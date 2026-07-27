@@ -3,12 +3,21 @@
 import { useState, useEffect } from "react";
 import { Station, Session } from "@/types/database";
 import { useToast } from "@/components/ui/toast";
+import { calculateGameEntrySubtotal } from "@/lib/pricing/calculation";
 
 interface ReceiptPopupProps {
   session: Session;
   station: Station;
   onClose: () => void;
   onConfirm: () => void;
+}
+
+interface GameEntry {
+  id: string;
+  play_type: "normal" | "combo";
+  play_subtype: "single" | "multi" | "triple" | "quad";
+  games_count: number;
+  price_per_game: number;
 }
 
 interface ReceiptData {
@@ -25,6 +34,7 @@ interface ReceiptData {
     unit_price: number;
     total_price: number;
   }>;
+  game_entries: GameEntry[];
   start_time: string;
   end_time: string;
   unit: "hour" | "game";
@@ -184,32 +194,51 @@ export function ReceiptPopup({
             </div>
           ) : null}
 
+          {/* Game Entries (billiard+games) */}
+          {receiptData.game_entries.length > 0 && (
+            <div className="border-t border-foreground-muted/20 pt-3">
+              <div className="text-sm font-medium text-foreground mb-2">الجيمات المسجلة</div>
+              {receiptData.game_entries.map((entry) => (
+                <div key={entry.id} className="flex justify-between text-sm py-1">
+                  <span className="text-foreground-muted">
+                    {entry.play_type === "combo" ? "كومب" : "عادي"} /{" "}
+                    {entry.play_subtype === "single"
+                      ? "فردي"
+                      : entry.play_subtype === "multi"
+                        ? "مالتي"
+                        : entry.play_subtype === "triple"
+                          ? "متولتة"
+                          : "مربعة"}{" "}
+                    × {entry.games_count}
+                  </span>
+                  <span className="text-foreground">
+                    {calculateGameEntrySubtotal(entry.games_count, entry.price_per_game).toFixed(2)} ج.م
+                  </span>
+                </div>
+              ))}
+              <div className="flex justify-between text-sm pt-1">
+                <span className="text-foreground-muted">إجمالي الجيمات</span>
+                <span className="text-foreground">{receiptData.game_entries_cost.toFixed(2)} ج.م</span>
+              </div>
+            </div>
+          )}
+
           {/* Products */}
           {receiptData.items.length > 0 && (
-            <>
-              <div className="border-t border-foreground-muted/20 pt-3">
-                <div className="text-sm font-medium text-foreground mb-2">المشروبات</div>
-                {receiptData.items.map((item) => (
-                  <div key={item.id} className="flex justify-between text-sm py-1">
-                    <span className="text-foreground-muted">
-                      {item.product_name} × {item.quantity}
-                    </span>
-                    <span className="text-foreground">{item.total_price.toFixed(2)} ج.م</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between text-sm">
+            <div className="border-t border-foreground-muted/20 pt-3">
+              <div className="text-sm font-medium text-foreground mb-2">المشروبات</div>
+              {receiptData.items.map((item) => (
+                <div key={item.id} className="flex justify-between text-sm py-1">
+                  <span className="text-foreground-muted">
+                    {item.product_name} × {item.quantity}
+                  </span>
+                  <span className="text-foreground">{item.total_price.toFixed(2)} ج.م</span>
+                </div>
+              ))}
+              <div className="flex justify-between text-sm pt-1">
                 <span className="text-foreground-muted">إجمالي المشروبات</span>
                 <span className="text-foreground">{receiptData.drinks_cost.toFixed(2)} ج.م</span>
               </div>
-            </>
-          )}
-
-          {/* Game Entries Cost (billiard) */}
-          {receiptData.game_entries_cost > 0 && (
-            <div className="flex justify-between text-sm">
-              <span className="text-foreground-muted">تكلفة الجيمات المسجلة</span>
-              <span className="text-foreground">{receiptData.game_entries_cost.toFixed(2)} ج.م</span>
             </div>
           )}
 

@@ -74,12 +74,13 @@ export async function POST(request: NextRequest) {
     let pricingUnit: "hour" | "game" = unit;
     let billiardGameEntriesCost = 0;
     let totalGamesCount = 0;
+    let gameEntries: { id: string; play_type: string; play_subtype: string; games_count: number; price_per_game: number }[] | null = null;
 
     if (isBilliardGames) {
       // Fetch billiard game entries and sum them
-      const { data: gameEntries, error: entriesError } = await supabase
+      const { data: entries, error: entriesError } = await supabase
         .from("billiard_game_entries")
-        .select("games_count, price_per_game")
+        .select("id, play_type, play_subtype, games_count, price_per_game")
         .eq("session_id", session_id)
         .eq("shop_id", shopId);
 
@@ -91,8 +92,9 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      billiardGameEntriesCost = calculateBilliardGameEntriesCost(gameEntries ?? []);
-      totalGamesCount = (gameEntries ?? []).reduce((sum, e) => sum + e.games_count, 0);
+      gameEntries = entries ?? [];
+      billiardGameEntriesCost = calculateBilliardGameEntriesCost(gameEntries);
+      totalGamesCount = gameEntries.reduce((sum, e) => sum + e.games_count, 0);
       pricingUnit = "game";
     } else {
       const playSubtype = session.play_subtype ?? (session.mode === "multi" ? "multi" : "single");
@@ -169,6 +171,17 @@ export async function POST(request: NextRequest) {
       total_price: Number(item.total_price),
     }));
 
+    // Format game entries for response (billiard+games only)
+    const formattedGameEntries = isBilliardGames
+      ? (gameEntries ?? []).map((entry) => ({
+          id: entry.id,
+          play_type: entry.play_type,
+          play_subtype: entry.play_subtype,
+          games_count: entry.games_count,
+          price_per_game: Number(entry.price_per_game),
+        }))
+      : [];
+
     return NextResponse.json({
       duration_hours: costResult.duration_hours,
       duration_formatted: formatDuration(costResult.duration_hours),
@@ -177,6 +190,7 @@ export async function POST(request: NextRequest) {
       game_entries_cost: Math.round(costResult.billiard_game_entries_cost * 100) / 100,
       total_cost: Math.round(costResult.total_cost * 100) / 100,
       items,
+      game_entries: formattedGameEntries,
       start_time: session.start_time,
       end_time: previewEndTime,
       unit: pricingUnit,
