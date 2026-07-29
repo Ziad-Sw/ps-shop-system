@@ -3,13 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getShopIdFromRequest } from "@/lib/auth/require-shop";
 import { assertPermission, PermissionError, getUserIdFromRequest } from "@/lib/auth/permissions";
-import { calculateSessionCost, calculateBilliardGameEntriesCost, formatDuration } from "@/lib/pricing/calculation";
+import { calculateSessionCost, calculateBilliardGameEntriesCost, calculateStationGameEntriesCost, formatDuration } from "@/lib/pricing/calculation";
 
-/**
- * POST /api/sessions/preview-close — calculates receipt preview (read-only, no DB updates)
- * Body: { session_id: string }
- * Returns: receipt preview with costs computed from billing_mode
- */
 export async function POST(request: NextRequest) {
   try {
     const shopId = await getShopIdFromRequest();
@@ -35,7 +30,6 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient();
 
-    // Get session with station info
     const { data: session, error: sessionError } = await supabase
       .from("sessions")
       .select(`
@@ -63,40 +57,81 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Derive unit from billing_mode
     const unit: "hour" | "game" = session.billing_mode === "time" ? "hour" : "game";
     const stationType = session.stations.station_type;
-    const isBilliardGames = stationType === "billiard" && session.billing_mode === "games";
+    const isGamesMode = session.billing_mode === "games";
 
-    // For billiard/games sessions, cost comes from game entries; pricing rule not needed
-    // For all other sessions, look up pricing rule by (shop_id, station_type, play_type='normal', play_subtype=mode, unit)
     let rate = 0;
     let pricingUnit: "hour" | "game" = unit;
     let billiardGameEntriesCost = 0;
+    let stationGameEntriesCost = 0;
     let totalGamesCount = 0;
-    let gameEntries: { id: string; play_type: string; play_subtype: string; games_count: number; price_per_game: number }[] | null = null;
+    let formattedGameEntries: Record<string, unknown>[] = [];
+    let isAccumulatedGames = false;
 
-    if (isBilliardGames) {
-      // Fetch billiard game entries and sum them
-      const { data: entries, error: entriesError } = await supabase
-        .from("billiard_game_entries")
-        .select("id, play_type, play_subtype, games_count, price_per_game")
-        .eq("session_id", session_id)
-        .eq("shop_id", shopId);
+    if (isGamesMode) {
+      if (stationType === "billiard") {
+        isAccumulatedGames = true;
+        const { data: entries, error: entriesError } = await supabase
+          .from("billiard_game_entries")
+          .select("id, play_type, play_subtype, games_count, price_per_game")
+          .eq("session_id", session_id)
+          .eq("shop_id", shopId);
 
-      if (entriesError) {
-        console.error("Failed to fetch billiard game entries:", entriesError);
-        return NextResponse.json(
-          { error: "Failed to fetch game entries" },
-          { status: 500 }
-        );
+        if (entriesError) {
+          console.error("Failed to fetch billiard game entries:", entriesError);
+          return NextResponse.json(
+            { error: "Failed to fetch game entries" },
+            { status: 500 }
+          );
+        }
+
+        const gameEntries = entries ?? [];
+        billiardGameEntriesCost = calculateBilliardGameEntriesCost(gameEntries);
+        totalGamesCount = gameEntries.reduce((sum, e) => sum + e.games_count, 0);
+        pricingUnit = "game";
+        formattedGameEntries = gameEntries.map((entry) => ({
+          id: entry.id,
+          entry_type: "billiard",
+          play_type: entry.play_type,
+          play_subtype: entry.play_subtype,
+          games_count: entry.games_count,
+          price_per_game: Number(entry.price_per_game),
+        }));
+      } else {
+        const { data: entries, error: entriesError } = await supabase
+          .from("station_game_entries")
+          .select("id, mode, games_count, price_per_game")
+          .eq("session_id", session_id)
+          .eq("shop_id", shopId);
+
+        if (entriesError) {
+          console.error("Failed to fetch station game entries:", entriesError);
+          return NextResponse.json(
+            { error: "Failed to fetch game entries" },
+            { status: 500 }
+          );
+        }
+
+        const stationEntries = entries ?? [];
+
+        if (stationEntries.length > 0) {
+          isAccumulatedGames = true;
+          stationGameEntriesCost = calculateStationGameEntriesCost(stationEntries);
+          totalGamesCount = stationEntries.reduce((sum, e) => sum + e.games_count, 0);
+          pricingUnit = "game";
+          formattedGameEntries = stationEntries.map((entry) => ({
+            id: entry.id,
+            entry_type: "station",
+            mode: entry.mode,
+            games_count: entry.games_count,
+            price_per_game: Number(entry.price_per_game),
+          }));
+        }
       }
+    }
 
-      gameEntries = entries ?? [];
-      billiardGameEntriesCost = calculateBilliardGameEntriesCost(gameEntries);
-      totalGamesCount = gameEntries.reduce((sum, e) => sum + e.games_count, 0);
-      pricingUnit = "game";
-    } else {
+    if (!isAccumulatedGames) {
       const playSubtype = session.play_subtype ?? (session.mode === "multi" ? "multi" : "single");
 
       const { data: pricingRule, error: pricingError } = await supabase
@@ -121,7 +156,6 @@ export async function POST(request: NextRequest) {
       pricingUnit = pricingRule.unit as "hour" | "game";
     }
 
-    // Get sale items for this session
     const { data: saleItems, error: itemsError } = await supabase
       .from("sale_items")
       .select(`
@@ -144,25 +178,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate drinks cost
     const drinksCost = saleItems.reduce((sum, item) => sum + Number(item.total_price), 0);
 
     const previewEndTime = new Date().toISOString();
 
-    // Calculate session cost using the centralized function
     const costResult = calculateSessionCost({
       station_type: stationType,
       mode: session.mode,
       unit: pricingUnit,
       rate,
       start_time: session.start_time,
-      end_time: previewEndTime, // Preview uses current time
-      games_count: isBilliardGames ? 0 : session.games_count,
+      end_time: previewEndTime,
+      games_count: isAccumulatedGames ? 0 : session.games_count,
       sale_items_total: drinksCost,
       billiard_game_entries_cost: billiardGameEntriesCost,
+      station_game_entries_cost: stationGameEntriesCost,
     });
 
-    // Format items for response
     const items = saleItems.map((item) => ({
       id: item.id,
       product_name: item.products.name,
@@ -171,30 +203,19 @@ export async function POST(request: NextRequest) {
       total_price: Number(item.total_price),
     }));
 
-    // Format game entries for response (billiard+games only)
-    const formattedGameEntries = isBilliardGames
-      ? (gameEntries ?? []).map((entry) => ({
-          id: entry.id,
-          play_type: entry.play_type,
-          play_subtype: entry.play_subtype,
-          games_count: entry.games_count,
-          price_per_game: Number(entry.price_per_game),
-        }))
-      : [];
-
     return NextResponse.json({
       duration_hours: costResult.duration_hours,
       duration_formatted: formatDuration(costResult.duration_hours),
       time_cost: Math.round(costResult.session_cost * 100) / 100,
       drinks_cost: Math.round(costResult.products_cost * 100) / 100,
-      game_entries_cost: Math.round(costResult.billiard_game_entries_cost * 100) / 100,
+      game_entries_cost: Math.round((costResult.billiard_game_entries_cost + costResult.station_game_entries_cost) * 100) / 100,
       total_cost: Math.round(costResult.total_cost * 100) / 100,
       items,
       game_entries: formattedGameEntries,
       start_time: session.start_time,
       end_time: previewEndTime,
       unit: pricingUnit,
-      games_count: isBilliardGames ? totalGamesCount : session.games_count,
+      games_count: totalGamesCount > 0 ? totalGamesCount : session.games_count,
     });
   } catch (err) {
     if (err instanceof PermissionError) {

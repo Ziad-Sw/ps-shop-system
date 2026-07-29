@@ -3,14 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getShopIdFromRequest } from "@/lib/auth/require-shop";
 import { assertPermission, PermissionError, getUserIdFromRequest } from "@/lib/auth/permissions";
-import { calculateSessionCost, calculateBilliardGameEntriesCost } from "@/lib/pricing/calculation";
+import { calculateSessionCost, calculateBilliardGameEntriesCost, calculateStationGameEntriesCost } from "@/lib/pricing/calculation";
 
-/**
- * POST /api/sessions/confirm-close — confirms and closes a session (writes to DB)
- * Body: { session_id: string }
- * Called when user clicks "تأكيد القفل" in the receipt popup.
- * Pricing is resolved from billing_mode on the session.
- */
 export async function POST(request: NextRequest) {
   try {
     const shopId = await getShopIdFromRequest();
@@ -36,7 +30,6 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient();
 
-    // Get session with station info
     const { data: session, error: sessionError } = await supabase
       .from("sessions")
       .select(`
@@ -72,36 +65,62 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Derive unit from billing_mode
     const unit = session.billing_mode === "time" ? ("hour" as const) : ("game" as const);
     const stationType = session.stations.station_type;
-    const isBilliardGames = stationType === "billiard" && session.billing_mode === "games";
+    const isGamesMode = session.billing_mode === "games";
 
-    // Resolve rate and game entries cost
     let rate = 0;
     let pricingUnit: "hour" | "game" = unit;
     let billiardGameEntriesCost = 0;
+    let stationGameEntriesCost = 0;
     let totalGamesCount = 0;
+    let isAccumulatedGames = false;
 
-    if (isBilliardGames) {
-      const { data: gameEntries, error: entriesError } = await supabase
-        .from("billiard_game_entries")
-        .select("games_count, price_per_game")
-        .eq("session_id", session_id)
-        .eq("shop_id", shopId);
+    if (isGamesMode) {
+      if (stationType === "billiard") {
+        isAccumulatedGames = true;
+        const { data: gameEntries, error: entriesError } = await supabase
+          .from("billiard_game_entries")
+          .select("games_count, price_per_game")
+          .eq("session_id", session_id)
+          .eq("shop_id", shopId);
 
-      if (entriesError) {
-        console.error("Failed to fetch billiard game entries:", entriesError);
-        return NextResponse.json(
-          { error: "Failed to fetch game entries" },
-          { status: 500 }
-        );
+        if (entriesError) {
+          console.error("Failed to fetch billiard game entries:", entriesError);
+          return NextResponse.json(
+            { error: "Failed to fetch game entries" },
+            { status: 500 }
+          );
+        }
+
+        billiardGameEntriesCost = calculateBilliardGameEntriesCost(gameEntries ?? []);
+        totalGamesCount = (gameEntries ?? []).reduce((sum, e) => sum + e.games_count, 0);
+        pricingUnit = "game";
+      } else {
+        const { data: stationEntries, error: entriesError } = await supabase
+          .from("station_game_entries")
+          .select("games_count, price_per_game")
+          .eq("session_id", session_id)
+          .eq("shop_id", shopId);
+
+        if (entriesError) {
+          console.error("Failed to fetch station game entries:", entriesError);
+          return NextResponse.json(
+            { error: "Failed to fetch game entries" },
+            { status: 500 }
+          );
+        }
+
+        if (stationEntries.length > 0) {
+          isAccumulatedGames = true;
+          stationGameEntriesCost = calculateStationGameEntriesCost(stationEntries);
+          totalGamesCount = stationEntries.reduce((sum, e) => sum + e.games_count, 0);
+          pricingUnit = "game";
+        }
       }
+    }
 
-      billiardGameEntriesCost = calculateBilliardGameEntriesCost(gameEntries ?? []);
-      totalGamesCount = (gameEntries ?? []).reduce((sum, e) => sum + e.games_count, 0);
-      pricingUnit = "game";
-    } else {
+    if (!isAccumulatedGames) {
       const playSubtype = session.play_subtype ?? (session.mode === "multi" ? "multi" : "single");
 
       const { data: pricingRule, error: pricingError } = await supabase
@@ -126,7 +145,6 @@ export async function POST(request: NextRequest) {
       pricingUnit = pricingRule.unit as "hour" | "game";
     }
 
-    // Get sale items for this session
     const { data: saleItems, error: itemsError } = await supabase
       .from("sale_items")
       .select("total_price")
@@ -141,10 +159,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate drinks cost
     const drinksCost = saleItems.reduce((sum, item) => sum + Number(item.total_price), 0);
 
-    // Calculate session cost using the centralized function
     const costResult = calculateSessionCost({
       station_type: stationType,
       mode: session.mode,
@@ -152,12 +168,12 @@ export async function POST(request: NextRequest) {
       rate,
       start_time: session.start_time,
       end_time: new Date().toISOString(),
-      games_count: isBilliardGames ? 0 : session.games_count,
+      games_count: isAccumulatedGames ? 0 : session.games_count,
       sale_items_total: drinksCost,
       billiard_game_entries_cost: billiardGameEntriesCost,
+      station_game_entries_cost: stationGameEntriesCost,
     });
 
-    // Update session with end time, duration, and calculated cost
     const { data: updatedSession, error: updateError } = await supabase
       .from("sessions")
       .update({
