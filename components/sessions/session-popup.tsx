@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Station, Session, Product, BilliardGameEntry } from "@/types/database";
-import type { BillingMode, PlayType, PlaySubtype } from "@/types/database";
-import { calculateGameEntrySubtotal, calculateBilliardGameEntriesCost } from "@/lib/pricing/calculation";
+import { Station, Session, Product, BilliardGameEntry, StationGameEntry } from "@/types/database";
+import type { BillingMode, PlayType, PlaySubtype, PricingMode } from "@/types/database";
+import { calculateGameEntrySubtotal, calculateBilliardGameEntriesCost, calculateStationGameEntriesCost } from "@/lib/pricing/calculation";
 import { ReceiptPopup } from "./receipt-popup";
 import { useToast } from "@/components/ui/toast";
 import { NumericInput } from "@/components/ui/numeric-input";
@@ -69,6 +69,16 @@ export function SessionPopup({
   const [startGamesPlaySubtype, setStartGamesPlaySubtype] = useState<PlaySubtype | null>(null);
   const [startGamesCount, setStartGamesCount] = useState(1);
 
+  // Station game entries (PS/pingpong + games billing mode)
+  const [stationGameEntries, setStationGameEntries] = useState<StationGameEntry[]>([]);
+  const [startStationMode, setStartStationMode] = useState<PricingMode | null>(null);
+  const [startStationGamesCount, setStartStationGamesCount] = useState(1);
+  const [newStationEntryMode, setNewStationEntryMode] = useState<PricingMode>("single");
+  const [newStationEntryGamesCount, setNewStationEntryGamesCount] = useState(1);
+  const [isAddingStationGameEntry, setIsAddingStationGameEntry] = useState(false);
+  const [removingStationEntryId, setRemovingStationEntryId] = useState<string | null>(null);
+  const [isLegacyStationGames, setIsLegacyStationGames] = useState(false);
+
   const activeBillingMode = activeSession?.billing_mode ?? billingMode;
   const isGameBased = activeBillingMode === "games";
 
@@ -86,10 +96,14 @@ export function SessionPopup({
       fetchSaleItems(activeSession.id);
       if (station.station_type === "billiard" && activeSession.billing_mode === "games") {
         fetchGameEntries(activeSession.id);
+      } else if (station.station_type !== "billiard" && activeSession.billing_mode === "games") {
+        fetchStationGameEntries(activeSession.id);
       }
     } else {
       setSaleItems([]);
       setGameEntries([]);
+      setStationGameEntries([]);
+      setIsLegacyStationGames(false);
     }
   }, [activeSession]);
 
@@ -159,9 +173,11 @@ export function SessionPopup({
           body.play_subtype = startPlaySubtype;
         }
       } else {
-        body.mode = mode;
-        if (billingMode === "games") {
-          body.games_count = gamesCount;
+        if (billingMode === "time" || startStationMode !== null) {
+          body.mode = mode;
+        }
+        if (billingMode === "games" && startStationMode !== null) {
+          body.games_count = startStationGamesCount;
         }
       }
 
@@ -174,6 +190,8 @@ export function SessionPopup({
       const data = await response.json();
 
       if (response.ok) {
+        let hasAutoEntry = false;
+
         if (
           station.station_type === "billiard" &&
           billingMode === "games" &&
@@ -195,8 +213,34 @@ export function SessionPopup({
             const addData = await addRes.json();
             showToast("warning", addData.error || "تم بدء الجلسة لكن فشل إضافة أول جيم");
           } else {
-            showToast("success", "تم بدء الجلسة مع أول جيم بنجاح");
+            hasAutoEntry = true;
           }
+        } else if (
+          station.station_type !== "billiard" &&
+          billingMode === "games" &&
+          startStationMode !== null &&
+          startStationGamesCount > 0
+        ) {
+          const addRes = await fetch("/api/sessions/add-station-game-entry", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              session_id: data.session.id,
+              mode: startStationMode,
+              games_count: startStationGamesCount,
+            }),
+          });
+
+          if (!addRes.ok) {
+            const addData = await addRes.json();
+            showToast("warning", addData.error || "تم بدء الجلسة لكن فشل إضافة أول جيم");
+          } else {
+            hasAutoEntry = true;
+          }
+        }
+
+        if (hasAutoEntry) {
+          showToast("success", "تم بدء الجلسة مع أول جيم بنجاح");
         } else {
           showToast("success", "تم بدء الجلسة بنجاح");
         }
@@ -342,6 +386,74 @@ export function SessionPopup({
     }
   };
 
+  const fetchStationGameEntries = async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/sessions/station-game-entries?session_id=${sessionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        const entries = data.entries || [];
+        setStationGameEntries(entries);
+        setIsLegacyStationGames(entries.length === 0);
+      }
+    } catch (error) {
+      console.error("Failed to fetch station game entries:", error);
+    }
+  };
+
+  const handleAddStationGameEntry = async () => {
+    if (!activeSession) return;
+    setIsAddingStationGameEntry(true);
+    try {
+      const response = await fetch("/api/sessions/add-station-game-entry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: activeSession.id,
+          mode: newStationEntryMode,
+          games_count: newStationEntryGamesCount,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showToast("success", "تم إضافة الجيمات بنجاح");
+        setNewStationEntryGamesCount(1);
+        fetchStationGameEntries(activeSession.id);
+      } else {
+        showToast("error", data.error || "فشل إضافة الجيمات");
+      }
+    } catch (error) {
+      console.error("Failed to add station game entry:", error);
+      showToast("error", "حدث خطأ أثناء إضافة الجيمات");
+    } finally {
+      setIsAddingStationGameEntry(false);
+    }
+  };
+
+  const handleRemoveStationGameEntry = async (entryId: string) => {
+    setRemovingStationEntryId(entryId);
+    try {
+      const response = await fetch(
+        `/api/sessions/remove-station-game-entry?entry_id=${entryId}`,
+        { method: "DELETE" }
+      );
+
+      if (response.ok) {
+        setStationGameEntries((prev) => prev.filter((e) => e.id !== entryId));
+        showToast("success", "تم حذف إدخال الجيم بنجاح");
+      } else {
+        const data = await response.json();
+        showToast("error", data.error || "فشل حذف إدخال الجيم");
+      }
+    } catch (error) {
+      console.error("Failed to remove station game entry:", error);
+      showToast("error", "حدث خطأ أثناء حذف إدخال الجيم");
+    } finally {
+      setRemovingStationEntryId(null);
+    }
+  };
+
   const handleAddGameEntry = async () => {
     if (!activeSession) return;
     setIsAddingGameEntry(true);
@@ -457,6 +569,10 @@ export function SessionPopup({
                 {isGameBased && station.station_type === "billiard" ? (
                   <div className="mt-3 text-sm text-green-400">
                     عدد الجيمات: {gameEntries.reduce((sum, e) => sum + e.games_count, 0)}
+                  </div>
+                ) : isGameBased && station.station_type !== "billiard" && stationGameEntries.length > 0 ? (
+                  <div className="mt-3 text-sm text-green-400">
+                    عدد الجيمات: {stationGameEntries.reduce((sum, e) => sum + e.games_count, 0)}
                   </div>
                 ) : isGameBased ? (
                   <div className="mt-3 text-sm text-green-400">
@@ -733,17 +849,21 @@ export function SessionPopup({
                 </>
               )}
 
-              {/* PS / Pingpong: Mode Selection (legacy) */}
+              {/* PS / Pingpong: Mode Selection — optional for games, required for time */}
               {station.station_type !== "billiard" && (
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground">
                     وضع اللعب
+                    {billingMode === "games" && <span className="text-xs text-foreground-muted"> (اختياري)</span>}
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
-                      onClick={() => setMode("single")}
+                      onClick={() => {
+                        setStartStationMode("single");
+                        setMode("single");
+                      }}
                       className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                        mode === "single"
+                        (billingMode === "games" ? startStationMode : mode) === "single"
                           ? "border-primary bg-primary/10 text-primary"
                           : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
                       }`}
@@ -751,9 +871,12 @@ export function SessionPopup({
                       فردي
                     </button>
                     <button
-                      onClick={() => setMode("multi")}
+                      onClick={() => {
+                        setStartStationMode("multi");
+                        setMode("multi");
+                      }}
                       className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                        mode === "multi"
+                        (billingMode === "games" ? startStationMode : mode) === "multi"
                           ? "border-primary bg-primary/10 text-primary"
                           : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
                       }`}
@@ -764,16 +887,16 @@ export function SessionPopup({
                 </div>
               )}
 
-              {/* Games Count (only for PS/pingpong + games billing mode) */}
-              {station.station_type !== "billiard" && billingMode === "games" && (
+              {/* Games Count (only for PS/pingpong + games billing mode — optional) */}
+              {station.station_type !== "billiard" && billingMode === "games" && startStationMode !== null && (
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground">
-                    عدد الجيمات
+                    عدد الجيمات <span className="text-xs text-foreground-muted">(اختياري)</span>
                   </label>
                   <NumericInput
                     min={1}
-                    value={gamesCount}
-                    onChange={(v) => setGamesCount(Math.max(1, v))}
+                    value={startStationGamesCount}
+                    onChange={(v) => setStartStationGamesCount(Math.max(1, v))}
                     placeholder="أدخل عدد الجيمات"
                   />
                 </div>
@@ -790,28 +913,130 @@ export function SessionPopup({
           ) : (
             /* Active Session - Add Products / End Session */
             <div className="space-y-4">
-              {/* Games Count (Game-based only - non-billiard) */}
+              {/* PS / Pingpong Game Entries (games billing mode) */}
               {isGameBased && station.station_type !== "billiard" && (
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground">
-                    عدد الجيمات
+                    الجيمات المسجلة
                   </label>
-                  <div className="flex gap-3">
-                    <NumericInput
-                      min={0}
-                      value={gamesCountInput}
-                      onChange={(v) => setGamesCountInput(Math.max(0, v))}
-                      placeholder="أدخل عدد الجيمات"
-                      className="flex-1"
-                    />
-                    <button
-                      onClick={handleSaveGames}
-                      disabled={!hasGamesChanged || isSavingGames}
-                      className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSavingGames ? "جاري حفظ..." : "حفظ"}
-                    </button>
-                  </div>
+
+                  {/* Legacy: single games_count mode (pre-migration sessions) */}
+                  {isLegacyStationGames ? (
+                    <div>
+                      <div className="mb-2 rounded-lg bg-yellow-500/10 p-2">
+                        <p className="text-xs text-yellow-400">
+                          هذه الجلسة بدأت قبل التحديث. استخدم الحقل أدناه لتعديل عدد الجيمات.
+                        </p>
+                      </div>
+                      <div className="flex gap-3">
+                        <NumericInput
+                          min={0}
+                          value={gamesCountInput}
+                          onChange={(v) => setGamesCountInput(Math.max(0, v))}
+                          placeholder="أدخل عدد الجيمات"
+                          className="flex-1"
+                        />
+                        <button
+                          onClick={handleSaveGames}
+                          disabled={!hasGamesChanged || isSavingGames}
+                          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isSavingGames ? "جاري حفظ..." : "حفظ"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Entries List */}
+                      {stationGameEntries.length > 0 ? (
+                        <div className="mb-3 rounded-lg bg-surface-page/50 p-3 space-y-1.5">
+                          {stationGameEntries.map((entry) => (
+                            <div key={entry.id} className="flex items-center justify-between text-sm">
+                              <span className="text-foreground-muted">
+                                {entry.mode === "single" ? "فردي" : "مالتي"} × {entry.games_count}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-foreground">
+                                  {(entry.games_count * entry.price_per_game).toFixed(2)} ج.م
+                                </span>
+                                <button
+                                  onClick={() => handleRemoveStationGameEntry(entry.id)}
+                                  disabled={removingStationEntryId === entry.id}
+                                  className="flex h-5 w-5 items-center justify-center rounded text-red-400 hover:bg-red-500/10 disabled:opacity-30"
+                                >
+                                  {removingStationEntryId === entry.id ? (
+                                    <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                    </svg>
+                                  ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M18 6 6 18" />
+                                      <path d="m6 6 12 12" />
+                                    </svg>
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="flex justify-between border-t border-foreground-muted/20 pt-2 text-sm font-medium">
+                            <span className="text-foreground-muted">إجمالي الجيمات</span>
+                            <span className="text-foreground">
+                              {calculateStationGameEntriesCost(stationGameEntries).toFixed(2)} ج.م
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="mb-3 text-sm text-foreground-muted">لا توجد جيمات مسجلة بعد</p>
+                      )}
+
+                      {/* Add Entry Form */}
+                      <div className="space-y-2 rounded-lg border border-foreground-muted/20 p-3">
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-foreground">وضع اللعب</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              onClick={() => setNewStationEntryMode("single")}
+                              className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+                                newStationEntryMode === "single"
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                              }`}
+                            >
+                              فردي
+                            </button>
+                            <button
+                              onClick={() => setNewStationEntryMode("multi")}
+                              className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+                                newStationEntryMode === "multi"
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                              }`}
+                            >
+                              مالتي
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <NumericInput
+                            min={1}
+                            value={newStationEntryGamesCount}
+                            onChange={(v) => setNewStationEntryGamesCount(Math.max(1, v))}
+                            placeholder="أدخل عدد الجيمات"
+                            className="flex-1 px-2 py-2 text-xs"
+                          />
+                          <button
+                            onClick={handleAddStationGameEntry}
+                            disabled={isAddingStationGameEntry}
+                            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-surface-page hover:bg-primary/90 disabled:opacity-50"
+                          >
+                            {isAddingStationGameEntry ? "جاري..." : "إضافة جيمات"}
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
