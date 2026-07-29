@@ -402,6 +402,51 @@ export interface Database {
           },
         ];
       };
+      station_game_entries: {
+        Row: {
+          id: string;
+          shop_id: string;
+          session_id: string;
+          mode: PricingMode;
+          games_count: number;
+          price_per_game: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          session_id: string;
+          mode: PricingMode;
+          games_count: number;
+          price_per_game: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          shop_id?: string;
+          session_id?: string;
+          mode?: PricingMode;
+          games_count?: number;
+          price_per_game?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "station_game_entries_shop_id_fkey";
+            columns: ["shop_id"];
+            isOneToOne: false;
+            referencedRelation: "shops";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "station_game_entries_session_id_fkey";
+            columns: ["session_id"];
+            isOneToOne: false;
+            referencedRelation: "sessions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       products: {
         Row: {
           id: string;
@@ -571,6 +616,7 @@ export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type SaleItem = Database["public"]["Tables"]["sale_items"]["Row"];
 export type Expense = Database["public"]["Tables"]["expenses"]["Row"];
 export type BilliardGameEntry = Database["public"]["Tables"]["billiard_game_entries"]["Row"];
+export type StationGameEntry = Database["public"]["Tables"]["station_game_entries"]["Row"];
 
 export const OWNER_PERMISSIONS: StaffPermissions = {
   manage_sessions: true,

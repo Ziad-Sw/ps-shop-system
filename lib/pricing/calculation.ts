@@ -10,6 +10,7 @@ export interface SessionCostInput {
   games_count: number | null;
   sale_items_total: number;
   billiard_game_entries_cost?: number;
+  station_game_entries_cost?: number;
 }
 
 export interface SessionCostOutput {
@@ -17,6 +18,7 @@ export interface SessionCostOutput {
   session_cost: number;
   products_cost: number;
   billiard_game_entries_cost: number;
+  station_game_entries_cost: number;
   total_cost: number;
 }
 
@@ -28,10 +30,10 @@ export interface SessionCostOutput {
  * - rate is the hourly/game rate from pricing_rules
  * - When unit = 'game', cost = games_count * rate
  * - When unit = 'hour', cost = duration_hours * rate
- * - When billiard/billing_mode=games, cost includes billiard_game_entries_cost
+ * - Accumulated game entries (billiard or station) add their cost
  */
 export function calculateSessionCost(input: SessionCostInput): SessionCostOutput {
-  const { unit, rate, start_time, end_time, games_count, sale_items_total, billiard_game_entries_cost } = input;
+  const { unit, rate, start_time, end_time, games_count, sale_items_total, billiard_game_entries_cost, station_game_entries_cost } = input;
 
   let duration_hours = 0;
   let session_cost = 0;
@@ -41,28 +43,36 @@ export function calculateSessionCost(input: SessionCostInput): SessionCostOutput
     session_cost = games * rate;
     duration_hours = 0;
   } else {
-    // Cost based on duration
     const startTime = new Date(start_time);
     const endTime = end_time ? new Date(end_time) : new Date();
     
-    // Calculate duration in hours with fractional minutes
     const durationMs = endTime.getTime() - startTime.getTime();
-    duration_hours = durationMs / (1000 * 60 * 60); // Convert to hours
+    duration_hours = durationMs / (1000 * 60 * 60);
     
-    // Cost = duration_hours * rate (no rounding, exact calculation)
     session_cost = duration_hours * rate;
   }
 
-  const game_entries_cost = billiard_game_entries_cost ?? 0;
-  const total_cost = session_cost + sale_items_total + game_entries_cost;
+  const billiardCost = billiard_game_entries_cost ?? 0;
+  const stationCost = station_game_entries_cost ?? 0;
+  const total_cost = session_cost + sale_items_total + billiardCost + stationCost;
 
   return {
     duration_hours,
     session_cost,
     products_cost: sale_items_total,
-    billiard_game_entries_cost: game_entries_cost,
+    billiard_game_entries_cost: billiardCost,
+    station_game_entries_cost: stationCost,
     total_cost,
   };
+}
+
+function sumGameEntries(
+  entries: { games_count: number; price_per_game: number }[]
+): number {
+  return entries.reduce(
+    (sum, e) => sum + calculateGameEntrySubtotal(e.games_count, e.price_per_game),
+    0
+  );
 }
 
 /**
@@ -83,10 +93,13 @@ export function calculateGameEntrySubtotal(
 export function calculateBilliardGameEntriesCost(
   entries: { games_count: number; price_per_game: number }[]
 ): number {
-  return entries.reduce(
-    (sum, e) => sum + calculateGameEntrySubtotal(e.games_count, e.price_per_game),
-    0
-  );
+  return sumGameEntries(entries);
+}
+
+export function calculateStationGameEntriesCost(
+  entries: { games_count: number; price_per_game: number }[]
+): number {
+  return sumGameEntries(entries);
 }
 
 /**

@@ -10,6 +10,7 @@ export type {
   SaleItem,
   Expense,
   BilliardGameEntry,
+  StationGameEntry,
   UserRole,
   StationType,
   PricingMode,
