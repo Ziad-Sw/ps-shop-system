@@ -67,12 +67,12 @@ export function SessionPopup({
   // Optional pre-start entry selection for billiard+games (null = not selected, start button works either way)
   const [startGamesPlayType, setStartGamesPlayType] = useState<PlayType | null>(null);
   const [startGamesPlaySubtype, setStartGamesPlaySubtype] = useState<PlaySubtype | null>(null);
-  const [startGamesCount, setStartGamesCount] = useState(1);
+  const [startGamesCount, setStartGamesCount] = useState(0);
 
   // Station game entries (PS/pingpong + games billing mode)
   const [stationGameEntries, setStationGameEntries] = useState<StationGameEntry[]>([]);
   const [startStationMode, setStartStationMode] = useState<PricingMode | null>(null);
-  const [startStationGamesCount, setStartStationGamesCount] = useState(1);
+  const [startStationGamesCount, setStartStationGamesCount] = useState(0);
   const [newStationEntryMode, setNewStationEntryMode] = useState<PricingMode>("single");
   const [newStationEntryGamesCount, setNewStationEntryGamesCount] = useState(1);
   const [isAddingStationGameEntry, setIsAddingStationGameEntry] = useState(false);
@@ -957,7 +957,7 @@ export function SessionPopup({
                               </span>
                               <div className="flex items-center gap-2">
                                 <span className="text-foreground">
-                                  {(entry.games_count * entry.price_per_game).toFixed(2)} ج.م
+                                  {calculateGameEntrySubtotal(entry.games_count, entry.price_per_game).toFixed(2)} ج.م
                                 </span>
                                 <button
                                   onClick={() => handleRemoveStationGameEntry(entry.id)}

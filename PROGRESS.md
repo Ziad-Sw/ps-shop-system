@@ -2678,3 +2678,79 @@
 **التحقق من clean-code-guard:** غير قابل للتطبيق — تعديل ملف أصول ثابتة (SVG) فقط.
 **التحقق من test-guard:** غير قابل للتطبيق — لا يوجد تغيير في كود الاختبار.
 
+---
+
+## يوليو 2026 — تمديد الدفعات المتراكمة للبلايستيشن والبينغ بونغ (المراحل 1-4) ✅
+
+**المراجع:** BRD Feature 5, TECH_INSTRUCTIONS §6.8
+
+تم تمديد نموذج الدفعات المتراكمة (accumulated game-entries) من البلياردو إلى البلايستيشن والبينغ بونغ في وضع الفوترة "عدد الجيمات".
+
+### المرحلة 1 — قاعدة البيانات (Migration 014)
+- إنشاء `supabase/migrations/014_station_game_entries.sql`:
+  - جدول `station_game_entries` (id, shop_id, session_id, mode, games_count, price_per_game, created_at)
+  - منفصل عن `billiard_game_entries` لأن PS/pingpong ليس لديه play_type/play_subtype
+  - فهارس على (session_id, shop_id) و (shop_id)
+  - Backfill للجلسات الحالية (1 صف موجود)
+- تطبيق الـ migration على Supabase والتحقق من الأعمدة
+
+### المرحلة 2 — الأنواع والتسعير (Types + Calculation)
+- إضافة `StationGameEntry` type إلى `types/database.ts` و `types/index.ts`
+- إضافة دالة `calculateStationGameEntriesCost` في `lib/pricing/calculation.ts`
+- إضافة دالة `sumGameEntries` الخاصة (DRY) التي تستخدم `calculateGameEntrySubtotal`
+- تحديث `SessionCostInput` / `SessionCostOutput` لحقل `station_game_entries_cost`
+
+### المرحلة 3 — API Routes (5 ملفات)
+- **جديد:** `POST /api/sessions/add-station-game-entry` — إضافة دفعة جيمات لـ PS/pingpong
+- **جديد:** `GET /api/sessions/station-game-entries` — جلب دفعات جلسة
+- **جديد:** `DELETE /api/sessions/remove-station-game-entry` — حذف دفعة
+- **تحديث:** `preview-close`/`confirm-close` — إضافة `entry_type` discriminator (`'billiard'` | `'station'`) لكل دفعة، حلّ التكلفة عبر `calculateStationGameEntriesCost`
+- **تحديث:** `update-games` — رفض التحديث للجلسات التي لديها `station_game_entries` (منع الخلط بين النموذجين)
+
+### المرحلة 4 — واجهة المستخدم (UI)
+- **بدء الجلسة** (PS/pingpong+games): mode + games_count اختياريان (اختياري)، زر البدء يعمل بدون إدخال
+- **الجلسة النشطة** (PS/pingpong+games): قائمة دفعات مع mode + count + subtotal + زر حذف + نموذج إضافة (نظير البلياردو)
+- **الجلسات القديمة** (pre-migration): رسالة تحذير صفراء + حقل تعديل قديم
+- **الرأس:** عرض مجموع الجيمات من `stationGameEntries` (مع fallback لـ `gamesCount`)
+- auto-create للدفعة الأولى عند بدء الجلسة (إذا اختار المستخدم mode + count)
+
+### الفجوات المغلقة (Gap Fixes)
+
+**Gap 1 — receipt-popup.tsx لم يُحدَّث:**
+- إضافة discriminated union: `BilliardGameEntryShape` (entry_type: "billiard") و `StationGameEntryShape` (entry_type: "station")
+- عرض الدفعات حسب `entry_type`: billiard → play_type/play_subtype, station → mode (فردي/مالتي)
+- استخدام `calculateGameEntrySubtotal` لحساب السطر مع `entry_type` discriminator
+
+**Gap 2 — ضرب سعري مضمّن:**
+- إصلاح السطر `(entry.games_count * entry.price_per_game)` في PS/pingpong entries list إلى `calculateGameEntrySubtotal(...)`
+- التحقق: 0 ضرب سعري مضمّن متبقي في session-popup.tsx
+
+**Gap 3 — فحص clean-code-guard و test-guard:**
+- clean-code-guard: clean (لا مخالفات في الكود الملموس)
+- test-guard: غير قابل للتطبيق (كود إنتاج، لا ملفات اختبار)
+
+### الإصلاح الإضافي — قيمة افتراضية 0 لحقول بدء الجلسة
+- `startGamesCount` (بلياردو+games): `useState(1)` → `useState(0)`
+- `startStationGamesCount` (PS/pingpong+games): `useState(1)` → `useState(0)`
+- السلوك على الدسكتوب: الحقل يعرض "0" بشكل مرئي
+- السلوك على الموبايل: الحقل يبدأ فارغاً مع placeholder (بفضل NumericInput)
+- لم تتغير حقول "إضافة دفعة" أثناء الجلسة النشطة (`newEntryGamesCount` و `newStationEntryGamesCount` تبقى `1`)
+
+### ملفات التنفيذ
+- `supabase/migrations/014_station_game_entries.sql` — جدول + backfill
+- `types/database.ts` — StationGameEntry type
+- `lib/pricing/calculation.ts` — calculateStationGameEntriesCost
+- `app/api/sessions/add-station-game-entry/route.ts` — POST
+- `app/api/sessions/station-game-entries/route.ts` — GET
+- `app/api/sessions/remove-station-game-entry/route.ts` — DELETE
+- `app/api/sessions/preview-close/route.ts` — تعميم مع entry_type
+- `app/api/sessions/confirm-close/route.ts` — حل التكلفة
+- `app/api/sessions/update-games/route.ts` — حماية النموذج الجديد
+- `components/sessions/session-popup.tsx` — UI start + active + header (المرحلة 4 + إصلاح Gap 2 + الإصلاح الإضافي)
+- `components/sessions/receipt-popup.tsx` — عرض entry_type discriminator (Gap 1)
+
+### نتائج التحقق
+- ✅ `npm run build` — ناجح بدون أخطاء TypeScript أو compilation
+- ✅ clean-code-guard: clean
+- ✅ test-guard: N/A (لا ملفات اختبار)
+

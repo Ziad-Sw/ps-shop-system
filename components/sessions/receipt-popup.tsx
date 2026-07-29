@@ -12,13 +12,27 @@ interface ReceiptPopupProps {
   onConfirm: () => void;
 }
 
-interface GameEntry {
+interface BilliardGameEntryShape {
   id: string;
+  entry_type: "billiard";
   play_type: "normal" | "combo";
   play_subtype: "single" | "multi" | "triple" | "quad";
   games_count: number;
   price_per_game: number;
+  mode?: never;
 }
+
+interface StationGameEntryShape {
+  id: string;
+  entry_type: "station";
+  mode: "single" | "multi";
+  games_count: number;
+  price_per_game: number;
+  play_type?: never;
+  play_subtype?: never;
+}
+
+type GameEntry = BilliardGameEntryShape | StationGameEntryShape;
 
 interface ReceiptData {
   duration_hours: number;
@@ -194,23 +208,29 @@ export function ReceiptPopup({
             </div>
           ) : null}
 
-          {/* Game Entries (billiard+games) */}
+          {/* Game Entries (billiard+games and PS/pingpong+games) */}
           {receiptData.game_entries.length > 0 && (
             <div className="border-t border-foreground-muted/20 pt-3">
               <div className="text-sm font-medium text-foreground mb-2">الجيمات المسجلة</div>
               {receiptData.game_entries.map((entry) => (
                 <div key={entry.id} className="flex justify-between text-sm py-1">
-                  <span className="text-foreground-muted">
-                    {entry.play_type === "combo" ? "كومب" : "عادي"} /{" "}
-                    {entry.play_subtype === "single"
-                      ? "فردي"
-                      : entry.play_subtype === "multi"
-                        ? "مالتي"
-                        : entry.play_subtype === "triple"
-                          ? "متولتة"
-                          : "مربعة"}{" "}
-                    × {entry.games_count}
-                  </span>
+                  {entry.entry_type === "billiard" ? (
+                    <span className="text-foreground-muted">
+                      {entry.play_type === "combo" ? "كومب" : "عادي"} /{" "}
+                      {entry.play_subtype === "single"
+                        ? "فردي"
+                        : entry.play_subtype === "multi"
+                          ? "مالتي"
+                          : entry.play_subtype === "triple"
+                            ? "متولتة"
+                            : "مربعة"}{" "}
+                      × {entry.games_count}
+                    </span>
+                  ) : (
+                    <span className="text-foreground-muted">
+                      {entry.mode === "single" ? "فردي" : "مالتي"} × {entry.games_count}
+                    </span>
+                  )}
                   <span className="text-foreground">
                     {calculateGameEntrySubtotal(entry.games_count, entry.price_per_game).toFixed(2)} ج.م
                   </span>
