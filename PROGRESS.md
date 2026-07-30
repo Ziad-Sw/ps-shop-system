@@ -2754,3 +2754,46 @@
 - ✅ clean-code-guard: clean
 - ✅ test-guard: N/A (لا ملفات اختبار)
 
+---
+
+## Fix: 2 bugs في "start new session" للبلايستيشن/بينغ بونغ مع games billing
+
+### Bug 1: PS/pingpong mode selector كان مختلفًا عن pattern البلياردو
+**المشكلة:** زراير "فردي/مالتي" في start-session view للبلايستيشن/بينغ بونغ كانت دائمًا تعيّن state اثنين (`startStationMode` و `mode`) معًا، بينما pattern البلياردو يعيّن state واحد فقط مختص بكل قسم. هذا خلق تباين في السلوك بين النوعين.
+
+**الإصلاح:** (`components/sessions/session-popup.tsx`)
+- جعل onClick لكل زر mode يعيّن فقط state المختص:
+  - في وضع `games` → يعيّن `startStationMode` فقط
+  - في وضع `time` → يعيّن `mode` فقط
+- بهذا أصبح السلوك مطابقًا تمامًا لـ pattern البلياردو ( كل قسم له state خاص به).
+
+### Bug 2: `games_count=0` كان يمنع بدء الجلسة مع games billing
+**المشكلة:** عند اختيار mode للجيمات مع ترك count على 0 (القيمة الافتراضية)، كان السيرفر يرفض الطلب بالرسالة "عدد الجيمات يجب أن يكون رقمًا صحيحًا موجبًا" لأن `games_count: 0` كان يُرسل ويتحقق منه بـ `games_count < 1`.
+
+**الإصلاحات:**
+
+**العميل** (`components/sessions/session-popup.tsx`):
+- `body.mode = mode` — دائمًا يُرسل `mode` لل non-billiard (بدون شرط)
+- شرط إرسال `games_count` أصبح `startStationGamesCount > 0` — لا يُرسل `games_count` أبدًا إذا كان 0
+
+**الخادم** (`app/api/sessions/start/route.ts`):
+- التحقق من `mode` لل non-billiard: مطلوب فقط لـ `time` billing (وليس لـ `games`)
+- عند عدم وجود `mode`: يُستخدم `mode ?? "single"` كقيمة افتراضية
+- التحقق من `games_count`: `games_count < 1` ← `games_count < 0` (لا يرفض 0، يرفض السالب فقط)
+
+### تتبع السلوك المُصحّح (Playstation + Games):
+
+1. **مع اختيار mode و count=0**: يُرسل `{mode, billing_mode: "games", station_id}` بدون `games_count` → السيرفر يقبل → شرط auto-entry `startStationMode !== null && startStationGamesCount > 0` = false ← جلسة تبدأ بدون إدخال. ✓
+
+2. **مع اختيار mode و count=3**: يُرسل `{mode, billing_mode: "games", station_id, games_count: 3}` → السيرفر يقبل → شرط auto-entry = true → ينشئ entry واحد بـ 3 جيمات. ✓
+
+3. **بدون لمس أي شيء (mode/count)**: يُرسل `{mode: "single", billing_mode: "time", station_id}` (لأن الوضع الافتراضي time) → السيرفر يقبل → تبدأ الجلسة عادي. أو إذا اختار games billing دون لمس mode/count → `mode=default "single"`, لا `games_count` → السيرفر يقبل (mode موجود، games_count مش موجود) → جلسة بدون إدخال. ✓
+
+### الملفات المتأثرة
+- `components/sessions/session-popup.tsx`
+- `app/api/sessions/start/route.ts`
+
+### التنبيهات
+- "DO NOT REMOVE WORKING FEATURES" — الـ default = 0 للأثنين (billiard و PS/pingpong) لم يتغير.
+- "Do not weaken any other validation" — `add-game-entry` و `add-station-game-entry` لم يتغيرا، لا يزالان يطلبان `games_count > 0`.
+

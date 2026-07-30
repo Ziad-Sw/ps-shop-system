@@ -173,10 +173,8 @@ export function SessionPopup({
           body.play_subtype = startPlaySubtype;
         }
       } else {
-        if (billingMode === "time" || startStationMode !== null) {
-          body.mode = mode;
-        }
-        if (billingMode === "games" && startStationMode !== null) {
+        body.mode = mode;
+        if (billingMode === "games" && startStationMode !== null && startStationGamesCount > 0) {
           body.games_count = startStationGamesCount;
         }
       }
@@ -859,8 +857,11 @@ export function SessionPopup({
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       onClick={() => {
-                        setStartStationMode("single");
-                        setMode("single");
+                        if (billingMode === "games") {
+                          setStartStationMode("single");
+                        } else {
+                          setMode("single");
+                        }
                       }}
                       className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
                         (billingMode === "games" ? startStationMode : mode) === "single"
@@ -872,8 +873,11 @@ export function SessionPopup({
                     </button>
                     <button
                       onClick={() => {
-                        setStartStationMode("multi");
-                        setMode("multi");
+                        if (billingMode === "games") {
+                          setStartStationMode("multi");
+                        } else {
+                          setMode("multi");
+                        }
                       }}
                       className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
                         (billingMode === "games" ? startStationMode : mode) === "multi"

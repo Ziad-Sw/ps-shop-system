@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         typeof games_count !== "number" ||
         !Number.isFinite(games_count) ||
         !Number.isInteger(games_count) ||
-        games_count < 1
+        games_count < 0
       ) {
         return NextResponse.json(
           { error: "عدد الجيمات يجب أن يكون رقمًا صحيحًا موجبًا." },
@@ -121,12 +121,14 @@ export async function POST(request: NextRequest) {
 
     // Station-type-dependent validations
     if (station.station_type !== "billiard") {
-      // Non-billiard: mode is required
-      if (mode !== "single" && mode !== "multi") {
-        return NextResponse.json(
-          { error: "وضع الجلسة مطلوب." },
-          { status: 400 }
-        );
+      if (billing_mode === "time") {
+        // Mode is required for time billing
+        if (mode !== "single" && mode !== "multi") {
+          return NextResponse.json(
+            { error: "وضع الجلسة مطلوب." },
+            { status: 400 }
+          );
+        }
       }
     } else {
       // Billiard+time: play_type and play_subtype are required
@@ -257,7 +259,7 @@ export async function POST(request: NextRequest) {
         insertData.mode = "single";
       }
     } else {
-      insertData.mode = mode;
+      insertData.mode = mode ?? "single";
       if (games_count !== undefined) {
         insertData.games_count = games_count;
       }
