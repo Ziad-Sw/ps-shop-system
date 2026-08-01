@@ -65,9 +65,9 @@ export function SessionPopup({
   const [startPlayType, setStartPlayType] = useState<PlayType>("normal");
   const [startPlaySubtype, setStartPlaySubtype] = useState<PlaySubtype>("single");
 
-  // Optional pre-start entry selection for billiard+games (null = not selected, start button works either way)
-  const [startGamesPlayType, setStartGamesPlayType] = useState<PlayType | null>(null);
-  const [startGamesPlaySubtype, setStartGamesPlaySubtype] = useState<PlaySubtype | null>(null);
+  // Billiard+games start play type/subtype (defaults match the time-mode selector; the start button works either way)
+  const [startGamesPlayType, setStartGamesPlayType] = useState<PlayType>("normal");
+  const [startGamesPlaySubtype, setStartGamesPlaySubtype] = useState<PlaySubtype>("single");
   const [startGamesCount, setStartGamesCount] = useState(0);
 
   // Station game entries (PS/pingpong + games billing mode)
@@ -781,88 +781,84 @@ export function SessionPopup({
                     </div>
                   </div>
 
-                  {startGamesPlayType !== null && (
-                    <>
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-foreground">
-                          النوع الفرعي
-                        </label>
-                        <div className={`grid gap-3 ${
-                          startGamesPlayType === "combo" ? "grid-cols-3" : "grid-cols-2"
-                        }`}>
-                          {startGamesPlayType === "normal" ? (
-                            <>
-                              <button
-                                onClick={() => setStartGamesPlaySubtype("single")}
-                                className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                                  startGamesPlaySubtype === "single"
-                                    ? "border-primary bg-primary/10 text-primary"
-                                    : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
-                                }`}
-                              >
-                                فردي
-                              </button>
-                              <button
-                                onClick={() => setStartGamesPlaySubtype("multi")}
-                                className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                                  startGamesPlaySubtype === "multi"
-                                    ? "border-primary bg-primary/10 text-primary"
-                                    : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
-                                }`}
-                              >
-                                مالتي
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => setStartGamesPlaySubtype("single")}
-                                className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                                  startGamesPlaySubtype === "single"
-                                    ? "border-primary bg-primary/10 text-primary"
-                                    : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
-                                }`}
-                              >
-                                فردي
-                              </button>
-                              <button
-                                onClick={() => setStartGamesPlaySubtype("triple")}
-                                className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                                  startGamesPlaySubtype === "triple"
-                                    ? "border-primary bg-primary/10 text-primary"
-                                    : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
-                                }`}
-                              >
-                                متولتة
-                              </button>
-                              <button
-                                onClick={() => setStartGamesPlaySubtype("quad")}
-                                className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                                  startGamesPlaySubtype === "quad"
-                                    ? "border-primary bg-primary/10 text-primary"
-                                    : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
-                                }`}
-                              >
-                                مربعة
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-foreground">
+                      النوع الفرعي
+                    </label>
+                    <div className={`grid gap-3 ${
+                      startGamesPlayType === "combo" ? "grid-cols-3" : "grid-cols-2"
+                    }`}>
+                      {startGamesPlayType === "normal" ? (
+                        <>
+                          <button
+                            onClick={() => setStartGamesPlaySubtype("single")}
+                            className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                              startGamesPlaySubtype === "single"
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                            }`}
+                          >
+                            فردي
+                          </button>
+                          <button
+                            onClick={() => setStartGamesPlaySubtype("multi")}
+                            className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                              startGamesPlaySubtype === "multi"
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                            }`}
+                          >
+                            مالتي
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => setStartGamesPlaySubtype("single")}
+                            className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                              startGamesPlaySubtype === "single"
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                            }`}
+                          >
+                            فردي
+                          </button>
+                          <button
+                            onClick={() => setStartGamesPlaySubtype("triple")}
+                            className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                              startGamesPlaySubtype === "triple"
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                            }`}
+                          >
+                            متولتة
+                          </button>
+                          <button
+                            onClick={() => setStartGamesPlaySubtype("quad")}
+                            className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                              startGamesPlaySubtype === "quad"
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                            }`}
+                          >
+                            مربعة
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
 
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-foreground">
-                          عدد الجيمات
-                        </label>
-                        <NumericInput
-                          min={1}
-                          value={startGamesCount}
-                          onChange={(v) => setStartGamesCount(Math.max(1, v))}
-                          placeholder="أدخل عدد الجيمات"
-                        />
-                      </div>
-                    </>
-                  )}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-foreground">
+                      عدد الجيمات
+                    </label>
+                    <NumericInput
+                      min={1}
+                      value={startGamesCount}
+                      onChange={(v) => setStartGamesCount(Math.max(1, v))}
+                      placeholder="أدخل عدد الجيمات"
+                    />
+                  </div>
                 </>
               )}
 

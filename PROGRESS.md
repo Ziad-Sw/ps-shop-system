@@ -2881,3 +2881,24 @@ A single visual/default-state change scoped to playstation/pingpong only:
 - `npx eslint components/sessions/session-popup.tsx` → **0 errors, 0 warnings** (exit 0).
 - `npm run build` passes (only pre-existing unrelated warnings: middleware-deprecation and tailwind module-type).
 
+---
+
+## Billiard games-mode default selection (August 2, 2026)
+
+### Problem
+Same UX inconsistency previously fixed for PlayStation/pingpong, now for **billiard**: when billing mode = "games" was selected in the "start new session" view, the billiard play-type selector (عادي/كومب) had nothing pre-selected and the subtype (فردي/مالتي/متولتة/مربعة) + games-count fields were hidden until a play type was clicked. The "time" mode showed عادي + فردي pre-selected immediately.
+
+### Fix
+Mirrored the PS/pingpong default-selection change in `components/sessions/session-popup.tsx`:
+- Changed `startGamesPlayType` initial value from `null` to `"normal"` (عادي) and `startGamesPlaySubtype` from `null` to `"single"` (فردي) — the same defaults the "time" mode selector already uses. Types narrowed from `PlayType | null` / `PlaySubtype | null` to non-nullable, matching how `startStationMode` was done for PS/pingpong.
+- Removed the now always-true `{startGamesPlayType !== null && ...}` conditional so the subtype selector and games-count field are always visible in billiard+games mode (like time mode), with عادي and فردي visually highlighted on open.
+
+### What did NOT change
+- The auto-first-entry logic is untouched: an initial entry is still created only when `startGamesCount > 0` (it still defaults to `0`), so clicking "ابدأ الجلسة" with games_count left at 0 still starts the session with zero entries, exactly as before — the pre-selection is visual only, not a validation/forced entry.
+- No PS/pingpong or other station logic was touched; no other file was touched.
+
+### Verification
+- `npx eslint components/sessions/session-popup.tsx` → **0 errors, 0 warnings** (exit 0).
+- `npm run build` passes.
+- Code trace: billiard auto-entry guard (`startGamesPlayType !== null && startGamesCount > 0`) still requires a count greater than 0; with the default of 0, no entry row is created on start.
+
