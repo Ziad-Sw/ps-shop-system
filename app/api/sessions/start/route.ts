@@ -7,6 +7,7 @@ import {
   verifySessionCookieValue,
 } from "@/lib/auth/session";
 import { assertPermission, PermissionError } from "@/lib/auth/permissions";
+import { isMissingGamesModelColumn } from "@/lib/sessions/games-model";
 import type { BillingMode, PlayType, PlaySubtype } from "@/types";
 
 /**
@@ -270,11 +271,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const { data: newSession, error: sessionError } = await supabase
+    let { data: newSession, error: sessionError } = await supabase
       .from("sessions")
       .insert(insertData as any)
       .select()
       .maybeSingle();
+
+    if (isMissingGamesModelColumn(sessionError) && "games_model" in insertData) {
+      const insertDataWithoutGamesModel = { ...insertData };
+      delete insertDataWithoutGamesModel.games_model;
+      const fallbackInsert = await supabase
+        .from("sessions")
+        .insert(insertDataWithoutGamesModel as any)
+        .select()
+        .maybeSingle();
+
+      newSession = fallbackInsert.data;
+      sessionError = fallbackInsert.error;
+    }
 
     if (sessionError || !newSession) {
       console.error("Failed to create session:", sessionError);

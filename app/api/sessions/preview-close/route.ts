@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getShopIdFromRequest } from "@/lib/auth/require-shop";
 import { assertPermission, PermissionError, getUserIdFromRequest } from "@/lib/auth/permissions";
 import { calculateSessionCost, calculateBilliardGameEntriesCost, calculateStationGameEntriesCost, formatDuration } from "@/lib/pricing/calculation";
+import { isMissingGamesModelColumn, stationSessionUsesEntriesModel } from "@/lib/sessions/games-model";
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient();
 
-    const { data: session, error: sessionError } = await supabase
+    let { data: session, error: sessionError } = await supabase
       .from("sessions")
       .select(`
         id,
@@ -50,6 +51,33 @@ export async function POST(request: NextRequest) {
       .eq("shop_id", shopId)
       .limit(1)
       .maybeSingle();
+
+    if (isMissingGamesModelColumn(sessionError)) {
+      const fallbackSession = await supabase
+        .from("sessions")
+        .select(`
+          id,
+          start_time,
+          mode,
+          billing_mode,
+          games_count,
+          station_id,
+          play_type,
+          play_subtype,
+          stations!inner (
+            station_type
+          )
+        `)
+        .eq("id", session_id)
+        .eq("shop_id", shopId)
+        .limit(1)
+        .maybeSingle();
+
+      session = fallbackSession.data
+        ? { ...fallbackSession.data, games_model: null }
+        : null;
+      sessionError = fallbackSession.error;
+    }
 
     if (sessionError || !session) {
       return NextResponse.json(
@@ -99,8 +127,7 @@ export async function POST(request: NextRequest) {
           games_count: entry.games_count,
           price_per_game: Number(entry.price_per_game),
         }));
-      } else if (session.games_model !== "legacy") {
-        isAccumulatedGames = true;
+      } else {
         const { data: entries, error: entriesError } = await supabase
           .from("station_game_entries")
           .select("id, mode, games_count, price_per_game")
@@ -116,16 +143,19 @@ export async function POST(request: NextRequest) {
         }
 
         const stationEntries = entries ?? [];
-        stationGameEntriesCost = calculateStationGameEntriesCost(stationEntries);
-        totalGamesCount = stationEntries.reduce((sum, e) => sum + e.games_count, 0);
-        pricingUnit = "game";
-        formattedGameEntries = stationEntries.map((entry) => ({
-          id: entry.id,
-          entry_type: "station",
-          mode: entry.mode,
-          games_count: entry.games_count,
-          price_per_game: Number(entry.price_per_game),
-        }));
+        if (stationSessionUsesEntriesModel(session.games_model, stationEntries.length)) {
+          isAccumulatedGames = true;
+          stationGameEntriesCost = calculateStationGameEntriesCost(stationEntries);
+          totalGamesCount = stationEntries.reduce((sum, e) => sum + e.games_count, 0);
+          pricingUnit = "game";
+          formattedGameEntries = stationEntries.map((entry) => ({
+            id: entry.id,
+            entry_type: "station",
+            mode: entry.mode,
+            games_count: entry.games_count,
+            price_per_game: Number(entry.price_per_game),
+          }));
+        }
       }
     }
 

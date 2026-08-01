@@ -2822,3 +2822,16 @@
 - Multiple active entries: add-entry endpoints insert independent rows and totals sum via shared helpers.
 - Delete entry: remove endpoints delete the selected row and local state filters that row out.
 - Close/receipt: preview/confirm sum entry rows for entries-model sessions and receipt labels rows via `entry_type`.
+
+## Session Close Flow Bug Fix (August 1, 2026)
+
+### Root Cause
+The database migration `015_add_games_model_to_sessions.sql` (which adds the `games_model` column to the `sessions` table) was not applied to the remote Supabase database. This was because migration `014_station_game_entries.sql` failed to apply as the `station_game_entries` table had already been created manually. Due to this missing column, selecting `games_model` in the `preview-close` and `confirm-close` API route queries failed, returning a "session not found" ("الجلسة غير موجودة") error during the close flow.
+
+### Fix Implemented
+1. Repaired the migration history for version `014` on the remote database:
+   `npx supabase migration repair 014 --status applied --linked`
+2. Pushed and applied migration `015` to the remote database:
+   `npx supabase db push`
+3. Verified the active PlayStation session (`b08c9a62-99f9-4283-a095-40905062a8dc`) has been correctly backfilled with `games_model = 'entries'` in the remote database and its data remains intact.
+
