@@ -2796,4 +2796,29 @@
 ### التنبيهات
 - "DO NOT REMOVE WORKING FEATURES" — الـ default = 0 للأثنين (billiard و PS/pingpong) لم يتغير.
 - "Do not weaken any other validation" — `add-game-entry` و `add-station-game-entry` لم يتغيرا، لا يزالان يطلبان `games_count > 0`.
+---
 
+## Full audit + unification: games billing model parity
+
+### Divergences found
+- PS/pingpong games-mode start previously sent or validated legacy `games_count` during session creation, while billiard creates the session first and only uses the add-entry endpoint for an optional initial row.
+- PS/pingpong optional mode selection had a separate button implementation from the active-session selector, increasing the chance of first-click/highlight drift.
+- PS/pingpong optional games count was hidden until a mode was selected and clamped to 1; the intended pre-start value is optional and `0` must remain valid.
+- PS/pingpong legacy detection was inferred from `station_game_entries.length === 0`, which misclassified new empty entries-model sessions as legacy.
+- Preview/confirm close treated station games sessions with no entry rows as old `games_count` sessions instead of using an explicit model marker.
+
+### Fixes made
+- Added persistent `sessions.games_model` via migration `015_add_games_model_to_sessions.sql`, with `entries` for row-based sessions and `legacy` only for pre-existing station games-count sessions.
+- Updated session creation to set `games_model = 'entries'` for all new billiard/PS/pingpong games-mode sessions.
+- Updated PS/pingpong games-mode start so no field is mandatory, `games_count = 0` is accepted, and an initial entry is created only through `add-station-game-entry` when mode is selected and count is greater than 0.
+- Replaced station empty-entry legacy inference with the explicit `games_model === 'legacy'` marker in UI, update-games, preview-close, and confirm-close.
+- Kept active-session add-entry validation strict (`games_count > 0`) for both billiard and station add-entry endpoints.
+- Kept receipt rendering discriminator-based with `entry_type: "billiard" | "station"` instead of shape guessing.
+
+### Manual trace checklist
+- Empty start: new games-mode sessions get `games_model = 'entries'`, no initial entry, and show the empty entries list rather than legacy UI.
+- Start with type/mode plus count: the session is created, then the matching add-entry endpoint creates the first row.
+- Old pre-existing station session: migration marks it `legacy`, so it keeps the old games-count editor.
+- Multiple active entries: add-entry endpoints insert independent rows and totals sum via shared helpers.
+- Delete entry: remove endpoints delete the selected row and local state filters that row out.
+- Close/receipt: preview/confirm sum entry rows for entries-model sessions and receipt labels rows via `entry_type`.

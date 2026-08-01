@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     const { data: session, error: sessionError } = await supabase
       .from("sessions")
-      .select("id, status, billing_mode, stations!inner(station_type)")
+      .select("id, status, billing_mode, games_model, stations!inner(station_type)")
       .eq("id", session_id)
       .eq("shop_id", shopId)
       .limit(1)
@@ -68,22 +68,16 @@ export async function POST(request: NextRequest) {
     }
 
     const stationType = session.stations.station_type;
-    const isStationGames = stationType !== "billiard" && session.billing_mode === "games";
 
-    if (isStationGames) {
-      const { data: existingEntries } = await supabase
-        .from("station_game_entries")
-        .select("id")
-        .eq("session_id", session_id)
-        .eq("shop_id", shopId)
-        .limit(1);
-
-      if (existingEntries && existingEntries.length > 0) {
-        return NextResponse.json(
-          { error: "هذه الجلسة تستخدم نظام الدفعات المتراكمة. استخدم إضافة جيمات بدلاً من تعديل العدد." },
-          { status: 400 }
-        );
-      }
+    if (
+      stationType !== "billiard" &&
+      session.billing_mode === "games" &&
+      session.games_model !== "legacy"
+    ) {
+      return NextResponse.json(
+        { error: "هذه الجلسة تستخدم نظام الدفعات المتراكمة. استخدم إضافة جيمات بدلاً من تعديل العدد." },
+        { status: 400 }
+      );
     }
     const { data: updatedSession, error: updateError } = await supabase
       .from("sessions")

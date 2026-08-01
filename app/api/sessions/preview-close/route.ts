@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
         mode,
         billing_mode,
         games_count,
+        games_model,
         station_id,
         play_type,
         play_subtype,
@@ -98,7 +99,8 @@ export async function POST(request: NextRequest) {
           games_count: entry.games_count,
           price_per_game: Number(entry.price_per_game),
         }));
-      } else {
+      } else if (session.games_model !== "legacy") {
+        isAccumulatedGames = true;
         const { data: entries, error: entriesError } = await supabase
           .from("station_game_entries")
           .select("id, mode, games_count, price_per_game")
@@ -114,20 +116,16 @@ export async function POST(request: NextRequest) {
         }
 
         const stationEntries = entries ?? [];
-
-        if (stationEntries.length > 0) {
-          isAccumulatedGames = true;
-          stationGameEntriesCost = calculateStationGameEntriesCost(stationEntries);
-          totalGamesCount = stationEntries.reduce((sum, e) => sum + e.games_count, 0);
-          pricingUnit = "game";
-          formattedGameEntries = stationEntries.map((entry) => ({
-            id: entry.id,
-            entry_type: "station",
-            mode: entry.mode,
-            games_count: entry.games_count,
-            price_per_game: Number(entry.price_per_game),
-          }));
-        }
+        stationGameEntriesCost = calculateStationGameEntriesCost(stationEntries);
+        totalGamesCount = stationEntries.reduce((sum, e) => sum + e.games_count, 0);
+        pricingUnit = "game";
+        formattedGameEntries = stationEntries.map((entry) => ({
+          id: entry.id,
+          entry_type: "station",
+          mode: entry.mode,
+          games_count: entry.games_count,
+          price_per_game: Number(entry.price_per_game),
+        }));
       }
     }
 

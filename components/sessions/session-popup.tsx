@@ -7,6 +7,7 @@ import { calculateGameEntrySubtotal, calculateBilliardGameEntriesCost, calculate
 import { ReceiptPopup } from "./receipt-popup";
 import { useToast } from "@/components/ui/toast";
 import { NumericInput } from "@/components/ui/numeric-input";
+import { ModeToggle } from "./mode-toggle";
 
 interface SessionPopupProps {
   station: Station;
@@ -77,10 +78,13 @@ export function SessionPopup({
   const [newStationEntryGamesCount, setNewStationEntryGamesCount] = useState(1);
   const [isAddingStationGameEntry, setIsAddingStationGameEntry] = useState(false);
   const [removingStationEntryId, setRemovingStationEntryId] = useState<string | null>(null);
-  const [isLegacyStationGames, setIsLegacyStationGames] = useState(false);
 
   const activeBillingMode = activeSession?.billing_mode ?? billingMode;
   const isGameBased = activeBillingMode === "games";
+  const isLegacyStationGames =
+    activeSession?.games_model === "legacy" &&
+    station.station_type !== "billiard" &&
+    isGameBased;
 
   // Fetch products on mount
   useEffect(() => {
@@ -103,7 +107,6 @@ export function SessionPopup({
       setSaleItems([]);
       setGameEntries([]);
       setStationGameEntries([]);
-      setIsLegacyStationGames(false);
     }
   }, [activeSession]);
 
@@ -172,11 +175,8 @@ export function SessionPopup({
           body.play_type = startPlayType;
           body.play_subtype = startPlaySubtype;
         }
-      } else {
+      } else if (billingMode === "time") {
         body.mode = mode;
-        if (billingMode === "games" && startStationMode !== null && startStationGamesCount > 0) {
-          body.games_count = startStationGamesCount;
-        }
       }
 
       const response = await fetch("/api/sessions/start", {
@@ -391,7 +391,6 @@ export function SessionPopup({
         const data = await response.json();
         const entries = data.entries || [];
         setStationGameEntries(entries);
-        setIsLegacyStationGames(entries.length === 0);
       }
     } catch (error) {
       console.error("Failed to fetch station game entries:", error);
@@ -568,7 +567,11 @@ export function SessionPopup({
                   <div className="mt-3 text-sm text-green-400">
                     عدد الجيمات: {gameEntries.reduce((sum, e) => sum + e.games_count, 0)}
                   </div>
-                ) : isGameBased && station.station_type !== "billiard" && stationGameEntries.length > 0 ? (
+                ) : isGameBased && isLegacyStationGames ? (
+                  <div className="mt-3 text-sm text-green-400">
+                    عدد الجيمات: {gamesCount}
+                  </div>
+                ) : isGameBased && station.station_type !== "billiard" ? (
                   <div className="mt-3 text-sm text-green-400">
                     عدد الجيمات: {stationGameEntries.reduce((sum, e) => sum + e.games_count, 0)}
                   </div>
@@ -848,62 +851,59 @@ export function SessionPopup({
               )}
 
               {/* PS / Pingpong: Mode Selection — optional for games, required for time */}
-              {station.station_type !== "billiard" && (
+              {station.station_type !== "billiard" && billingMode === "time" && (
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground">
                     وضع اللعب
-                    {billingMode === "games" && <span className="text-xs text-foreground-muted"> (اختياري)</span>}
                   </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => {
-                        if (billingMode === "games") {
-                          setStartStationMode("single");
-                        } else {
-                          setMode("single");
-                        }
-                      }}
-                      className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                        (billingMode === "games" ? startStationMode : mode) === "single"
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
-                      }`}
-                    >
-                      فردي
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (billingMode === "games") {
-                          setStartStationMode("multi");
-                        } else {
-                          setMode("multi");
-                        }
-                      }}
-                      className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                        (billingMode === "games" ? startStationMode : mode) === "multi"
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
-                      }`}
-                    >
-                      مالتي
-                    </button>
-                  </div>
+                  <ModeToggle value={mode} onChange={setMode} />
                 </div>
               )}
 
-              {/* Games Count (only for PS/pingpong + games billing mode — optional) */}
-              {station.station_type !== "billiard" && billingMode === "games" && startStationMode !== null && (
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-foreground">
-                    عدد الجيمات <span className="text-xs text-foreground-muted">(اختياري)</span>
-                  </label>
-                  <NumericInput
-                    min={1}
-                    value={startStationGamesCount}
-                    onChange={(v) => setStartStationGamesCount(Math.max(1, v))}
-                    placeholder="أدخل عدد الجيمات"
-                  />
-                </div>
+              {station.station_type !== "billiard" && billingMode === "games" && (
+                <>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-foreground">
+                      وضع اللعب <span className="text-xs text-foreground-muted">(اختياري)</span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setStartStationMode("single")}
+                        className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                          startStationMode === "single"
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                        }`}
+                      >
+                        فردي
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setStartStationMode("multi")}
+                        className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                          startStationMode === "multi"
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
+                        }`}
+                      >
+                        مالتي
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-foreground">
+                      عدد الجيمات
+                    </label>
+                    <NumericInput
+                      min={0}
+                      value={startStationGamesCount}
+                      onChange={(v) => setStartStationGamesCount(Math.max(0, v))}
+                      placeholder="أدخل عدد الجيمات"
+                    />
+                  </div>
+                </>
               )}
 
               <button
@@ -998,28 +998,11 @@ export function SessionPopup({
                       <div className="space-y-2 rounded-lg border border-foreground-muted/20 p-3">
                         <div>
                           <label className="mb-1 block text-xs font-medium text-foreground">وضع اللعب</label>
-                          <div className="grid grid-cols-2 gap-2">
-                            <button
-                              onClick={() => setNewStationEntryMode("single")}
-                              className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
-                                newStationEntryMode === "single"
-                                  ? "border-primary bg-primary/10 text-primary"
-                                  : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
-                              }`}
-                            >
-                              فردي
-                            </button>
-                            <button
-                              onClick={() => setNewStationEntryMode("multi")}
-                              className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
-                                newStationEntryMode === "multi"
-                                  ? "border-primary bg-primary/10 text-primary"
-                                  : "border-foreground-muted/30 text-foreground hover:bg-surface-page"
-                              }`}
-                            >
-                              مالتي
-                            </button>
-                          </div>
+                          <ModeToggle
+                            value={newStationEntryMode}
+                            onChange={setNewStationEntryMode}
+                            size="sm"
+                          />
                         </div>
 
                         <div className="flex gap-2">

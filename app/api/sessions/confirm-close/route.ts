@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
         mode,
         billing_mode,
         games_count,
+        games_model,
         status,
         station_id,
         play_type,
@@ -96,7 +97,8 @@ export async function POST(request: NextRequest) {
         billiardGameEntriesCost = calculateBilliardGameEntriesCost(gameEntries ?? []);
         totalGamesCount = (gameEntries ?? []).reduce((sum, e) => sum + e.games_count, 0);
         pricingUnit = "game";
-      } else {
+      } else if (session.games_model !== "legacy") {
+        isAccumulatedGames = true;
         const { data: stationEntries, error: entriesError } = await supabase
           .from("station_game_entries")
           .select("games_count, price_per_game")
@@ -111,12 +113,9 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        if (stationEntries.length > 0) {
-          isAccumulatedGames = true;
-          stationGameEntriesCost = calculateStationGameEntriesCost(stationEntries);
-          totalGamesCount = stationEntries.reduce((sum, e) => sum + e.games_count, 0);
-          pricingUnit = "game";
-        }
+        stationGameEntriesCost = calculateStationGameEntriesCost(stationEntries ?? []);
+        totalGamesCount = (stationEntries ?? []).reduce((sum, e) => sum + e.games_count, 0);
+        pricingUnit = "game";
       }
     }
 

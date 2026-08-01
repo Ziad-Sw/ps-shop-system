@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         games_count < 0
       ) {
         return NextResponse.json(
-          { error: "عدد الجيمات يجب أن يكون رقمًا صحيحًا موجبًا." },
+          { error: "عدد الجيمات يجب أن يكون رقمًا صحيحًا غير سالب." },
           { status: 400 }
         );
       }
@@ -257,10 +257,15 @@ export async function POST(request: NextRequest) {
       } else {
         // Billiard+games: mode is informational, default to "single"
         insertData.mode = "single";
+        insertData.games_model = "entries";
       }
     } else {
-      insertData.mode = mode ?? "single";
-      if (games_count !== undefined) {
+      // PS/pingpong+games: mode defaults to single (like billiard+games); optional pre-start
+      // entry is created via add-station-game-entry after session creation, not here.
+      insertData.mode = billing_mode === "time" ? (mode ?? "single") : "single";
+      if (billing_mode === "games") {
+        insertData.games_model = "entries";
+      } else if (games_count !== undefined) {
         insertData.games_count = games_count;
       }
     }

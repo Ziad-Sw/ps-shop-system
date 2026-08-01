@@ -20,6 +20,8 @@ export type PlaySubtype = "single" | "multi" | "triple" | "quad";
 
 export type BillingMode = "time" | "games";
 
+export type GamesModel = "entries" | "legacy";
+
 export type SessionStatus = "active" | "completed";
 
 export type ShiftStatus = "open" | "closed";
@@ -291,6 +293,7 @@ export interface Database {
           duration_hours: number | null;
           play_type: PlayType | null;
           play_subtype: PlaySubtype | null;
+          games_model: GamesModel | null;
           created_at: string;
           updated_at: string;
         };
@@ -309,6 +312,7 @@ export interface Database {
           duration_hours?: number | null;
           play_type?: PlayType | null;
           play_subtype?: PlaySubtype | null;
+          games_model?: GamesModel | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -327,6 +331,7 @@ export interface Database {
           duration_hours?: number | null;
           play_type?: PlayType | null;
           play_subtype?: PlaySubtype | null;
+          games_model?: GamesModel | null;
           created_at?: string;
           updated_at?: string;
         };

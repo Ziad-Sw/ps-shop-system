@@ -16,6 +16,7 @@ export type {
   PricingMode,
   PricingUnit,
   BillingMode,
+  GamesModel,
   SessionStatus,
   ShiftStatus,
   StaffPermissions,
