@@ -2835,3 +2835,25 @@ The database migration `015_add_games_model_to_sessions.sql` (which adds the `ga
    `npx supabase db push`
 3. Verified the active PlayStation session (`b08c9a62-99f9-4283-a095-40905062a8dc`) has been correctly backfilled with `games_model = 'entries'` in the remote database and its data remains intact.
 
+---
+
+## UX Consistency Fix: Default "فردي" pre-selected in games mode for PS/Pingpong (August 2, 2026)
+
+### Problem
+In the "start new session" view (`session-popup.tsx`), the mode selector (فردي/مالتي) for **playstation and pingpong** behaved inconsistently depending on billing mode:
+- **time mode**: "فردي" was pre-selected and visually highlighted as soon as the view opened.
+- **games mode**: nothing was pre-selected — the user had to actively click an option before anything was highlighted.
+
+### Fix
+A single visual/default-state change scoped to playstation/pingpong only:
+- `components/sessions/session-popup.tsx` — changed the initial value of `startStationMode` from `null` to `"single"` (فردي), so the games-mode selector now matches the time-mode selector's default behavior for these station types.
+
+### What did NOT change
+- No billiard code, logic, or UI was touched — billiard's play-type/subtype selector keeps its own (correct) behavior.
+- This is **not** a validation change: the "ابدأ الجلسة" button still starts the session with zero entries when `games_count` is left at `0`. The auto-first-entry logic still requires `startStationGamesCount > 0` (its default remains `0`), so the visual pre-selection never forces an entry.
+- No other file or flow was touched.
+
+### Verification
+- `npm run build` passes.
+- Code trace: the auto-entry branch at `session-popup.tsx` still guards on `startStationMode !== null && startStationGamesCount > 0`; since `startStationGamesCount` defaults to `0`, starting with games_count=0 creates zero entries exactly as before.
+

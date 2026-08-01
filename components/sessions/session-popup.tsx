@@ -72,7 +72,7 @@ export function SessionPopup({
 
   // Station game entries (PS/pingpong + games billing mode)
   const [stationGameEntries, setStationGameEntries] = useState<StationGameEntry[]>([]);
-  const [startStationMode, setStartStationMode] = useState<PricingMode | null>(null);
+  const [startStationMode, setStartStationMode] = useState<PricingMode>("single");
   const [startStationGamesCount, setStartStationGamesCount] = useState(0);
   const [newStationEntryMode, setNewStationEntryMode] = useState<PricingMode>("single");
   const [newStationEntryGamesCount, setNewStationEntryGamesCount] = useState(1);
