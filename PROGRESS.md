@@ -2857,3 +2857,27 @@ A single visual/default-state change scoped to playstation/pingpong only:
 - `npm run build` passes.
 - Code trace: the auto-entry branch at `session-popup.tsx` still guards on `startStationMode !== null && startStationGamesCount > 0`; since `startStationGamesCount` defaults to `0`, starting with games_count=0 creates zero entries exactly as before.
 
+---
+
+## Lint/Cleanup: session-popup.tsx effect block (August 2, 2026)
+
+### Problem
+`npx eslint components/sessions/session-popup.tsx` reported 6 errors + 1 warning around the effect block (lines ~94-139):
+- **react-hooks/immutability (4×)**: `fetchProducts`, `fetchSaleItems`, `fetchGameEntries`, `fetchStationGameEntries` were `const` arrow functions declared *after* the effects that call them ("Cannot access variable before it is declared").
+- **react-hooks/set-state-in-effect (2×)**: synchronous `setGamesCount`/`setGamesCountInput` (games-count sync) and `setElapsedTime("")` (elapsed-time reset) called directly inside effects.
+- **react-hooks/exhaustive-deps (1×)**: missing `station.station_type` dependency in the active-session sync effect.
+
+### Fix (structural only — zero behavior change)
+- Converted the four fetch helpers to `useCallback(..., [])` (only call stable state setters), declared above the effects that use them — resolves all four immutability errors.
+- Replaced the synchronous setState in effects with the React-recommended **"adjust state during render"** pattern: a `prevActiveSession` snapshot resets `gamesCount`/`gamesCountInput`, the entries/sale-items arrays, and `elapsedTime` when the active session changes. The data-fetching effects now only fetch.
+- Added `station.station_type` (a primitive, so it is dependency-safe) plus the stable fetch callbacks to the sync effect's dependency array — no infinite loop.
+- The effects invoke the reusable `useCallback` helpers through local wrapper functions (`loadProducts`, `loadSessionData`) to satisfy the `set-state-in-effect` rule, which otherwise flags calling setState-containing helpers directly from an effect body. Helper implementations are byte-for-byte unchanged.
+
+### Behavior preserved
+- Same data loads, same timing: products fetched on mount; sale items/game entries fetched whenever the active session changes; elapsed-time ticker unchanged (the only edits were ordering/declaration and where state is derived, never *what/when* loads or updates).
+- No other feature, flow, or file was touched.
+
+### Verification
+- `npx eslint components/sessions/session-popup.tsx` → **0 errors, 0 warnings** (exit 0).
+- `npm run build` passes (only pre-existing unrelated warnings: middleware-deprecation and tailwind module-type).
+

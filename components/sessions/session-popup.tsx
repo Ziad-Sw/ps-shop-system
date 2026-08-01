@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Station, Session, Product, BilliardGameEntry, StationGameEntry } from "@/types/database";
 import type { BillingMode, PlayType, PlaySubtype, PricingMode } from "@/types/database";
 import { calculateGameEntrySubtotal, calculateBilliardGameEntriesCost, calculateStationGameEntriesCost } from "@/lib/pricing/calculation";
@@ -86,34 +86,99 @@ export function SessionPopup({
     station.station_type !== "billiard" &&
     isGameBased;
 
-  // Fetch products on mount
-  useEffect(() => {
-    fetchProducts();
+  // Stable fetch helpers (only call state setters, so an empty dep array is safe)
+  const fetchProducts = useCallback(async () => {
+    try {
+      const response = await fetch("/api/products");
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(data.products || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+    }
   }, []);
 
-  // Sync gamesCount and fetch existing sale items / game entries when activeSession changes
-  useEffect(() => {
+  const fetchSaleItems = useCallback(async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/sessions/sale-items?session_id=${sessionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSaleItems(data.items || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch sale items:", error);
+    }
+  }, []);
+
+  const fetchGameEntries = useCallback(async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/sessions/game-entries?session_id=${sessionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setGameEntries(data.entries || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch game entries:", error);
+    }
+  }, []);
+
+  const fetchStationGameEntries = useCallback(async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/sessions/station-game-entries?session_id=${sessionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        const entries = data.entries || [];
+        setStationGameEntries(entries);
+      }
+    } catch (error) {
+      console.error("Failed to fetch station game entries:", error);
+    }
+  }, []);
+
+  // Adjust state during render when the active session changes (avoids synchronous setState in effects)
+  const [prevActiveSession, setPrevActiveSession] = useState(activeSession);
+  if (activeSession !== prevActiveSession) {
+    setPrevActiveSession(activeSession);
     if (activeSession) {
       const g = activeSession.games_count ?? 0;
       setGamesCount(g);
       setGamesCountInput(g);
+    } else {
+      setSaleItems([]);
+      setGameEntries([]);
+      setStationGameEntries([]);
+    }
+    if (!activeSession || activeSession.billing_mode !== "time") {
+      setElapsedTime("");
+    }
+  }
+
+  // Fetch products on mount
+  useEffect(() => {
+    const loadProducts = () => fetchProducts();
+    loadProducts();
+  }, [fetchProducts]);
+
+  // Fetch existing sale items / game entries when activeSession changes
+  useEffect(() => {
+    if (!activeSession) return;
+
+    const loadSessionData = () => {
       fetchSaleItems(activeSession.id);
       if (station.station_type === "billiard" && activeSession.billing_mode === "games") {
         fetchGameEntries(activeSession.id);
       } else if (station.station_type !== "billiard" && activeSession.billing_mode === "games") {
         fetchStationGameEntries(activeSession.id);
       }
-    } else {
-      setSaleItems([]);
-      setGameEntries([]);
-      setStationGameEntries([]);
-    }
-  }, [activeSession]);
+    };
+
+    loadSessionData();
+  }, [activeSession, station.station_type, fetchSaleItems, fetchGameEntries, fetchStationGameEntries]);
 
   // Update elapsed time for active time-based sessions
   useEffect(() => {
     if (!activeSession || activeSession.billing_mode !== "time") {
-      setElapsedTime("");
       return;
     }
 
@@ -137,30 +202,6 @@ export function SessionPopup({
 
     return () => clearInterval(interval);
   }, [activeSession]);
-
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch("/api/products");
-      if (response.ok) {
-        const data = await response.json();
-        setProducts(data.products || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch products:", error);
-    }
-  };
-
-  const fetchSaleItems = async (sessionId: string) => {
-    try {
-      const response = await fetch(`/api/sessions/sale-items?session_id=${sessionId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setSaleItems(data.items || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch sale items:", error);
-    }
-  };
 
   const handleStartSession = async () => {
     setIsStarting(true);
@@ -369,31 +410,6 @@ export function SessionPopup({
       showToast("error", "حدث خطأ أثناء تحديث عدد الجيمات");
     } finally {
       setIsSavingGames(false);
-    }
-  };
-
-  const fetchGameEntries = async (sessionId: string) => {
-    try {
-      const response = await fetch(`/api/sessions/game-entries?session_id=${sessionId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setGameEntries(data.entries || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch game entries:", error);
-    }
-  };
-
-  const fetchStationGameEntries = async (sessionId: string) => {
-    try {
-      const response = await fetch(`/api/sessions/station-game-entries?session_id=${sessionId}`);
-      if (response.ok) {
-        const data = await response.json();
-        const entries = data.entries || [];
-        setStationGameEntries(entries);
-      }
-    } catch (error) {
-      console.error("Failed to fetch station game entries:", error);
     }
   };
 
