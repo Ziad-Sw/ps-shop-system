@@ -2898,7 +2898,56 @@ Mirrored the PS/pingpong default-selection change in `components/sessions/sessio
 - No PS/pingpong or other station logic was touched; no other file was touched.
 
 ### Verification
-- `npx eslint components/sessions/session-popup.tsx` → **0 errors, 0 warnings** (exit 0).
+- `npx eslint components/sessions/session-popup.tsx` �+' **0 errors, 0 warnings** (exit 0).
 - `npm run build` passes.
 - Code trace: billiard auto-entry guard (`startGamesPlayType !== null && startGamesCount > 0`) still requires a count greater than 0; with the default of 0, no entry row is created on start.
+
+---
+
+## أغسطس 2026 — بيئة عرض تجريبية معزولة (Demo Shop) للزوار ✅
+
+### ما تم بناؤه
+
+**الهدف:** بيئة تجريبية آمنة ومستقلة تمامًا لزوار الملف التعريفي (portfolio) — محل منفصل ببيانات وهمية وID دخول ثابت، دون أي مساس ببيانات الإنتاج (Super Remontada).
+
+### 1. المحل التجريبي + البيانات (Migration 016)
+ملف `supabase/migrations/016_add_demo_shop.sql` ينشئ مستأجرًا (tenant) منفصلاً بالكامل:
+
+- **shops:** `Super Remontada — Demo` (id ثابت `00000000-0000-4000-8000-00000000DE01`) — PS/بلياردو/بينغ بونغ مفعلة، أعداد 2/2/1، وردية واحدة يوميًا
+- **users:** مستخدم owner كامل الصلاحيات — `login_id = DEMO2026`، `display_name = مدير تجريبي`
+- **stations:** 5 محطات وهمية — PS1، PS2، بلياردو 1، بلياردو 2، بينغ بونغ 1
+- **pricing_rules:** 18 قاعدة أسعار (4 PS + 4 بينغ بونغ بلاي `normal`، 10 بلياردو `normal`/`combo`) — كل صف يحترم `UNIQUE (shop_id, station_type, play_type, play_subtype, unit)`
+- **products:** 6 مشروبات وهمية (بيبسي 10، مياه 5، شاي 10، قهوة 15، عصير 20، مشروب طاقة 50)
+- **shifts:** ورديتان مقفلتان (قبل 3 أيام ويوم) داخل نافذة الأرشيف (30 يومًا) بأرقام 1 و2
+- **sessions:** 4 جلسات مكتملة — PS1 2س@30=60، بلياردو 5ج@7=35، PS2 1.5س@60=90، بينغ بونغ 8ج@5=40 (الحسابات مطابقة للأسعار المزروعة)
+- **game entries:** 1 بلياردو + 1 محطة (اتساق مع `games_model='entries'`)
+- **sale_items:** 5 مبيعات (الإجمالي = الكمية × سعر الوحدة)
+- **expenses:** 2 مصروفين وهميين (صيانة 20، تشغيل 30)
+
+**قرارات برمجية:**
+| القرار | السبب |
+|---|---|
+| `login_id = 'DEMO2026'` بدلًا من `'1234'` | API تسجيل الدخول يحل `login_id` عالميًا بدون فلتر `shop_id`، لذا يجب أن يكون فريدًا على مستوى الجدول — قيمة واضحة التجريب لا تتصادم مع أرقام العضويات الحقيقية |
+| IDs ثابتة قابلة للرجوع إليها + `ON CONFLICT DO NOTHING` | سهولة التعريف والتنظيف لاحقًا + أمان عند إعادة التشغيل |
+| جميع الصفوف تحمل `shop_id = ...DE01` فقط | المحل الحقيقي `...000001` لم يُذكر في أي صف |
+
+### 2. تلميح صفحة تسجيل الدخول
+`app/(auth)/login/page.tsx` — سطر تلميح صغير تحت حقل الـ ID: "للتجربة، استخدم ID: **DEMO2026**" باستخدام نفس التوكينات (dark mode + IBM Plex Sans Arabic) — بدون ألوان أو خطوط جديدة.
+
+### 3. التحقق من التطبيق (يدوي على قاعدة البيانات المباشرة) ✅
+
+- ✅ **Migration 016 مطبّق بنجاح على قاعدة البيانات المباشرة** (Supabase SQL Editor)
+- ✅ **المحل الحقيقي `00000000-0000-4000-8000-000000000001` — الأعداد قبل وبعد متطابقة تمامًا عبر الجداول التسعة:**
+  shops:1, users:1, stations:12, pricing_rules:18, products:7, shifts:9, sessions:61, sale_items:18, expenses:0
+- ✅ **بيانات الإنتاج غير متأثرة بتاتًا** — لا حذف، لا تعديل، لا إدراج على صفوف المحل الحقيقي
+- ✅ المحل التجريبي مؤكد: id=`...DE01`، name=`Super Remontada — Demo`
+- ✅ المستخدم التجريبي مؤكد: `login_id=DEMO2026`, `role=owner`, `is_active=true`
+- ✅ عدد المحطات التجريبية: 5
+
+### 4. الحراس المطبقة
+- **clean-code-guard:** clean — تعديل login صفحة minimal باستخدام توكينات موجودة، بدون تعليقات/دوال/أخطاء جديدة
+- **test-guard:** N/A — لا ملفات اختبار في هذا التغيير (بيانات seed وليست كود اختبار)
+
+**ملاحظة:** أثناء التطوير كانت قاعدة البيانات المباشرة غير قابلة للوصول من بيئة العمل (DNS لا يحل اسم المشروع `yahpumevvxaduwogydmg.supabase.co`)، لذا نُفّذ التحقق يدويًا عبر Supabase SQL Editor — الأعداد المؤكدة أعلاه من التحقق اليدوي.
+
 

@@ -98,6 +98,12 @@ function LoginForm() {
               placeholder="أدخل معرف الدخول الخاص بك"
               className="w-full h-11 px-4 rounded-lg bg-surface-page border border-foreground-muted/20 text-foreground placeholder:text-foreground-muted/40 focus:border-primary focus:outline-none transition-colors duration-150 disabled:opacity-50"
             />
+            <p className="mt-2 text-xs text-foreground-muted">
+              للتجربة، استخدم ID:{" "}
+              <span className="font-semibold text-primary" dir="ltr">
+                DEMO2026
+              </span>
+            </p>
           </div>
 
           <div className="text-right">
