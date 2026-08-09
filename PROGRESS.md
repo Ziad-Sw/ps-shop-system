@@ -2950,4 +2950,14 @@ Mirrored the PS/pingpong default-selection change in `components/sessions/sessio
 
 **ملاحظة:** أثناء التطوير كانت قاعدة البيانات المباشرة غير قابلة للوصول من بيئة العمل (DNS لا يحل اسم المشروع `yahpumevvxaduwogydmg.supabase.co`)، لذا نُفّذ التحقق يدويًا عبر Supabase SQL Editor — الأعداد المؤكدة أعلاه من التحقق اليدوي.
 
+---
+
+## أغسطس 2026 — تنظيف المستودع للعرض العام (Portfolio-Ready Cleanup) ✅
+
+تم حذف ملفات غير مطلوبة للعرض العام عبر `git rm`:
+- `test-shifts.js` — سكربت تصحيح مؤقت معطوب (يشير إلى `SESSION_COOKIE_NAME` غير معرّف)، بلا أي استدعاء.
+- `test-shifts-db.js` — سكربت تصحيح خطير (وصول مباشر لقاعدة الإنتاج بمفتاح service-role ويهارد كود shop_id الحقيقي)، بلا أي استدعاء.
+- `AGENTS.md` + `CLAUDE.md` — ملفات إرشادات أدوات AI الداخلية.
+بقي كل ما يخص المستندات (ARCHIVE_LOGIC, BRD, TECH_INSTRUCTIONS, PROGRESS, README) و`.env.local.example` والأصول المتجاهلة كما هو. لا تغيير في أي منطق/سلوك.
+
 
