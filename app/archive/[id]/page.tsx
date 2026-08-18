@@ -244,7 +244,7 @@ export default async function ShiftDetailPage({
             <div className="rounded-lg bg-surface-page/50 p-3">
               <p className="text-xs text-foreground-muted">المسؤول</p>
               <p className="mt-1 text-sm text-foreground font-medium">
-                {shift.opened_by_user_name || shift.responsible_name}
+                {shift.responsible_name}
               </p>
             </div>
           </div>

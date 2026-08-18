@@ -163,7 +163,7 @@ export default function CalendarGrid({ shifts }: CalendarGridProps) {
                         {formatTime(shift.opened_at)} — {formatTime(shift.closed_at)}
                       </span>
                       <span className="text-xs text-foreground-muted">
-                        {shift.opened_by_user_name || shift.responsible_name}
+                        {shift.responsible_name}
                       </span>
                     </div>
                     <span className="text-sm font-medium text-primary">
@@ -206,7 +206,7 @@ export default function CalendarGrid({ shifts }: CalendarGridProps) {
                     {formatTime(shift.opened_at)} — {formatTime(shift.closed_at)}
                   </span>
                   <span className="text-xs text-foreground-muted truncate">
-                    {shift.opened_by_user_name || shift.responsible_name}
+                    {shift.responsible_name}
                   </span>
                 </div>
                 <span className="text-sm font-medium text-primary whitespace-nowrap mr-3">
