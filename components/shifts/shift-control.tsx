@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/toast";
+import { formatTime } from "@/lib/format/time";
 import { OpenShiftModal } from "./open-shift-modal";
 import { CloseShiftModal } from "./close-shift-modal";
 
@@ -89,14 +90,6 @@ export function ShiftControl({ canManageShifts = true }: ShiftControlProps) {
       console.error("Failed to close shift:", error);
       throw error;
     }
-  };
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString("ar-EG", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   if (isLoading) {

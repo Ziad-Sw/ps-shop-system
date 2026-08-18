@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/components/ui/toast";
+import { formatTime } from "@/lib/format/time";
 
 interface CloseShiftModalProps {
   isOpen: boolean;
@@ -27,14 +28,6 @@ export function CloseShiftModal({
   const [isClosed, setIsClosed] = useState(false);
   const [closedAt, setClosedAt] = useState<string | null>(null);
   const { showToast } = useToast();
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString("ar-EG", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   const handleSubmit = async () => {
     if (!shift) return;

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { NumericInput } from "@/components/ui/numeric-input";
 import { useToast } from "@/components/ui/toast";
+import { formatDate } from "@/lib/format/time";
 
 interface Expense {
   id: string;
@@ -19,16 +20,6 @@ interface Expense {
 interface ExpensesListProps {
   initialExpenses: Expense[];
   canEdit?: boolean;
-}
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("ar-SA", {
-    weekday: "short",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
 }
 
 export default function ExpensesList({

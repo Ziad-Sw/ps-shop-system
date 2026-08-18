@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatTime } from "@/lib/format/time";
 import { Station, Session } from "@/types/database";
 import { useToast } from "@/components/ui/toast";
 import { calculateGameEntrySubtotal } from "@/lib/pricing/calculation";
@@ -53,16 +54,6 @@ interface ReceiptData {
   end_time: string;
   unit: "hour" | "game";
   games_count: number | null;
-}
-
-function formatTime(isoString: string): string {
-  const date = new Date(isoString);
-  const formatter = new Intl.DateTimeFormat("ar-EG", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-  return formatter.format(date);
 }
 
 export function ReceiptPopup({

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import AuthenticatedShell from "@/components/layout/authenticated-shell";
+import { formatDateTime, formatTime } from "@/lib/format/time";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   SESSION_COOKIE_NAME,
@@ -123,28 +124,6 @@ async function getShiftDetail(
     sale_items: row.sale_items ?? [],
     total_revenue: sessionsCost + saleItemsRevenue,
   };
-}
-
-function formatDateTime(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("ar-EG", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-}
-
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleTimeString("ar-EG", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
 }
 
 function formatCurrency(value: number): string {

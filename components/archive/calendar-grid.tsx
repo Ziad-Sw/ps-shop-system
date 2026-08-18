@@ -2,25 +2,11 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { formatDate, formatTime } from "@/lib/format/time";
 import type { ArchiveShift } from "@/types/archive";
 
 interface CalendarGridProps {
   shifts: ArchiveShift[];
-}
-
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit", hour12: false });
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("ar-EG", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
 }
 
 function formatCurrency(value: number): string {
@@ -32,15 +18,6 @@ function toDateStr(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
-}
-
-function formatLongDate(date: Date): string {
-  return date.toLocaleDateString("ar-EG", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
 }
 
 export default function CalendarGrid({ shifts }: CalendarGridProps) {
@@ -110,7 +87,7 @@ export default function CalendarGrid({ shifts }: CalendarGridProps) {
                       : "text-foreground hover:bg-surface-page"
                   }
                 `}
-                title={formatLongDate(day.date)}
+                title={formatDate(day.date)}
               >
                 <span className="font-semibold text-base">{day.number}</span>
                 {hasShifts && (
