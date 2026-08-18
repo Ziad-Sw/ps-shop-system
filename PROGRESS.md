@@ -2960,4 +2960,34 @@ Mirrored the PS/pingpong default-selection change in `components/sessions/sessio
 - `AGENTS.md` + `CLAUDE.md` — ملفات إرشادات أدوات AI الداخلية.
 بقي كل ما يخص المستندات (ARCHIVE_LOGIC, BRD, TECH_INSTRUCTIONS, PROGRESS, README) و`.env.local.example` والأصول المتجاهلة كما هو. لا تغيير في أي منطق/سلوك.
 
+---
+
+## أغسطس 2026 — إصلاح: نافذة "تم إغلاق الوردية" تظهر خطأً عند فتح وردية جديدة ✅
+
+### المشكلة
+نافذة تأكيد "تم إغلاق الوردية" (اسم المسؤول، رقم الوردية، وقت الفتح، وقت الإغلاق) كانت تظهر بشكل خاطئ عند **بدء/فتح** وردية جديدة، بدلًا من الظهور فقط عند إغلاق الوردية فعليًا.
+
+### السبب الجذري
+تسرّب حالة قديمة (stale state) في تدفق الإغلاق، وليس خطأ في تدفق الفتح نفسه:
+1. عند إغلاق الوردية، يستدعي `handleCloseShift` دالة `fetchCurrentShift()` التي تُفَرّغ `currentShift` إلى `null` (لأن `/api/shifts/current` يعيد `null` بعد عدم وجود وردية مفتوحة).
+2. بسبب تحوّل `currentShift` إلى `null`، يصل `shift={null}` إلى `CloseShiftModal` فيصطدم بشرط `if (!isOpen || !shift) return null` وتختفي نافذة التأكيد — لكن `isCloseModalOpen` يبقى `true` وحالة `isClosed`/`closedAt` الداخلية للمودال تبقى قديمة (لم تُصفَّر عبر `handleDismiss`).
+3. عند فتح وردية جديدة لاحقًا، يعيد `fetchCurrentShift` ملء `currentShift` بقيمة غير null، فيُعيد المودال المثبّت (الذي لم يُغلق) الظهور بحالة `isClosed=true` القديمة — فتظهر نافذة "تم إغلاق الوردية" أثناء فتح الوردية الجديدة.
+
+### الإصلاح المطبّق (في `components/shifts/shift-control.tsx`)
+1. **إضافة حالة `closedShift`** تحفظ الوردية التي أُغلقت لتوّها.
+2. **في `handleCloseShift`**: عند النجاح، تخزين الوردية المغلقة (`setClosedShift(data.shift)`) مع استمرار استدعاء `fetchCurrentShift()`.
+3. **تمرير `shift={closedShift ?? currentShift}`** إلى `CloseShiftModal`، وتوسيع `onClose` ليمسح `closedShift` أيضًا — فيظهر تأكيد الإغلاق بعد الإغلاق الفعلي فقط، ويُصفَّر عند الضغط على "تم".
+4. **في `handleOpenShift`**: عند النجاح، تصفير دفاعي `setIsCloseModalOpen(false)` و `setClosedShift(null)` لضمان عدم ظهور النافذة أثناء فتح وردية جديدة إطلاقًا.
+
+### ما لم يتغير
+- مظهر النافذة ومحتواها (اسم المسؤول، رقم الوردية، وقت الفتح، وقت الإغلاق) كما هو تمامًا — فقط تغيّر شرط الظهور.
+- لم تُلمس أي API route (`/api/shifts/open`، `/api/shifts/close`، `/api/shifts/current`) ولا أي ميزة أخرى.
+
+### التحقق
+- `npx tsc --noEmit` → بدون أخطاء.
+- `npx eslint components/shifts/shift-control.tsx` → لا أخطاء جديدة (خطأ `react-hooks/set-state-in-effect` الوحيد في `useEffect` عند استدعاء `fetchCurrentShift` كان موجودًا سابقًا في نسخة HEAD قبل التعديل).
+
+### الخطوة التالية
+اختبار يدوي من المطوّر (Ziad): إغلاق وردية → ظهور نافذة "تم إغلاق الوردية" فقط عند الإغلاق → الضغط على "تم" → فتح وردية جديدة → عدم ظهور النافذة إطلاقًا.
+
 

@@ -19,6 +19,7 @@ interface ShiftControlProps {
 
 export function ShiftControl({ canManageShifts = true }: ShiftControlProps) {
   const [currentShift, setCurrentShift] = useState<Shift | null>(null);
+  const [closedShift, setClosedShift] = useState<Shift | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
@@ -54,6 +55,8 @@ export function ShiftControl({ canManageShifts = true }: ShiftControlProps) {
       const data = await response.json();
 
       if (response.ok) {
+        setIsCloseModalOpen(false);
+        setClosedShift(null);
         await fetchCurrentShift();
       } else {
         showToast("error", data.error || "فشل فتح الوردية");
@@ -75,6 +78,7 @@ export function ShiftControl({ canManageShifts = true }: ShiftControlProps) {
       const data = await response.json();
 
       if (response.ok) {
+        setClosedShift(data.shift);
         await fetchCurrentShift();
         return data.shift;
       } else {
@@ -158,8 +162,11 @@ export function ShiftControl({ canManageShifts = true }: ShiftControlProps) {
 
       <CloseShiftModal
         isOpen={isCloseModalOpen}
-        onClose={() => setIsCloseModalOpen(false)}
-        shift={currentShift}
+        onClose={() => {
+          setIsCloseModalOpen(false);
+          setClosedShift(null);
+        }}
+        shift={closedShift ?? currentShift}
         onCloseShift={handleCloseShift}
       />
     </>
