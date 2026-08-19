@@ -24,6 +24,7 @@ export function ShiftControl({ canManageShifts = true }: ShiftControlProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
+  const [closePressedAt, setClosePressedAt] = useState<string | null>(null);
   const { showToast } = useToast();
 
   const fetchCurrentShift = async () => {
@@ -130,7 +131,10 @@ export function ShiftControl({ canManageShifts = true }: ShiftControlProps) {
           <div>
             {currentShift ? (
               <button
-                onClick={() => setIsCloseModalOpen(true)}
+                onClick={() => {
+                  setClosePressedAt(new Date().toISOString());
+                  setIsCloseModalOpen(true);
+                }}
                 disabled={!canManageShifts}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -160,8 +164,10 @@ export function ShiftControl({ canManageShifts = true }: ShiftControlProps) {
         onClose={() => {
           setIsCloseModalOpen(false);
           setClosedShift(null);
+          setClosePressedAt(null);
         }}
         shift={closedShift ?? currentShift}
+        pressedAt={closePressedAt}
         onCloseShift={handleCloseShift}
       />
     </>

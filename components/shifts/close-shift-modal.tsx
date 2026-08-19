@@ -13,6 +13,7 @@ interface CloseShiftModalProps {
     shift_number: number;
     opened_at: string;
   } | null;
+  pressedAt?: string | null;
   onCloseShift: (shiftId: string) => Promise<{
     closed_at: string | null;
   } | null>;
@@ -22,6 +23,7 @@ export function CloseShiftModal({
   isOpen,
   onClose,
   shift,
+  pressedAt,
   onCloseShift,
 }: CloseShiftModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,12 +78,14 @@ export function CloseShiftModal({
             <span>وقت الفتح:</span>
             <span className="text-white font-medium">{formatTime(shift.opened_at)}</span>
           </div>
-          {isClosed && closedAt && (
+          {(isClosed && closedAt) || pressedAt ? (
             <div className="flex justify-between text-neutral-300">
               <span>وقت الإغلاق:</span>
-              <span className="text-white font-medium">{formatTime(closedAt)}</span>
+              <span className="text-white font-medium">
+                {formatTime(isClosed && closedAt ? closedAt : (pressedAt ?? shift.opened_at))}
+              </span>
             </div>
-          )}
+          ) : null}
         </div>
 
         <div className="flex gap-3 justify-end">
