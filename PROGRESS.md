@@ -3095,4 +3095,70 @@ Mirrored the PS/pingpong default-selection change in `components/sessions/sessio
 ### الخطوة التالية
 اختبار يدوي من المطوّر (Ziad) على **الموبايل والديسبتوب**: فتح جلسة → قائمة "إضافة مشروب" مع عدة منتجات → يجب أن تُظهر القائمة حد أقصى للارتفاع مع تمرير داخلي، واختيار المنتج يُضيفه كالمعتاد، والنقر خارجها يُغلقها.
 
+---
+
+## إصلاح 13 — حل خطأ set-state-in-effect في shift-control
+
+**Commit:** `3b06773` — `fix: resolve set-state-in-effect warning in shift-control useEffect`
+
+### المشكلة
+خطأ lint في `components/shifts/shift-control.tsx:44-46` (قاعدة `react-hooks/set-state-in-effect`): استدعاء `fetchCurrentShift()` بشكل متزامن داخل `useEffect` — والقاعدة تمنع الـ setState المتزامن في جسم الـ effect لأنه يسبب renders متسلسلة.
+
+### الإصلاح المطبّق
+- غُطّي الاستدعاء بـ async IIFE: `(async () => { await fetchCurrentShift(); })()` — بذلك ينتظر الـ effect الدالة غير المتزامنة ويحافظ على سلوك الاستدعاء عند التركيب (mount) تمامًا كما كان.
+- لم يتغير أي شيء آخر: `fetchCurrentShift` نفسها، ترتيب الاستدعاء، الـ error handling، أو سلوك المكوّن.
+- التأكيد: القاعدة تقبل هذا النمط (اختبار تجريبي بـ 4 صيغ عبر eslint قبل الاختيار؛ الصيغة المختارة هي النمط الموصى به في React docs).
+
+### التحقق
+- `npx eslint components/shifts/shift-control.tsx` → نظيف (لا أخطاء/تحذيرات).
+- `npx tsc --noEmit` → بدون أخطاء.
+- `git diff` → ملف واحد فقط (`shift-control.tsx`).
+- **clean-code-guard:** clean — سلوك محفوظ، لا كود جديد غير ضروري، يتبع نمط الملف.
+- **test-guard:** لا ينطبق — المشروع لا يحتوي على test runner.
+
+---
+
+## فحص 14 — تدقيق كامل لقاعدة الكود (Investigation فقط، لم يُنفَّذ أي تنظيف)
+
+**المرجع:** `3b06773` — مسح كامل بـ `npx eslint .` + فحص التكرار/الكود الميت يدويًا. **لا تغييرات تمت — بانتظار موافقة Ziad قبل لمس أي بند.**
+
+### قائمة "آمن للتنظيف — لا مخاطرة وظيفية" (Safe to clean)
+
+**أخطاء/تحذيرات lint (نوعية فقط، لا تغيّر سلوكًا):**
+1. `app/api/sessions/start/route.ts:11` — استيرادات غير مستخدمة: `BillingMode`, `PlayType`, `PlaySubtype` (remove unused imports).
+2. `app/api/products/route.ts:10`, `app/api/sessions/active/route.ts:9`, `app/api/shifts/current/route.ts:9` — معامل `request` غير مستخدم في `GET` (حذف المعامل لا يغيّر السلوك).
+3. `app/api/sessions/confirm-close/route.ts:106,127,148` — `totalGamesCount` يُعيّن لكنه لا يُقرأ في أي مكان (متغيّر ميت؛ إزالته آمنة).
+4. `app/api/expenses/route.ts:46,119`, `app/api/expenses/[id]/route.ts:47`, `app/expenses/page.tsx:75`, `components/expenses/expenses-list.tsx:84` — `any` صريح في تعيينات قراءة/كتابة المصاريف (استبدال بنوع `ExpenseRow`/نوع مشتق — تحويلات/`insert` فقط، لا تغيير سلوك).
+5. `app/api/stations/list/route.ts:63-64` — `as any` في تحقق `validTypes.includes` (استبدال بكتابة صحيحة `stationType as StationType`).
+6. `app/api/sessions/start/route.ts:276,285` — `insertData as any` في إدراج الجلسة (استبدال بنوع `Database["public"]["Tables"]["sessions"]["Insert"]` — نمط النتيجة يستخدمه الكود مسبقًا؛ ليس له أثر على منطق التنفيذ).
+7. `components/ui/toast.tsx:47` — `(window as any).webkitAudioContext` (استبدال بـ `Window & { webkitAudioContext?: ... }` — تعليمات صوتية فقط).
+
+### قائمة "تحتاج تأكيد قبل لمسها" (Needs confirmation)
+
+**أخطاء lint أخرى مشابهة لنمط إصلاح 13 (قرار مطوّر):**
+8. `components/sessions/stations-grid.tsx:47` — `set-state-in-effect`: استدعاء `fetchStations()`/`fetchActiveSessions()` متزامنًا في effect (نفس نمط إصلاح 13، لكنه يمسّ جلب الشبكة الرئيسية للوحة — آمن سلوكيًا لكن يستحق فحصًا يدويًا).
+9. `components/ui/numeric-input.tsx:34` — `set-state-in-effect`: `setIsTouch(mq.matches)` متزامن في effect (هنا الـ setState داخل effect يستمع لحالة media query — سلوك حالي مقصود؛ الحل الأنظف قد يكون `useSyncExternalStore` بدل `useEffect` — تغيير بنيوي يحتاج قرار).
+10. `components/sessions/receipt-popup.tsx:71` — `react-hooks/immutability` + `exhaustive-deps`: `fetchReceiptData()` مستدعى قبل تعريفه (تعريف الدالة أسفل الـ effect) — إعادة الترتيب/الـ `useCallback` تحفظ السلوك، لكنه مكوّن إيصال (حساس للفوترة) ويستحق فحصًا يدويًا.
+11. `components/ui/toast.tsx:30` — `react-hooks/purity`: `Math.random()` في `showToast` (يُستدعى من معالجات أحداث، لكن القاعدة تتعامل معه كأنه في الـ render) — الحل (رقم تسلسلي/`crypto.randomUUID`) يحفظ السلوك؛ لا يُمسّ حاليًا لتجنب أي تغيير غير متوقع في إشعارات كل الشاشات.
+12. `app/(auth)/login/page.tsx:56` و `components/layout/sidebar.tsx:169` — تحذير `<img>` (no-img-element) — التحويل إلى `next/image` تغيير بصري/أداء، يحتاج موافقة.
+
+**تكرارات (لا مخاطرة وظيفية لكنها إعادة هيكلة تتطلب قرارًا):**
+13. `formatCurrency` مكرّرة بحرفها: `components/archive/calendar-grid.tsx:12` و `app/archive/[id]/page.tsx:129` (نفس `value.toLocaleString("ar-EG") + " ج.م"`) — دمج في `lib/format` أو مكان مشترك.
+14. `getStationTypeLabel` مكرّرة بأربع صيغ: `app/archive/[id]/page.tsx:133` (function)، `components/sessions/station-card.tsx:75` (function)، وتعبيرات inline في `session-popup.tsx:600` و `receipt-popup.tsx:168` — توحيد في أداة مشتركة.
+15. دوال مكرّرة بحرفها بين صفحتي الأرشيف: `getCurrentUser`/`getShopName`/`getOwnerName` في `app/archive/page.tsx:12-53` و `app/archive/[id]/page.tsx:14-55` — نقل إلى `lib/auth`/`lib/shops` مشترك.
+16. تعيين صف المصاريف `(row: any) => ({...})` مكرر: `app/api/expenses/route.ts:46-56` و `app/expenses/page.tsx:75-85` — دالة تعيين مشتركة في `lib`.
+
+**غامض — يحتاج تأكيد Ziad (قد يكون مقصودًا):**
+17. `formatDuration` بنسختين مختلفتين: `lib/pricing/calculation.ts:108` (تأخذ ساعات) و `app/archive/[id]/page.tsx:150` (تأخذ ISO) — واجهتان مختلفتان لنفس المفهوم؛ توحيد اختياري، لكنهما تُستخدمان في أماكن مختلفة بلا نية ترقّب (لا يُلمس إلا بطلب).
+18. معامل `request` غير المستخدم في الـ GET routes الثلاثة (بند 2) — قد يُترك عمدًا كمستقبل Next.js signature؛ التأكيد يُحمّل أي حذف تلقائي.
+
+### ما تم التحقق منه ولا يحتاج أي عمل
+- **لا كود معلّق** (commented-out code) في أي ملف `.ts/.tsx`.
+- **لا توجد `eslint-disable`/`ts-ignore`/`FIXME`/`TODO`** في أي مكان.
+- **لا `<select>` مكرر** (البند الوحيد عُولج في إصلاح 12).
+- **clean-code-guard:** clean لهذا الفحص — أُبلغ فقط، لم تُجرَ تعديلات.
+
+### الخطوة التالية
+مراجعة Ziad للبندين 8–12 (أخطاء lint إضافية من نفس النمط) وتحديد ما يُنفَّذ، ثم موافقة على بنود التنظيف الآمنة 1–7 و/أو إعادة الهيكلة 13–16.
+
 
