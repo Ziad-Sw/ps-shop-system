@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Station, Session, Product, BilliardGameEntry, StationGameEntry } from "@/types/database";
 import type { BillingMode, PlayType, PlaySubtype, PricingMode } from "@/types/database";
 import { calculateGameEntrySubtotal, calculateBilliardGameEntriesCost, calculateStationGameEntriesCost } from "@/lib/pricing/calculation";
@@ -31,6 +31,8 @@ export function SessionPopup({
   const [showReceipt, setShowReceipt] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
+  const [isProductMenuOpen, setIsProductMenuOpen] = useState(false);
+  const productMenuRef = useRef<HTMLDivElement>(null);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
@@ -85,6 +87,7 @@ export function SessionPopup({
     activeSession?.games_model === "legacy" &&
     station.station_type !== "billiard" &&
     isGameBased;
+  const selectedProduct = products.find((p) => p.id === selectedProductId);
 
   // Stable fetch helpers (only call state setters, so an empty dep array is safe)
   const fetchProducts = useCallback(async () => {
@@ -98,6 +101,30 @@ export function SessionPopup({
       console.error("Failed to fetch products:", error);
     }
   }, []);
+
+  // Close the product menu when clicking outside of it
+  useEffect(() => {
+    if (!isProductMenuOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (productMenuRef.current && !productMenuRef.current.contains(event.target as Node)) {
+        setIsProductMenuOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsProductMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isProductMenuOpen]);
 
   const fetchSaleItems = useCallback(async (sessionId: string) => {
     try {
@@ -1226,19 +1253,16 @@ export function SessionPopup({
                   إضافة مشروب
                 </label>
                 <div className="space-y-3">
-                  <div className="relative">
-                    <select
-                      value={selectedProductId}
-                      onChange={(e) => setSelectedProductId(e.target.value)}
-                      className="w-full appearance-none rounded-lg bg-surface-page px-3 py-2 text-foreground outline-none focus:ring-2 focus:ring-primary"
+                  <div ref={productMenuRef} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsProductMenuOpen((v) => !v)}
+                      className="w-full appearance-none rounded-lg bg-surface-page px-3 py-2 text-left text-foreground outline-none focus:ring-2 focus:ring-primary"
                     >
-                      <option value="">اختر مشروب</option>
-                      {products.map((product) => (
-                        <option key={product.id} value={product.id}>
-                          {product.name} - {product.price} ج.م
-                        </option>
-                      ))}
-                    </select>
+                      {selectedProduct
+                        ? `${selectedProduct.name} - ${selectedProduct.price} ج.م`
+                        : "اختر مشروب"}
+                    </button>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="16"
@@ -1253,6 +1277,41 @@ export function SessionPopup({
                     >
                       <path d="m6 9 6 6 6-6" />
                     </svg>
+                    {isProductMenuOpen && (
+                      <div className="absolute left-0 right-0 z-20 mt-1 max-h-[280px] overflow-y-auto rounded-lg border border-foreground-muted/20 bg-surface-card shadow-2xl scrollbar-dark">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedProductId("");
+                            setIsProductMenuOpen(false);
+                          }}
+                          className={`w-full px-3 py-2 text-left hover:bg-surface-page ${
+                            !selectedProduct
+                              ? "bg-surface-page text-foreground"
+                              : "text-foreground-muted"
+                          }`}
+                        >
+                          اختر مشروب
+                        </button>
+                        {products.map((product) => (
+                          <button
+                            key={product.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedProductId(product.id);
+                              setIsProductMenuOpen(false);
+                            }}
+                            className={`w-full px-3 py-2 text-left hover:bg-surface-page ${
+                              product.id === selectedProductId
+                                ? "bg-surface-page text-foreground"
+                                : "text-foreground-muted"
+                            }`}
+                          >
+                            {product.name} - {product.price} ج.م
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex gap-3">
