@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ToastProvider, useToast } from "@/components/ui/toast";
 
@@ -53,7 +54,7 @@ function LoginForm() {
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm rounded-xl bg-surface-card p-8 border border-foreground-muted/10 shadow-xl">
         <div className="flex flex-col items-center mb-6">
-          <img src="/logo-ps.svg" alt="PS-System logo" className="h-14 w-14 mb-3" />
+          <Image src="/logo-ps.svg" alt="PS-System logo" width={56} height={56} className="h-14 w-14 mb-3" />
           <h1 className="text-2xl font-bold text-foreground text-center">PS-System</h1>
           <p className="mt-2 text-sm text-foreground-muted text-center">
             نظام إدارة محلات الألعاب والترفيه

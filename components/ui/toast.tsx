@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface Toast {
   id: string;
@@ -25,9 +25,10 @@ export function useToast() {
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const toastIdRef = useRef(0);
 
   const showToast = (type: "success" | "error" | "info" | "warning", text: string) => {
-    const id = Math.random().toString(36).substring(7);
+    const id = `toast-${toastIdRef.current++}`;
     const newToast = { id, type, text };
     setToasts((prev) => [...prev, newToast]);
 

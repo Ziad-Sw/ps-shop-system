@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import type { StationType } from "@/types/database";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getShopIdFromRequest } from "@/lib/auth/require-shop";
 
@@ -16,7 +17,9 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const stationType = searchParams.get("station_type");
+    const stationTypeParam = searchParams.get("station_type");
+    const validTypes: readonly StationType[] = ["playstation", "billiard", "pingpong"];
+    const stationType = validTypes.find((type) => type === stationTypeParam);
 
     const supabase = createAdminClient();
 
@@ -59,10 +62,7 @@ export async function GET(request: NextRequest) {
       .eq("is_active", true);
 
     if (stationType) {
-      const validTypes = ["playstation", "billiard", "pingpong"] as const;
-      if (validTypes.includes(stationType as any)) {
-        query = query.eq("station_type", stationType as any);
-      }
+      query = query.eq("station_type", stationType);
     }
 
     const { data: stations, error } = await query.order("sort_order", { ascending: true });

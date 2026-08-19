@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Station, Session } from "@/types/database";
 import { StationCard } from "./station-card";
 
@@ -13,7 +13,7 @@ export function StationsGrid({ canManageSessions = true }: StationsGridProps) {
   const [activeSessions, setActiveSessions] = useState<Record<string, Session>>({});
   const [loading, setLoading] = useState(true);
 
-  const fetchStations = async () => {
+  const fetchStations = useCallback(async () => {
     try {
       const response = await fetch("/api/stations/list");
       if (response.ok) {
@@ -25,9 +25,9 @@ export function StationsGrid({ canManageSessions = true }: StationsGridProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchActiveSessions = async () => {
+  const fetchActiveSessions = useCallback(async () => {
     try {
       const response = await fetch("/api/sessions/active");
       if (response.ok) {
@@ -41,12 +41,15 @@ export function StationsGrid({ canManageSessions = true }: StationsGridProps) {
     } catch (error) {
       console.error("Failed to fetch active sessions:", error);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchStations();
-    fetchActiveSessions();
-  }, []);
+    const loadData = () => {
+      fetchStations();
+      fetchActiveSessions();
+    };
+    loadData();
+  }, [fetchStations, fetchActiveSessions]);
 
   const handleSessionStarted = () => {
     fetchActiveSessions();

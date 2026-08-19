@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from "react";
 
 interface NumericInputProps {
   value: number;
@@ -25,17 +25,18 @@ export function NumericInput({
   disabled = false,
   className = "",
 }: NumericInputProps) {
-  const [isTouch, setIsTouch] = useState(false);
   const [mobileInput, setMobileInput] = useState("");
   const prevValueRef = useRef(value);
 
-  useEffect(() => {
-    const mq = window.matchMedia("(pointer: coarse)");
-    setIsTouch(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setIsTouch(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
+  const isTouch = useSyncExternalStore(
+    (onChange) => {
+      const mq = window.matchMedia("(pointer: coarse)");
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia("(pointer: coarse)").matches,
+    () => false
+  );
 
   useEffect(() => {
     if (!isTouch) return;

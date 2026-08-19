@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { formatTime } from "@/lib/format/time";
 import { Station, Session } from "@/types/database";
 import { useToast } from "@/components/ui/toast";
@@ -66,12 +66,7 @@ export function ReceiptPopup({
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
 
-  // Fetch receipt data on mount
-  useEffect(() => {
-    fetchReceiptData();
-  }, []);
-
-  const fetchReceiptData = async () => {
+  const fetchReceiptData = useCallback(async () => {
     try {
       const response = await fetch("/api/sessions/preview-close", {
         method: "POST",
@@ -94,7 +89,13 @@ export function ReceiptPopup({
       showToast("error", "حدث خطأ أثناء حساب الإيصال");
       onClose();
     }
-  };
+  }, [session.id, onClose, showToast]);
+
+  // Fetch receipt data on mount
+  useEffect(() => {
+    const loadReceipt = () => fetchReceiptData();
+    loadReceipt();
+  }, [fetchReceiptData]);
 
   const handleConfirm = async () => {
     setIsConfirming(true);
