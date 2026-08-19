@@ -3215,4 +3215,28 @@ Mirrored the PS/pingpong default-selection change in `components/sessions/sessio
 ### الخطوة التالية
 بانتظار موافقة Ziad على بنود التنظيف المتبقية (1–7 من فحص 14 و/أو إعادة الهيكلة 13–16).
 
+---
+
+## تنظيف 17 — الدفعة الثانية: إزالة جميع نتائج lint المتبقية (0 errors + 0 warnings)
+
+**Commit:** `852259d` — `chore: eliminate all remaining lint findings (safe cleanup batch 2)`
+
+### ما تم إصلاحه (8 ملفات — لا تغيير في السلوك)
+1. **`app/api/stations/list/route.ts:63-64`** — إزالة `as any`: استبدال `validTypes.includes(stationType as any)` بالتصفية عبر `validTypes.find(...)` مع نوع `StationType` من `@/types/database` — لا `as` على الإطلاق، والمنطق حرفيًا نفسه.
+2. **`components/sessions/stations-grid.tsx:47`** — `react-hooks/set-state-in-effect`: تغليف `fetchStations`/`fetchActiveSessions` بـ `useCallback` وإضافة الدوال للـ deps، مع استدعاء غير مباشر عبر دالة داخلية (`loadData`) — نفس النمط المعتمد سابقًا في `session-popup.tsx`؛ السلوك لم يتغيّر.
+3. **`components/ui/numeric-input.tsx:34`** — `react-hooks/set-state-in-effect`: استبدال تأثير `matchMedia` بـ `useSyncExternalStore` (النمط الكنسي للاشتراك في Media Query) — خالٍ من الـ effect، آمن للـ hydration (server snapshot = `false`)، وسلوك العميل مطابق تمامًا.
+4. **`components/ui/toast.tsx:30`** — `react-hooks/purity` (Math.random أثناء render): استبدال `Math.random().toString(36)` بمعرّف متسلسل عبر `useRef` (`toast-${toastIdRef.current++}`) — لا دوال غير نقية أثناء الـ render، والمعرّفات تبقى فريدة بلا تصادم.
+5. **`components/sessions/receipt-popup.tsx:71`** — `react-hooks/immutability`: رفع `fetchReceiptData` إلى `useCallback` قبل الـ effect وإضافته للـ deps، مع استدعاء غير مباشر (`loadReceipt`) — النقطة (preview-close) للقراءة فقط، وأي إعادة تنفيذ idempotent.
+6. **`app/(auth)/login/page.tsx:56` + `components/layout/sidebar.tsx:169`** — `<img>` → `next/image` مع تفعيل `images.dangerouslyAllowSVG: true` في `next.config.ts` (مطلوب لتشغيل الـ SVG عبر next/image) — نفس الأبعاد تمامًا (`56×56` و `32×32`) ولا تغيير بصري.
+
+### التحقق
+- `npx tsc --noEmit` → بدون أخطاء.
+- `npx eslint .` → **صفر نتائج** (0 errors، 0 warnings) — أول تشغيل نظيف تمامًا منذ فحص 14.
+- `git diff` → 8 ملفات بالضبط (قائمة البنود)، لا شيء آخر.
+- **clean-code-guard:** clean — لا تغيير في أي منطق/رسالة/عقد API/سلوك UI؛ التعديلات نوعية (types) ونمطية (hooks) فقط.
+- **test-guard:** لا ينطبق — المشروع لا يحتوي على test runner.
+
+### الخطوة التالية
+فحص lint كامل الآن نظيف. ما تبقى من فحص 14 (بنود "تحتاج تأكيد" المتبقية و/أو إعادة الهيكلة 13–16) يُترك لقرار Ziad — لا يوجد أي أثر lint متبقٍ يفرض لمسها.
+
 
