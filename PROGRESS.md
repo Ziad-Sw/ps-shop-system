@@ -3161,4 +3161,30 @@ Mirrored the PS/pingpong default-selection change in `components/sessions/sessio
 ### الخطوة التالية
 مراجعة Ziad للبندين 8–12 (أخطاء lint إضافية من نفس النمط) وتحديد ما يُنفَّذ، ثم موافقة على بنود التنظيف الآمنة 1–7 و/أو إعادة الهيكلة 13–16.
 
+---
+
+## إصلاح 15 — قائمة المشروبات: Portal بدل القائمة المطلقة المقيّدة + محاذاة RTL
+
+**Commit:** `aa49af6` — `fix: portal-based dropdown positioning with flip logic + RTL text alignment and chevron spacing`
+
+### المشكلة
+قائمة اختيار المشروب في `components/sessions/session-popup.tsx` كانت `absolute` داخل كارد المودال الذي يحمل `max-h-[85vh] overflow-y-auto` — فتتقيّد بتمرير الحاوية وتسبب تمريرًا متداخلًا (نفس جذر مشكلة إصلاح 12). إضافة إلى رجوعين بصريين: نص الخيارات كان `text-left` (غير مطابق لـ `dir="rtl"`) وسهم القائمة على اليسار (`left-3`) يتراكب مع النص.
+
+### الإصلاح المطبّق
+- **Portal:** تُرسم القائمة الآن عبر `createPortal(…, document.body)` في موضع `fixed` بحساب `getBoundingClientRect()` من الزر المطلِق (`productMenuRef`) — بعيدًا عن حاوية التمرير الخاصة بالمودال، مع `z-[60]` فوق الـ overlay.
+- **Flip logic:** إذا لم تتسع القائمة (280px) أسفل الزر، تُفتح فوقه تلقائيًا.
+- **إعادة التموضع:** `resize` + `scroll` (بالتقاط capture للتمرير داخل المودال نفسه) يعيدان حساب الموقع أثناء فتح القائمة.
+- **RTL:** نص الزر والخيارات `text-right`، ومساحة مخصصة للسهم `pl-8` على اليسار (لا تراكب مع النص).
+- **خارجية النقر:** تُحسب الآن مقابل الزر **وقائمة الـ portal معًا** (`productMenuRef` + `productMenuListRef`) حتى لا يغلق اختيار الخيار القائمة قبل تسجيل النقر.
+
+### التحقق
+- `npx eslint components/sessions/session-popup.tsx` → نظيف.
+- `npx tsc --noEmit` → بدون أخطاء.
+- `git diff` → ملف واحد فقط (`session-popup.tsx`).
+- **clean-code-guard:** clean — لا لون/خط جديد، لا تغيير في منطق إضافة/جلب المشروبات، لا `set-state-in-effect` جديد (التحديث يتم في معالج أحداث وعند scroll/resize).
+- **test-guard:** لا ينطبق — المشروع لا يحتوي على test runner.
+
+### الخطوة التالية
+اختبار Ziad اليدوي على الموبايل والديستوب: فتح قائمة مشروب في جلسة، التمرير داخل كارد المودال، والتحقق من أن القائمة تطفو فوق المحتوى وتملأ الاتجاه RTL بشكل صحيح.
+
 
