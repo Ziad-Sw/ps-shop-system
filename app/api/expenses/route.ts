@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getShopIdFromRequest } from "@/lib/auth/require-shop";
 import { assertPermission, PermissionError, getUserIdFromRequest } from "@/lib/auth/permissions";
+import type { Database } from "@/types";
 
 export async function GET() {
   try {
@@ -43,7 +44,8 @@ export async function GET() {
       );
     }
 
-    const expenses = (data ?? []).map((row: any) => ({
+    const expenses = (data ?? []).map(
+      (row: Database["public"]["Tables"]["expenses"]["Row"] & { shifts: { shift_number: number } | null }) => ({
       id: row.id,
       shop_id: row.shop_id,
       shift_id: row.shift_id,
@@ -116,7 +118,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const insertData: any = {
+    const insertData: Database["public"]["Tables"]["expenses"]["Insert"] = {
       shop_id: shopId,
       shift_id: openShift.id,
       description: description.trim(),

@@ -103,7 +103,6 @@ export async function POST(request: NextRequest) {
     let pricingUnit: "hour" | "game" = unit;
     let billiardGameEntriesCost = 0;
     let stationGameEntriesCost = 0;
-    let totalGamesCount = 0;
     let isAccumulatedGames = false;
 
     if (isGamesMode) {
@@ -124,7 +123,6 @@ export async function POST(request: NextRequest) {
         }
 
         billiardGameEntriesCost = calculateBilliardGameEntriesCost(gameEntries ?? []);
-        totalGamesCount = (gameEntries ?? []).reduce((sum, e) => sum + e.games_count, 0);
         pricingUnit = "game";
       } else {
         const { data: stationEntries, error: entriesError } = await supabase
@@ -145,7 +143,6 @@ export async function POST(request: NextRequest) {
         if (stationSessionUsesEntriesModel(session.games_model, gameEntries.length)) {
           isAccumulatedGames = true;
           stationGameEntriesCost = calculateStationGameEntriesCost(gameEntries);
-          totalGamesCount = gameEntries.reduce((sum, e) => sum + e.games_count, 0);
           pricingUnit = "game";
         }
       }

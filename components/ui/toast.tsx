@@ -44,7 +44,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const playSuccessSound = () => {
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as Window & { webkitAudioContext?: typeof AudioContext })
+          .webkitAudioContext;
       if (!AudioContextClass) return;
       const ctx = new AudioContextClass();
 

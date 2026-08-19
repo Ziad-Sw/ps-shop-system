@@ -81,7 +81,12 @@ export default function ExpensesList({
 
     setIsSaving(true);
     try {
-      const body: any = {
+      const body: {
+        description: string;
+        amount: number;
+        expense_date: string;
+        category?: string;
+      } = {
         description: formDescription.trim(),
         amount,
         expense_date: formDate,

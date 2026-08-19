@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getShopIdFromRequest } from "@/lib/auth/require-shop";
 import { assertPermission, PermissionError, getUserIdFromRequest } from "@/lib/auth/permissions";
+import type { Database } from "@/types";
 
 async function getExpenseForShop(
   supabase: ReturnType<typeof createAdminClient>,
@@ -44,7 +45,7 @@ export async function PUT(
       return NextResponse.json({ error: "المصروف غير موجود." }, { status: 404 });
     }
 
-    const update: any = {};
+    const update: Database["public"]["Tables"]["expenses"]["Update"] = {};
 
     if (description !== undefined) {
       if (typeof description !== "string" || description.trim().length === 0) {

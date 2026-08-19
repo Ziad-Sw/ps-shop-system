@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getShopIdFromRequest } from "@/lib/auth/require-shop";
@@ -6,7 +6,7 @@ import { getShopIdFromRequest } from "@/lib/auth/require-shop";
 /**
  * GET /api/shifts/current — returns the currently open shift for the shop, or null if none.
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const shopId = await getShopIdFromRequest();
     if (!shopId) {

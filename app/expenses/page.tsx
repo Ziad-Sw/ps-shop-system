@@ -7,6 +7,7 @@ import {
   verifySessionCookieValue,
 } from "@/lib/auth/session";
 import { getUserPermissions } from "@/lib/auth/permissions";
+import type { Database } from "@/types";
 import ExpensesList from "@/components/expenses/expenses-list";
 
 async function getCurrentUser() {
@@ -72,17 +73,19 @@ async function getExpenses(shopId: string) {
     .order("expense_date", { ascending: false })
     .order("created_at", { ascending: false });
 
-  return (data ?? []).map((row: any) => ({
-    id: row.id,
-    shop_id: row.shop_id,
-    shift_id: row.shift_id,
-    description: row.description,
-    amount: Number(row.amount),
-    category: row.category,
-    expense_date: row.expense_date,
-    created_at: row.created_at,
-    shift_number: row.shifts?.shift_number ?? null,
-  }));
+  return (data ?? []).map(
+    (row: Database["public"]["Tables"]["expenses"]["Row"] & { shifts: { shift_number: number } | null }) => ({
+      id: row.id,
+      shop_id: row.shop_id,
+      shift_id: row.shift_id,
+      description: row.description,
+      amount: Number(row.amount),
+      category: row.category,
+      expense_date: row.expense_date,
+      created_at: row.created_at,
+      shift_number: row.shifts?.shift_number ?? null,
+    })
+  );
 }
 
 export default async function ExpensesPage() {

@@ -7,7 +7,7 @@ import { assertPermission, PermissionError, getUserIdFromRequest } from "@/lib/a
 /**
  * Returns all active products (drinks) for the authenticated shop.
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const shopId = await getShopIdFromRequest();
     if (!shopId) {

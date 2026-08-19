@@ -8,7 +8,7 @@ import {
 } from "@/lib/auth/session";
 import { assertPermission, PermissionError } from "@/lib/auth/permissions";
 import { isMissingGamesModelColumn } from "@/lib/sessions/games-model";
-import type { BillingMode, PlayType, PlaySubtype } from "@/types";
+import type { Database } from "@/types";
 
 /**
  * POST /api/sessions/start — starts a new session on a station
@@ -273,7 +273,7 @@ export async function POST(request: NextRequest) {
 
     let { data: newSession, error: sessionError } = await supabase
       .from("sessions")
-      .insert(insertData as any)
+      .insert(insertData as Database["public"]["Tables"]["sessions"]["Insert"])
       .select()
       .maybeSingle();
 
@@ -282,7 +282,7 @@ export async function POST(request: NextRequest) {
       delete insertDataWithoutGamesModel.games_model;
       const fallbackInsert = await supabase
         .from("sessions")
-        .insert(insertDataWithoutGamesModel as any)
+        .insert(insertDataWithoutGamesModel as Database["public"]["Tables"]["sessions"]["Insert"])
         .select()
         .maybeSingle();
 
