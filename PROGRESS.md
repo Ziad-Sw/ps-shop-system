@@ -3187,4 +3187,32 @@ Mirrored the PS/pingpong default-selection change in `components/sessions/sessio
 ### الخطوة التالية
 اختبار Ziad اليدوي على الموبايل والديستوب: فتح قائمة مشروب في جلسة، التمرير داخل كارد المودال، والتحقق من أن القائمة تطفو فوق المحتوى وتملأ الاتجاه RTL بشكل صحيح.
 
+---
+
+## تنظيف 16 — الدفعة الأولى من التنظيف الآمن (7 بنود مؤكّدة من فحص 14)
+
+**Commit:** `3811eae` — `chore: clean up unused imports, dead variables, and any-types (safe cleanup batch 1)`
+
+### ما تم تنظيفه (7 بنود — لا تغيير في السلوك إطلاقًا)
+1. **استيراد غير مستخدم** في `app/api/sessions/start/route.ts:11`: حذف `import type { BillingMode, PlayType, PlaySubtype }` (غير مستخدمة في الملف) واستبداله بـ `import type { Database }` (لازم للبند 4).
+2. **معامل `request` غير المستخدم** في GET routes الثلاثة: `app/api/products/route.ts` و `app/api/sessions/active/route.ts` و `app/api/shifts/current/route.ts` → حُذف المعامل (Next.js لا يتطلبه في route handlers الثابتة)، مع إزالة استيراد `NextRequest` من الملفين اللذين لا يستخدمانه في POST.
+3. **متغيّر ميت `totalGamesCount`** في `app/api/sessions/confirm-close/route.ts` (الإعلان + التعيينان في فرعي billiard/station) — لم يكن يُقرأ في أي مكان.
+4. **أنواع `any`**:
+   - `app/api/expenses/route.ts` → `(row: any)` و `insertData: any` (منسّقان) إلى `expenses Row` مع علاقة `shifts`، ونوع `Insert` من قاعدة الأنواع.
+   - `app/api/expenses/[id]/route.ts` → `update: any` إلى `expenses Update`.
+   - `app/expenses/page.tsx` → `(row: any)` إلى نفس النوع الموحّد.
+   - `components/expenses/expenses-list.tsx` → `body: any` إلى interface صريح مع `category?`.
+   - `app/api/sessions/start/route.ts:276,285` → `insertData as any` إلى `Database[...]["sessions"]["Insert"]`.
+   - `components/ui/toast.tsx:47` → `(window as any).webkitAudioContext` إلى `Window & { webkitAudioContext?: typeof AudioContext }`.
+
+### التحقق
+- `npx tsc --noEmit` → بدون أخطاء.
+- `npx eslint .` → البنود السبعة انتهت؛ الأخطاء/التحذيرات المتبقية كلها من قائمة "تحتاج تأكيد" في فحص 14 (stations-grid، numeric-input، receipt-popup، toast purity، img warnings، و `stations/list/route.ts` غير المشمول).
+- `git diff` → 10 ملفات بالضبط (قائمة البنود)، لا شيء آخر.
+- **clean-code-guard:** clean — سلوك محفوظ حرفيًا، لا تغيير في أي منطق/رسالة/عقد API.
+- **test-guard:** لا ينطبق — المشروع لا يحتوي على test runner.
+
+### الخطوة التالية
+بانتظار موافقة Ziad على بنود التنظيف المتبقية (1–7 من فحص 14 و/أو إعادة الهيكلة 13–16).
+
 
