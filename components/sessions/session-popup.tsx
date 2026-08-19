@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Station, Session, Product, BilliardGameEntry, StationGameEntry } from "@/types/database";
 import type { BillingMode, PlayType, PlaySubtype, PricingMode } from "@/types/database";
 import { calculateGameEntrySubtotal, calculateBilliardGameEntriesCost, calculateStationGameEntriesCost } from "@/lib/pricing/calculation";
@@ -33,6 +34,12 @@ export function SessionPopup({
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [isProductMenuOpen, setIsProductMenuOpen] = useState(false);
   const productMenuRef = useRef<HTMLDivElement>(null);
+  const productMenuListRef = useRef<HTMLDivElement>(null);
+  const [productMenuPosition, setProductMenuPosition] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
@@ -102,12 +109,31 @@ export function SessionPopup({
     }
   }, []);
 
+  // Position the product menu list relative to the trigger (ported to document.body)
+  const updateProductMenuPosition = useCallback(() => {
+    const trigger = productMenuRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const listHeight = 280;
+    const gap = 4;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const opensAbove = spaceBelow < listHeight + gap;
+    setProductMenuPosition({
+      top: opensAbove ? rect.top - listHeight - gap : rect.bottom + gap,
+      left: rect.left,
+      width: rect.width,
+    });
+  }, []);
+
   // Close the product menu when clicking outside of it
   useEffect(() => {
     if (!isProductMenuOpen) return;
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (productMenuRef.current && !productMenuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const isInsideTrigger = productMenuRef.current?.contains(target);
+      const isInsideList = productMenuListRef.current?.contains(target);
+      if (!isInsideTrigger && !isInsideList) {
         setIsProductMenuOpen(false);
       }
     };
@@ -125,6 +151,22 @@ export function SessionPopup({
       document.removeEventListener("keydown", handleEscape);
     };
   }, [isProductMenuOpen]);
+
+  // Recalculate the menu position when the page or popup scrolls / resizes while open
+  useEffect(() => {
+    if (!isProductMenuOpen) return;
+
+    const handleReposition = () => {
+      updateProductMenuPosition();
+    };
+
+    window.addEventListener("resize", handleReposition);
+    window.addEventListener("scroll", handleReposition, true);
+    return () => {
+      window.removeEventListener("resize", handleReposition);
+      window.removeEventListener("scroll", handleReposition, true);
+    };
+  }, [isProductMenuOpen, updateProductMenuPosition]);
 
   const fetchSaleItems = useCallback(async (sessionId: string) => {
     try {
@@ -1256,8 +1298,13 @@ export function SessionPopup({
                   <div ref={productMenuRef} className="relative">
                     <button
                       type="button"
-                      onClick={() => setIsProductMenuOpen((v) => !v)}
-                      className="w-full appearance-none rounded-lg bg-surface-page px-3 py-2 text-left text-foreground outline-none focus:ring-2 focus:ring-primary"
+                      onClick={() => {
+                        if (!isProductMenuOpen) {
+                          updateProductMenuPosition();
+                        }
+                        setIsProductMenuOpen((v) => !v);
+                      }}
+                      className="w-full appearance-none rounded-lg bg-surface-page py-2 pr-3 pl-8 text-right text-foreground outline-none focus:ring-2 focus:ring-primary"
                     >
                       {selectedProduct
                         ? `${selectedProduct.name} - ${selectedProduct.price} ج.م`
@@ -1277,41 +1324,52 @@ export function SessionPopup({
                     >
                       <path d="m6 9 6 6 6-6" />
                     </svg>
-                    {isProductMenuOpen && (
-                      <div className="absolute left-0 right-0 z-20 mt-1 max-h-[280px] overflow-y-auto rounded-lg border border-foreground-muted/20 bg-surface-card shadow-2xl scrollbar-dark">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedProductId("");
-                            setIsProductMenuOpen(false);
+                    {isProductMenuOpen &&
+                      productMenuPosition &&
+                      createPortal(
+                        <div
+                          ref={productMenuListRef}
+                          className="fixed z-[60] max-h-[280px] overflow-y-auto rounded-lg border border-foreground-muted/20 bg-surface-card shadow-2xl scrollbar-dark"
+                          style={{
+                            top: productMenuPosition.top,
+                            left: productMenuPosition.left,
+                            width: productMenuPosition.width,
                           }}
-                          className={`w-full px-3 py-2 text-left hover:bg-surface-page ${
-                            !selectedProduct
-                              ? "bg-surface-page text-foreground"
-                              : "text-foreground-muted"
-                          }`}
                         >
-                          اختر مشروب
-                        </button>
-                        {products.map((product) => (
                           <button
-                            key={product.id}
                             type="button"
                             onClick={() => {
-                              setSelectedProductId(product.id);
+                              setSelectedProductId("");
                               setIsProductMenuOpen(false);
                             }}
-                            className={`w-full px-3 py-2 text-left hover:bg-surface-page ${
-                              product.id === selectedProductId
+                            className={`w-full px-3 py-2 text-right hover:bg-surface-page ${
+                              !selectedProduct
                                 ? "bg-surface-page text-foreground"
                                 : "text-foreground-muted"
                             }`}
                           >
-                            {product.name} - {product.price} ج.م
+                            اختر مشروب
                           </button>
-                        ))}
-                      </div>
-                    )}
+                          {products.map((product) => (
+                            <button
+                              key={product.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedProductId(product.id);
+                                setIsProductMenuOpen(false);
+                              }}
+                              className={`w-full px-3 py-2 text-right hover:bg-surface-page ${
+                                product.id === selectedProductId
+                                  ? "bg-surface-page text-foreground"
+                                  : "text-foreground-muted"
+                              }`}
+                            >
+                              {product.name} - {product.price} ج.م
+                            </button>
+                          ))}
+                        </div>,
+                        document.body
+                      )}
                   </div>
 
                   <div className="flex gap-3">
