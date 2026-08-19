@@ -42,7 +42,9 @@ export function ShiftControl({ canManageShifts = true }: ShiftControlProps) {
   };
 
   useEffect(() => {
-    fetchCurrentShift();
+    (async () => {
+      await fetchCurrentShift();
+    })();
   }, []);
 
   const handleOpenShift = async (responsibleName: string) => {
