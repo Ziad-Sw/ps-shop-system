@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { User, StaffPermissions } from "@/types/database";
 import { useToast } from "@/components/ui/toast";
+import { formatCount } from "@/lib/format/number";
 
 interface TeamManagementFormProps {
   initialTeamMembers: User[];
@@ -187,7 +188,7 @@ export default function TeamManagementForm({
       {/* Active Members Section */}
       <div className="rounded-xl bg-surface-card p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">
-          الأعضاء النشطون ({teamMembers.length})
+          الأعضاء النشطون ({formatCount(teamMembers.length)})
         </h2>
 
         {teamMembers.length === 0 ? (

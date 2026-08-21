@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/components/ui/toast";
+import { formatCount } from "@/lib/format/number";
 import { formatTime } from "@/lib/format/time";
 
 interface CloseShiftModalProps {
@@ -72,7 +73,7 @@ export function CloseShiftModal({
           </div>
           <div className="flex justify-between text-neutral-300">
             <span>رقم الوردية:</span>
-            <span className="text-white font-medium">{shift.shift_number}</span>
+            <span className="text-white font-medium">{formatCount(shift.shift_number)}</span>
           </div>
           <div className="flex justify-between text-neutral-300">
             <span>وقت الفتح:</span>

@@ -95,6 +95,7 @@ export function NumericInput({
       min={min}
       max={max}
       step={step}
+      lang="en"
       placeholder={placeholder}
       required={required}
       disabled={disabled}

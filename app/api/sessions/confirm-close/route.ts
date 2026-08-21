@@ -3,8 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getShopIdFromRequest } from "@/lib/auth/require-shop";
 import { assertPermission, PermissionError, getUserIdFromRequest } from "@/lib/auth/permissions";
-import { calculateSessionCost, calculateBilliardGameEntriesCost, calculateStationGameEntriesCost } from "@/lib/pricing/calculation";
+import { calculateSessionCost, calculateBilliardGameEntriesCost, calculateStationGameEntriesCost, calculateGameEntriesCount } from "@/lib/pricing/calculation";
 import { isMissingGamesModelColumn, stationSessionUsesEntriesModel } from "@/lib/sessions/games-model";
+import type { Database } from "@/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -103,6 +104,7 @@ export async function POST(request: NextRequest) {
     let pricingUnit: "hour" | "game" = unit;
     let billiardGameEntriesCost = 0;
     let stationGameEntriesCost = 0;
+    let accumulatedGamesCount = 0;
     let isAccumulatedGames = false;
 
     if (isGamesMode) {
@@ -122,7 +124,9 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        billiardGameEntriesCost = calculateBilliardGameEntriesCost(gameEntries ?? []);
+        const billiardGameEntries = gameEntries ?? [];
+        billiardGameEntriesCost = calculateBilliardGameEntriesCost(billiardGameEntries);
+        accumulatedGamesCount = calculateGameEntriesCount(billiardGameEntries);
         pricingUnit = "game";
       } else {
         const { data: stationEntries, error: entriesError } = await supabase
@@ -143,6 +147,7 @@ export async function POST(request: NextRequest) {
         if (stationSessionUsesEntriesModel(session.games_model, gameEntries.length)) {
           isAccumulatedGames = true;
           stationGameEntriesCost = calculateStationGameEntriesCost(gameEntries);
+          accumulatedGamesCount = calculateGameEntriesCount(gameEntries);
           pricingUnit = "game";
         }
       }
@@ -202,14 +207,20 @@ export async function POST(request: NextRequest) {
       station_game_entries_cost: stationGameEntriesCost,
     });
 
+    const sessionUpdate: Database["public"]["Tables"]["sessions"]["Update"] = {
+      end_time: new Date().toISOString(),
+      status: "completed",
+      duration_hours: costResult.duration_hours,
+      calculated_cost: costResult.total_cost,
+    };
+
+    if (isAccumulatedGames) {
+      sessionUpdate.games_count = accumulatedGamesCount;
+    }
+
     const { data: updatedSession, error: updateError } = await supabase
       .from("sessions")
-      .update({
-        end_time: new Date().toISOString(),
-        status: "completed",
-        duration_hours: costResult.duration_hours,
-        calculated_cost: costResult.total_cost,
-      })
+      .update(sessionUpdate)
       .eq("id", session_id)
       .eq("shop_id", shopId)
       .select()

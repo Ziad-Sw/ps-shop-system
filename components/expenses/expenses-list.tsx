@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { NumericInput } from "@/components/ui/numeric-input";
 import { useToast } from "@/components/ui/toast";
+import { formatCount, formatCurrency } from "@/lib/format/number";
 import { formatDate } from "@/lib/format/time";
 
 interface Expense {
@@ -222,11 +223,11 @@ export default function ExpensesList({
                     {expense.category || "—"}
                   </td>
                   <td className="px-4 py-3 text-sm text-foreground font-medium">
-                    {Number(expense.amount).toLocaleString()}
+                    {formatCurrency(Number(expense.amount))}
                   </td>
                   <td className="px-4 py-3 text-sm text-foreground-muted">
                     {expense.shift_number
-                      ? `#${expense.shift_number}`
+                      ? `#${formatCount(expense.shift_number)}`
                       : "—"}
                   </td>
                   {canEdit && (

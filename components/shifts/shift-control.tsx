@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/toast";
+import { formatCount } from "@/lib/format/number";
 import { formatTime } from "@/lib/format/time";
 import { OpenShiftModal } from "./open-shift-modal";
 import { CloseShiftModal } from "./close-shift-modal";
@@ -118,7 +119,7 @@ export function ShiftControl({ canManageShifts = true }: ShiftControlProps) {
                   </span>
                 </div>
                 <div className="flex items-center gap-3 text-neutral-400 text-sm">
-                  <span>رقم {currentShift.shift_number}</span>
+                  <span>رقم {formatCount(currentShift.shift_number)}</span>
                   <span>•</span>
                   <span>من {formatTime(currentShift.opened_at)}</span>
                 </div>

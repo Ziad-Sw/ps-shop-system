@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { formatCurrency, formatCount } from "@/lib/format/number";
 import { formatTime } from "@/lib/format/time";
 import { Station, Session } from "@/types/database";
 import { useToast } from "@/components/ui/toast";
@@ -174,7 +175,7 @@ export function ReceiptPopup({
           <div className="mt-1 text-lg font-semibold text-foreground">{station.name}</div>
           {receiptData.unit === "game" ? (
             <div className="mt-2 text-sm text-foreground-muted">
-              عدد الجيمات: {receiptData.games_count ?? 0}
+              عدد الجيمات: {formatCount(receiptData.games_count ?? 0)}
             </div>
           ) : (
             <>
@@ -196,7 +197,7 @@ export function ReceiptPopup({
               <span className="text-foreground-muted">
                 {receiptData.unit === "game" ? "تكلفة اللعب" : "تكلفة الوقت"}
               </span>
-              <span className="text-foreground">{receiptData.time_cost.toFixed(2)} ج.م</span>
+              <span className="text-foreground">{formatCurrency(receiptData.time_cost)}</span>
             </div>
           ) : null}
 
@@ -216,21 +217,21 @@ export function ReceiptPopup({
                           : entry.play_subtype === "triple"
                             ? "متولتة"
                             : "مربعة"}{" "}
-                      × {entry.games_count}
+                      × {formatCount(entry.games_count)}
                     </span>
                   ) : (
                     <span className="text-foreground-muted">
-                      {entry.mode === "single" ? "فردي" : "مالتي"} × {entry.games_count}
+                      {entry.mode === "single" ? "فردي" : "مالتي"} × {formatCount(entry.games_count)}
                     </span>
                   )}
                   <span className="text-foreground">
-                    {calculateGameEntrySubtotal(entry.games_count, entry.price_per_game).toFixed(2)} ج.م
+                    {formatCurrency(calculateGameEntrySubtotal(entry.games_count, entry.price_per_game))}
                   </span>
                 </div>
               ))}
               <div className="flex justify-between text-sm pt-1">
                 <span className="text-foreground-muted">إجمالي الجيمات</span>
-                <span className="text-foreground">{receiptData.game_entries_cost.toFixed(2)} ج.م</span>
+                <span className="text-foreground">{formatCurrency(receiptData.game_entries_cost)}</span>
               </div>
             </div>
           )}
@@ -242,14 +243,14 @@ export function ReceiptPopup({
               {receiptData.items.map((item) => (
                 <div key={item.id} className="flex justify-between text-sm py-1">
                   <span className="text-foreground-muted">
-                    {item.product_name} × {item.quantity}
+                    {item.product_name} × {formatCount(item.quantity)}
                   </span>
-                  <span className="text-foreground">{item.total_price.toFixed(2)} ج.م</span>
+                  <span className="text-foreground">{formatCurrency(item.total_price)}</span>
                 </div>
               ))}
               <div className="flex justify-between text-sm pt-1">
                 <span className="text-foreground-muted">إجمالي المشروبات</span>
-                <span className="text-foreground">{receiptData.drinks_cost.toFixed(2)} ج.م</span>
+                <span className="text-foreground">{formatCurrency(receiptData.drinks_cost)}</span>
               </div>
             </div>
           )}
@@ -258,7 +259,7 @@ export function ReceiptPopup({
           <div className="border-t border-foreground-muted/20 pt-3">
             <div className="flex justify-between text-lg font-semibold">
               <span className="text-foreground">الإجمالي</span>
-              <span className="text-primary">{receiptData.total_cost.toFixed(2)} ج.م</span>
+              <span className="text-primary">{formatCurrency(receiptData.total_cost)}</span>
             </div>
           </div>
         </div>

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getShopIdFromRequest } from "@/lib/auth/require-shop";
 import { assertPermission, PermissionError, getUserIdFromRequest } from "@/lib/auth/permissions";
-import { calculateSessionCost, calculateBilliardGameEntriesCost, calculateStationGameEntriesCost, formatDuration } from "@/lib/pricing/calculation";
+import { calculateSessionCost, calculateBilliardGameEntriesCost, calculateStationGameEntriesCost, calculateGameEntriesCount, formatDuration } from "@/lib/pricing/calculation";
 import { isMissingGamesModelColumn, stationSessionUsesEntriesModel } from "@/lib/sessions/games-model";
 
 export async function POST(request: NextRequest) {
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
 
         const gameEntries = entries ?? [];
         billiardGameEntriesCost = calculateBilliardGameEntriesCost(gameEntries);
-        totalGamesCount = gameEntries.reduce((sum, e) => sum + e.games_count, 0);
+        totalGamesCount = calculateGameEntriesCount(gameEntries);
         pricingUnit = "game";
         formattedGameEntries = gameEntries.map((entry) => ({
           id: entry.id,
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
         if (stationSessionUsesEntriesModel(session.games_model, stationEntries.length)) {
           isAccumulatedGames = true;
           stationGameEntriesCost = calculateStationGameEntriesCost(stationEntries);
-          totalGamesCount = stationEntries.reduce((sum, e) => sum + e.games_count, 0);
+          totalGamesCount = calculateGameEntriesCount(stationEntries);
           pricingUnit = "game";
           formattedGameEntries = stationEntries.map((entry) => ({
             id: entry.id,

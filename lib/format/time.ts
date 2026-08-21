@@ -1,4 +1,5 @@
-const DISPLAY_LOCALE = "en-US";
+const DISPLAY_TIME_LOCALE = "en-US";
+const DISPLAY_DATE_LOCALE = "ar-EG-u-nu-latn";
 const DISPLAY_TIME_ZONE = "Africa/Cairo";
 
 function toDate(value: string | Date): Date {
@@ -6,7 +7,7 @@ function toDate(value: string | Date): Date {
 }
 
 export function formatTime(iso: string | Date): string {
-  return new Intl.DateTimeFormat(DISPLAY_LOCALE, {
+  return new Intl.DateTimeFormat(DISPLAY_TIME_LOCALE, {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
@@ -15,20 +16,20 @@ export function formatTime(iso: string | Date): string {
 }
 
 export function formatDateTime(iso: string | Date): string {
-  return new Intl.DateTimeFormat(DISPLAY_LOCALE, {
+  const date = toDate(iso);
+  const formattedDate = new Intl.DateTimeFormat(DISPLAY_DATE_LOCALE, {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
     timeZone: DISPLAY_TIME_ZONE,
-  }).format(toDate(iso));
+  }).format(date);
+
+  return `${formattedDate}، ${formatTime(date)}`;
 }
 
 export function formatDate(iso: string | Date): string {
-  return new Intl.DateTimeFormat(DISPLAY_LOCALE, {
+  return new Intl.DateTimeFormat(DISPLAY_DATE_LOCALE, {
     weekday: "long",
     year: "numeric",
     month: "long",

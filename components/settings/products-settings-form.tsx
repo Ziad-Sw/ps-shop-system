@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { NumericInput } from "@/components/ui/numeric-input";
 import { useToast } from "@/components/ui/toast";
+import { formatCurrency } from "@/lib/format/number";
 
 interface Product {
   id: string;
@@ -243,7 +244,7 @@ export default function ProductsSettingsForm({
                       disabled={!canEdit || isSavingEdit}
                     />
                   ) : (
-                    <div className="text-foreground">{product.price}</div>
+                    <div className="text-foreground">{formatCurrency(product.price)}</div>
                   )}
                 </div>
                 {editingProductId === product.id ? (

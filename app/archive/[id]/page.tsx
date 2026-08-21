@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import AuthenticatedShell from "@/components/layout/authenticated-shell";
+import { formatCurrency, formatCount } from "@/lib/format/number";
 import { formatDateTime, formatTime } from "@/lib/format/time";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -126,10 +127,6 @@ async function getShiftDetail(
   };
 }
 
-function formatCurrency(value: number): string {
-  return value.toLocaleString("ar-EG") + " ج.م";
-}
-
 function getStationTypeLabel(stationType: string): string {
   switch (stationType) {
     case "playstation": return "بلايستيشن";
@@ -193,7 +190,7 @@ export default async function ShiftDetailPage({
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <h1 className="text-2xl font-semibold text-foreground">
-                الوردية #{shift.shift_number}
+                الوردية #{formatCount(shift.shift_number)}
               </h1>
               <p className="mt-1 text-sm text-foreground-muted">
                 {formatDateTime(shift.opened_at)}
@@ -232,7 +229,7 @@ export default async function ShiftDetailPage({
         {/* Sessions */}
         <div className="rounded-xl bg-surface-card p-6">
           <h2 className="text-lg font-semibold text-foreground mb-4">
-            الجلسات ({shift.sessions.length})
+            الجلسات ({formatCount(shift.sessions.length)})
           </h2>
 
           {shift.sessions.length === 0 ? (
@@ -263,7 +260,7 @@ export default async function ShiftDetailPage({
                       </td>
                       <td className="py-3 px-2 text-foreground-muted">
                         {session.billing_mode === "games"
-                          ? `${session.games_count ?? 0} جيم`
+                          ? `${formatCount(session.games_count ?? 0)} جيم`
                           : formatDuration(session.start_time, session.end_time)}
                       </td>
                       <td className="py-3 px-2 text-foreground font-medium">
@@ -282,7 +279,7 @@ export default async function ShiftDetailPage({
         {/* Sale Items */}
         <div className="rounded-xl bg-surface-card p-6">
           <h2 className="text-lg font-semibold text-foreground mb-4">
-            المبيعات ({shift.sale_items.length})
+            المبيعات ({formatCount(shift.sale_items.length)})
           </h2>
 
           {shift.sale_items.length === 0 ? (
@@ -305,7 +302,7 @@ export default async function ShiftDetailPage({
                         {item.products?.name ?? "—"}
                       </td>
                       <td className="py-3 px-2 text-foreground-muted">
-                        {item.quantity}
+                        {formatCount(item.quantity)}
                       </td>
                       <td className="py-3 px-2 text-foreground-muted">
                         {formatCurrency(Number(item.unit_price))}

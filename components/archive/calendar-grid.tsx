@@ -2,15 +2,12 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { formatCount, formatCurrency } from "@/lib/format/number";
 import { formatDate, formatTime } from "@/lib/format/time";
 import type { ArchiveShift } from "@/types/archive";
 
 interface CalendarGridProps {
   shifts: ArchiveShift[];
-}
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString("ar-EG") + " ج.م";
 }
 
 function toDateStr(date: Date): string {
@@ -64,7 +61,7 @@ export default function CalendarGrid({ shifts }: CalendarGridProps) {
       {/* Numbered Grid */}
       <div className="rounded-xl bg-surface-card p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">
-          آخر 30 يوم
+          آخر {formatCount(30)} يوم
         </h2>
 
         <div className="grid grid-cols-6 gap-2">
@@ -89,7 +86,7 @@ export default function CalendarGrid({ shifts }: CalendarGridProps) {
                 `}
                 title={formatDate(day.date)}
               >
-                <span className="font-semibold text-base">{day.number}</span>
+                <span className="font-semibold text-base">{formatCount(day.number)}</span>
                 {hasShifts && (
                   <span
                     className={`mt-0.5 h-1.5 w-1.5 rounded-full ${
@@ -134,7 +131,7 @@ export default function CalendarGrid({ shifts }: CalendarGridProps) {
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className="font-medium text-foreground">
-                        الوردية #{shift.shift_number}
+                        الوردية #{formatCount(shift.shift_number)}
                       </span>
                       <span className="text-xs text-foreground-muted">
                         {formatTime(shift.opened_at)} — {formatTime(shift.closed_at)}
@@ -157,7 +154,7 @@ export default function CalendarGrid({ shifts }: CalendarGridProps) {
       {/* Summary: All shifts listed for deep linking */}
       <div className="rounded-xl bg-surface-card p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4">
-          جميع الورديات ({shifts.length})
+          جميع الورديات ({formatCount(shifts.length)})
         </h3>
 
         {shifts.length === 0 ? (
@@ -174,7 +171,7 @@ export default function CalendarGrid({ shifts }: CalendarGridProps) {
               >
                 <div className="flex items-center gap-3 flex-wrap min-w-0">
                   <span className="font-medium text-foreground text-sm whitespace-nowrap">
-                    الوردية #{shift.shift_number}
+                    الوردية #{formatCount(shift.shift_number)}
                   </span>
                   <span className="text-xs text-foreground-muted whitespace-nowrap">
                     {formatDate(shift.opened_at)}

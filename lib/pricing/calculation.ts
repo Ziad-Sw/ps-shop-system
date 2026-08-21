@@ -102,6 +102,12 @@ export function calculateStationGameEntriesCost(
   return sumGameEntries(entries);
 }
 
+export function calculateGameEntriesCount(
+  entries: { games_count: number }[]
+): number {
+  return entries.reduce((sum, entry) => sum + entry.games_count, 0);
+}
+
 /**
  * Format duration for display (e.g., "1h 30m", "45m", "2h")
  */

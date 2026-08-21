@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Station, Session, Product, BilliardGameEntry, StationGameEntry } from "@/types/database";
 import type { BillingMode, PlayType, PlaySubtype, PricingMode } from "@/types/database";
-import { calculateGameEntrySubtotal, calculateBilliardGameEntriesCost, calculateStationGameEntriesCost } from "@/lib/pricing/calculation";
+import { calculateGameEntrySubtotal, calculateBilliardGameEntriesCost, calculateStationGameEntriesCost, calculateGameEntriesCount } from "@/lib/pricing/calculation";
+import { formatCurrency, formatCount } from "@/lib/format/number";
 import { ReceiptPopup } from "./receipt-popup";
 import { useToast } from "@/components/ui/toast";
 import { NumericInput } from "@/components/ui/numeric-input";
@@ -260,9 +261,9 @@ export function SessionPopup({
       const minutes = diffMinutes % 60;
 
       if (hours > 0) {
-        setElapsedTime(`${hours}س ${minutes}د`);
+        setElapsedTime(`${formatCount(hours)}س ${formatCount(minutes)}د`);
       } else {
-        setElapsedTime(`${minutes}د`);
+        setElapsedTime(`${formatCount(minutes)}د`);
       }
     };
 
@@ -650,19 +651,19 @@ export function SessionPopup({
               <>
                 {isGameBased && station.station_type === "billiard" ? (
                   <div className="mt-3 text-sm text-green-400">
-                    عدد الجيمات: {gameEntries.reduce((sum, e) => sum + e.games_count, 0)}
+                    عدد الجيمات: {formatCount(calculateGameEntriesCount(gameEntries))}
                   </div>
                 ) : isGameBased && isLegacyStationGames ? (
                   <div className="mt-3 text-sm text-green-400">
-                    عدد الجيمات: {gamesCount}
+                    عدد الجيمات: {formatCount(gamesCount)}
                   </div>
                 ) : isGameBased && station.station_type !== "billiard" ? (
                   <div className="mt-3 text-sm text-green-400">
-                    عدد الجيمات: {stationGameEntries.reduce((sum, e) => sum + e.games_count, 0)}
+                    عدد الجيمات: {formatCount(calculateGameEntriesCount(stationGameEntries))}
                   </div>
                 ) : isGameBased ? (
                   <div className="mt-3 text-sm text-green-400">
-                    عدد الجيمات: {gamesCount}
+                    عدد الجيمات: {formatCount(gamesCount)}
                   </div>
                 ) : (
                   elapsedTime && (
@@ -1038,11 +1039,11 @@ export function SessionPopup({
                           {stationGameEntries.map((entry) => (
                             <div key={entry.id} className="flex items-center justify-between text-sm">
                               <span className="text-foreground-muted">
-                                {entry.mode === "single" ? "فردي" : "مالتي"} × {entry.games_count}
+                                {entry.mode === "single" ? "فردي" : "مالتي"} × {formatCount(entry.games_count)}
                               </span>
                               <div className="flex items-center gap-2">
                                 <span className="text-foreground">
-                                  {calculateGameEntrySubtotal(entry.games_count, entry.price_per_game).toFixed(2)} ج.م
+                                  {formatCurrency(calculateGameEntrySubtotal(entry.games_count, entry.price_per_game))}
                                 </span>
                                 <button
                                   onClick={() => handleRemoveStationGameEntry(entry.id)}
@@ -1067,7 +1068,7 @@ export function SessionPopup({
                           <div className="flex justify-between border-t border-foreground-muted/20 pt-2 text-sm font-medium">
                             <span className="text-foreground-muted">إجمالي الجيمات</span>
                             <span className="text-foreground">
-                              {calculateStationGameEntriesCost(stationGameEntries).toFixed(2)} ج.م
+                              {formatCurrency(calculateStationGameEntriesCost(stationGameEntries))}
                             </span>
                           </div>
                         </div>
@@ -1129,11 +1130,11 @@ export function SessionPopup({
                                 : entry.play_subtype === "triple"
                                   ? "متولتة"
                                   : "مربعة"}{" "}
-                            × {entry.games_count}
+                            × {formatCount(entry.games_count)}
                           </span>
                           <div className="flex items-center gap-2">
                             <span className="text-foreground">
-                              {calculateGameEntrySubtotal(entry.games_count, entry.price_per_game).toFixed(2)} ج.م
+                              {formatCurrency(calculateGameEntrySubtotal(entry.games_count, entry.price_per_game))}
                             </span>
                             <button
                               onClick={() => handleRemoveGameEntry(entry.id)}
@@ -1158,8 +1159,7 @@ export function SessionPopup({
                       <div className="flex justify-between border-t border-foreground-muted/20 pt-2 text-sm font-medium">
                         <span className="text-foreground-muted">إجمالي الجيمات</span>
                         <span className="text-foreground">
-                          {calculateBilliardGameEntriesCost(gameEntries).toFixed(2)}{" "}
-                          ج.م
+                          {formatCurrency(calculateBilliardGameEntriesCost(gameEntries))}
                         </span>
                       </div>
                     </div>
@@ -1307,7 +1307,7 @@ export function SessionPopup({
                       className="w-full appearance-none rounded-lg bg-surface-page py-2 pr-3 pl-8 text-right text-foreground outline-none focus:ring-2 focus:ring-primary"
                     >
                       {selectedProduct
-                        ? `${selectedProduct.name} - ${selectedProduct.price} ج.م`
+                        ? `${selectedProduct.name} - ${formatCurrency(selectedProduct.price)}`
                         : "اختر مشروب"}
                     </button>
                     <svg
@@ -1364,7 +1364,7 @@ export function SessionPopup({
                                   : "text-foreground-muted"
                               }`}
                             >
-                              {product.name} - {product.price} ج.م
+                              {product.name} - {formatCurrency(product.price)}
                             </button>
                           ))}
                         </div>,
@@ -1399,10 +1399,10 @@ export function SessionPopup({
                     {saleItems.map((item) => (
                       <div key={item.id} className="flex items-center justify-between text-sm">
                         <span className="text-foreground-muted">
-                          {item.product_name} × {item.quantity}
+                          {item.product_name} × {formatCount(item.quantity)}
                         </span>
                         <div className="flex items-center gap-2">
-                          <span className="text-foreground">{item.total_price.toFixed(2)} ج.م</span>
+                          <span className="text-foreground">{formatCurrency(item.total_price)}</span>
                           <button
                             onClick={() => handleRemoveProduct(item.id)}
                             disabled={removingItemId === item.id}
@@ -1427,7 +1427,7 @@ export function SessionPopup({
                   <div className="mt-2 flex justify-between border-t border-foreground-muted/20 pt-2 text-sm font-medium">
                     <span className="text-foreground-muted">إجمالي المشروبات</span>
                     <span className="text-foreground">
-                      {saleItems.reduce((sum, item) => sum + item.total_price, 0).toFixed(2)} ج.م
+                      {formatCurrency(saleItems.reduce((sum, item) => sum + item.total_price, 0))}
                     </span>
                   </div>
                 </div>
