@@ -1,4 +1,4 @@
-const DISPLAY_LOCALE = "ar-EG";
+const DISPLAY_LOCALE = "en-US";
 const DISPLAY_TIME_ZONE = "Africa/Cairo";
 
 function toDate(value: string | Date): Date {
